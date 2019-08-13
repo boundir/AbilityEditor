@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Default" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Guid>7c5e0b2e-6ff2-403e-9e6d-f1957409a27f</Guid>
+    <Name>Ability Editor</Name>
+    <Description>This mod allows you to modify any ability (vanilla and modded ones). You will be able to change cooldowns, charges, action cost and other.
+tags= War of the Chosen, Gameplay, Config, Ability</Description>
+    <SteamPublishID>0</SteamPublishID>
+    <AssemblyName>AbilityEditor</AssemblyName>
+    <RootNamespace>AbilityEditor</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Folder Include="Config\" />
+    <Folder Include="Localization\" />
+    <Folder Include="Src\" />
+    <Folder Include="Src\AbilityEditor\" />
+    <Folder Include="Src\AbilityEditor\Classes\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Config\XComAbilityEditor.ini">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="ReadMe.txt" />
+    <Content Include="ModPreview.jpg" />
+    <Content Include="Config\XComEditor.ini" />
+    <Content Include="Config\XComEngine.ini" />
+    <Content Include="Config\XComGame.ini" />
+    <Content Include="Localization\XComGame.int" />
+    <Content Include="Src\AbilityEditor\Classes\X2DownloadableContentInfo_AbilityEditor.uc" />
+    <Content Include="Src\AbilityEditor\Classes\OPTC_Abilities.uc">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Src\AbilityEditor\Classes\Helper_AbilityEditor.uc">
+      <SubType>Content</SubType>
+    </Content>
+  </ItemGroup>
+  <Import Project="$(MSBuildLocalExtensionPath)\XCOM2.targets" />
+</Project>
