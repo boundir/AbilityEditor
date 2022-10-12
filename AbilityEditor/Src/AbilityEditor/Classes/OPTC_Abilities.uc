@@ -1,4 +1,4 @@
-class OPTC_Abilities extends X2DownloadableContentInfo config(AbilityEditor);
+class OPTC_Abilities config(AbilityEditor);
 
 struct native BonusCharges
 {
@@ -20,10 +20,14 @@ struct native AbilityNames
 	var int Charges;
 	var bool KeepChargeOnMiss;
 	var array<Name> DoNotConsumeAllActionsWith;
+	var array<Name> DoNotConsumeAllActionsUnderEffects;
 	var array<Name> SharedAbilityCharges;
+	var array<AdditionalCooldownInfo> SharedCooldowns;
+	var Name bCrossClassEligible;
 	var array<Name> AddAbility;
 	var array<BonusCharges> BonusChargeWith;
 	var array<Name> OverrideAbilities;
+	var array<Name> PrerequisiteAbilities;
 	var String FocusAmount;
 	var bool ConsumeAllFocus;
 	var bool GhostOnlyCost;
@@ -31,7 +35,7 @@ struct native AbilityNames
 
 var config array<AbilityNames> Abilities;
 
-static event OnPostTemplatesCreated()
+static event EditAbilityTemplates()
 {
 	local X2AbilityTemplateManager			AbilityTemplateManager;
 	local array<X2DataTemplate>				TemplateAllDifficulties;
@@ -47,7 +51,9 @@ static event OnPostTemplatesCreated()
 
 	local AbilityNames 						ConfigAbilities;
 	local BonusCharges 						ConfigAbilitiesBonusCharge;
+	local AdditionalCooldownInfo			AdditionalCooldownInfo, SharedCooldown;
 	local Name 								AbilityNameNoEndTurn;
+	local Name 								EffectNameNoEndTurn;
 	local Name 								SharedChargeAbilityName;
 	local Name 								AddAbilityName;
 	local Name 								OverrideAbilityName;
@@ -98,6 +104,15 @@ static event OnPostTemplatesCreated()
 				{
 					// Set the ability cooldown
 					Cooldown = class'Helper_AbilityEditor'.static.SetCooldown(ConfigAbilities.Cooldown);
+					
+					foreach ConfigAbilities.SharedCooldowns(AdditionalCooldownInfo)
+					{
+						SharedCooldown.AbilityName = AdditionalCooldownInfo.AbilityName;
+						SharedCooldown.NumTurns = AdditionalCooldownInfo.NumTurns;
+
+						Cooldown.AditionalAbilityCooldowns.AddItem(SharedCooldown);
+					}
+
 					AbilityTemplate.AbilityCooldown = Cooldown;
 				}
 
@@ -119,6 +134,22 @@ static event OnPostTemplatesCreated()
 								GremlinHealCharges.AddBonusCharge(ConfigAbilitiesBonusCharge.BonusAbilityName, ConfigAbilitiesBonusCharge.NumBonusCharges);
 							}
 							AbilityTemplate.AbilityCharges = GremlinHealCharges;
+						}
+					}
+
+					if(ConfigAbilities.bCrossClassEligible != '')
+					{
+						if(ConfigAbilities.bCrossClassEligible == 'TRUE')
+						{
+							AbilityTemplate.bCrossClassEligible = true;
+						}
+						else if(ConfigAbilities.bCrossClassEligible == 'FALSE')
+						{
+							AbilityTemplate.bCrossClassEligible = false;
+						}
+						else
+						{
+							`LOG("bCrossClassEligible is neither true or false", ,'Ability Editor');
 						}
 					}
 
@@ -174,6 +205,14 @@ static event OnPostTemplatesCreated()
 					{
 						ActionPointCost.DoNotConsumeAllSoldierAbilities.AddItem(AbilityNameNoEndTurn);
 					}
+
+					// Hotfix. Since we removed AbilityCosts we also removed DLC OPTC change on Overdrive.
+					ActionPointCost.DoNotConsumeAllEffects.AddItem('DLC_3Overdrive');
+
+					foreach ConfigAbilities.DoNotConsumeAllActionsUnderEffects(EffectNameNoEndTurn)
+					{
+						ActionPointCost.DoNotConsumeAllEffects.AddItem(EffectNameNoEndTurn);
+					}
 				}
 				AbilityTemplate.AbilityCosts.AddItem(ActionPointCost);
 
@@ -189,6 +228,13 @@ static event OnPostTemplatesCreated()
 				{
 					AbilityTemplate.OverrideAbilities.AddItem(OverrideAbilityName);
 					`LOG("Overriding" @ ConfigAbilities.AbilityName @ "with" @ OverrideAbilityName, ,'Ability Editor');
+				}
+
+				// If this ability is a modifier on another ability, its listed here
+				foreach ConfigAbilities.PrerequisiteAbilities(PrerequiredAbilityName)
+				{
+					AbilityTemplate.PrerequisiteAbilities.AddItem(PrerequiredAbilityName);
+					`LOG("Ability" @ PrerequiredAbilityName @ "is now required for" ConfigAbilities.AbilityName, ,'Ability Editor');
 				}
 
 				// For abilities that require an item but are not sourced from one, specifies a default slot to use.

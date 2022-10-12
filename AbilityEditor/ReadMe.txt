@@ -20,6 +20,15 @@ You will be able to change cooldowns, charges, action cost and other.
 [u]FreeAction[/u] - [i]Bool[/i]
 [b]Optional[/b] - Should this ability cost an action?
 
+[u]FocusAmount[/u] - [i]Integer[/i]
+[b]Optional[/b] - Number of focus it will take
+
+[u]ConsumeAllFocus[/u] - [i]Bool[/i]
+[b]Optional[/b] - Should this ability require all you focus?
+
+[u]GhostOnlyCost[/u] - [i]Bool[/i]
+[b]Optional[/b] - Should this ability cost focus for Ghost only?
+
 [u]DoNotConsumeAllActionsWith[/u] - [i]Array (string)[/i]
 [b]Optional[/b] - If the ability owner has any of these abilities, the ability will not consume all points if EndsTurn was set to true. (e.g. Salvo)
 
@@ -32,6 +41,9 @@ You will be able to change cooldowns, charges, action cost and other.
 [u]KeepChargeOnMiss[/u] - [i]Bool[/i]
 [b]Optional[/b] - Recover your charge if the ability misses (e.g. Domination)
 
+[u]ConsumeItem[/u] - [i]Bool[/i]
+[b]Optional[/b] - Will consume the item granting this ability.
+
 [u]SharedAbilityCharges[/u] - [i]Array (string)[/i]
 [b]Optional[/b] - Abilities which should all have their charges deducted as well (e.g. Skulljack & Skullmine).
 
@@ -41,6 +53,9 @@ You will be able to change cooldowns, charges, action cost and other.
 [u]OverrideAbilities[/u] - [i]Array (string)[/i]
 [b]Optional[/b] - Getting one of those abilities will override the original ability.
 
+[u]PrerequisiteAbilities[/u] - [i]Array (string)[/i]
+[b]Optional[/b] - Ability required to unlock current ability.
+
 [u]BonusChargeWith[/u] - [i]Array[/i]
 [list]
     [*] [u]BonusAbilityName[/u] - [i]String[/i] - Name of the ability granting extra charges.
@@ -48,9 +63,16 @@ You will be able to change cooldowns, charges, action cost and other.
 [/list]
 [b]Optional[/b] - Abilities which should grant extra charges.
 
+[u]SharedCooldowns[/u] - [i]Array[/i]
+[list]
+    [*] [u]AbilityName[/u] - [i]String[/i] - Name of the ability getting a cooldown.
+    [*] [u]NumTurns[/u] - [i]Integer[/i] - Number of turns before use.
+[/list]
+[b]Optional[/b] - Abilities which will get a cooldown.
+
 [u]ItemSlot[/u] - [i]String[/i]
 [b]Optional[/b] - For abilities that require an item but are not sourced from one, specifies a default slot to use.
-Accepte values:
+Accepted values:
 [list]
     [*] Unknown
     [*] PrimaryWeapon

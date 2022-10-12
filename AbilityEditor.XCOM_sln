@@ -3,15 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # XCOM ModBuddy Solution File, Format Version 11.00
 VisualStudioVersion = 12.0.21005.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{5DAE07AF-E217-45C1-8DE7-FF99D6011E8A}") = "AbilityEditor", "AbilityEditor\AbilityEditor.x2proj", "{1F47773F-9760-4CE0-B9FC-7486E17F031F}"
+Project("{5DAE07AF-E217-45C1-8DE7-FF99D6011E8A}") = "AbilityEditor", "AbilityEditor\AbilityEditor.x2proj", "{930026BA-A84A-4E02-83CA-A80C9A1B3273}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Default|XCOM 2 = Default|XCOM 2
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{1F47773F-9760-4CE0-B9FC-7486E17F031F}.Default|XCOM 2.ActiveCfg = Default|XCOM 2
-		{1F47773F-9760-4CE0-B9FC-7486E17F031F}.Default|XCOM 2.Build.0 = Default|XCOM 2
+		{930026BA-A84A-4E02-83CA-A80C9A1B3273}.Default|XCOM 2.ActiveCfg = Default|XCOM 2
+		{930026BA-A84A-4E02-83CA-A80C9A1B3273}.Default|XCOM 2.Build.0 = Default|XCOM 2
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
