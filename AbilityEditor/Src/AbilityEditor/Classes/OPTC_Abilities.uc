@@ -1,4 +1,4 @@
-class OPTC_Abilities config(AbilityEditor);
+class OPTC_Abilities extends Object config(AbilityEditor);
 
 struct native BonusCharges
 {
@@ -57,6 +57,7 @@ static event EditAbilityTemplates()
 	local Name 								SharedChargeAbilityName;
 	local Name 								AddAbilityName;
 	local Name 								OverrideAbilityName;
+	local Name 								PrerequiredAbilityName;
 
 	local X2AbilityCharges_GremlinHeal		GremlinHealCharges;
 	local X2AbilityCharges_ScanningProtocol	ScanningProtocolCharges;
@@ -149,7 +150,7 @@ static event EditAbilityTemplates()
 						}
 						else
 						{
-							`LOG("bCrossClassEligible is neither true or false", ,'Ability Editor');
+							`LOG("bCrossClassEligible is neither true or false", , 'Ability Editor');
 						}
 					}
 
@@ -220,21 +221,21 @@ static event EditAbilityTemplates()
 				foreach ConfigAbilities.AddAbility(AddAbilityName)
 				{
 					AbilityTemplate.AdditionalAbilities.AddItem(AddAbilityName);
-					`LOG("Adding" @ AddAbilityName @ "to" @ ConfigAbilities.AbilityName, ,'Ability Editor');
+					`LOG("Adding" @ AddAbilityName @ "to" @ ConfigAbilities.AbilityName, , 'Ability Editor');
 				}
 
 				// Getting one of those abilities will override the original ability
 				foreach ConfigAbilities.OverrideAbilities(OverrideAbilityName)
 				{
 					AbilityTemplate.OverrideAbilities.AddItem(OverrideAbilityName);
-					`LOG("Overriding" @ ConfigAbilities.AbilityName @ "with" @ OverrideAbilityName, ,'Ability Editor');
+					`LOG("Overriding" @ ConfigAbilities.AbilityName @ "with" @ OverrideAbilityName, , 'Ability Editor');
 				}
 
 				// If this ability is a modifier on another ability, its listed here
 				foreach ConfigAbilities.PrerequisiteAbilities(PrerequiredAbilityName)
 				{
 					AbilityTemplate.PrerequisiteAbilities.AddItem(PrerequiredAbilityName);
-					`LOG("Ability" @ PrerequiredAbilityName @ "is now required for" ConfigAbilities.AbilityName, ,'Ability Editor');
+					`LOG("Ability" @ PrerequiredAbilityName @ "is now required for" @ ConfigAbilities.AbilityName, , 'Ability Editor');
 				}
 
 				// For abilities that require an item but are not sourced from one, specifies a default slot to use.
@@ -286,7 +287,7 @@ static event EditAbilityTemplates()
 					}
 				}
 
-				`LOG("Patched" @ ConfigAbilities.AbilityName, ,'Ability Editor');
+				`LOG("Patched" @ ConfigAbilities.AbilityName, , 'Ability Editor');
 			}
 		}
 	}
