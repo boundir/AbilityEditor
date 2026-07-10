@@ -7,6 +7,7 @@ var config(AbilityEditor) array<AbilityEdit> AbilityEdits;
 var const array<class<X2AbilityChargesEditor> > ChargesEditors;
 var const array<class<X2AbilityCooldownEditor> > CooldownEditors;
 var const array<class<X2AbilityCostEditor> > CostEditors;
+var const array<class<X2AbilityConditionEditor> > ConditionEditors;
 
 static event OnPostTemplatesCreated()
 {
@@ -87,6 +88,27 @@ static function ApplyAbilityEdit(X2AbilityTemplate Template, AbilityEdit Ability
 	class'X2AbilityChargesEditor_Helper'.static.ApplyChargesEdit(Template, AbilityEdit.Charges);
 	class'X2AbilityCooldownEditor_Helper'.static.ApplyCooldownEdit(Template, AbilityEdit.Cooldown);
 	class'X2AbilityCostEditor_Helper'.static.ApplyCostEdit(Template, AbilityEdit);
+
+	class'X2AbilityConditionEditor_Helper'.static.ApplyConditionEdits(
+		Template.DataName,
+		"Template.AbilityShooterConditions",
+		Template.AbilityShooterConditions,
+		AbilityEdit.ShooterConditions
+	);
+
+	class'X2AbilityConditionEditor_Helper'.static.ApplyConditionEdits(
+		Template.DataName,
+		"Template.AbilityTargetConditions",
+		Template.AbilityTargetConditions,
+		AbilityEdit.TargetConditions
+	);
+
+	class'X2AbilityConditionEditor_Helper'.static.ApplyConditionEdits(
+		Template.DataName,
+		"Template.AbilityMultiTargetConditions",
+		Template.AbilityMultiTargetConditions,
+		AbilityEdit.MultiTargetConditions
+	);
 }
 
 defaultproperties
@@ -114,4 +136,43 @@ defaultproperties
 	CostEditors(6) = class'X2AbilityCostEditor_QuickdrawActionPoints'
 	CostEditors(7) = class'X2AbilityCostEditor_ActionPoints'
 	CostEditors(8) = class'X2AbilityCostEditor_Base'
+
+	// X2Condition_UnitEffects subclasses must come before X2Condition_UnitEffects.
+	ConditionEditors(0) = class'X2AbilityConditionEditor_UnitEffectsApplying'
+	ConditionEditors(1) = class'X2AbilityConditionEditor_UnitEffectsOnSource'
+	ConditionEditors(2) = class'X2AbilityConditionEditor_UnitEffectsWithAbilitySource'
+	ConditionEditors(3) = class'X2AbilityConditionEditor_UnitEffectsWithAbilityTarget'
+	ConditionEditors(4) = class'X2AbilityConditionEditor_AbilityProperty'
+	ConditionEditors(5) = class'X2AbilityConditionEditor_AbilitySourceWeapon'
+	ConditionEditors(6) = class'X2AbilityConditionEditor_BattleState'
+	ConditionEditors(7) = class'X2AbilityConditionEditor_BerserkerDevastatingPunch'
+	ConditionEditors(8) = class'X2AbilityConditionEditor_Bondmate'
+	ConditionEditors(9) = class'X2AbilityConditionEditor_DarkEvent'
+	ConditionEditors(10) = class'X2AbilityConditionEditor_EverVigilant'
+	ConditionEditors(11) = class'X2AbilityConditionEditor_FuseTarget'
+	ConditionEditors(12) = class'X2AbilityConditionEditor_GameplayTag'
+	ConditionEditors(13) = class'X2AbilityConditionEditor_HackingTarget'
+	ConditionEditors(14) = class'X2AbilityConditionEditor_Interactive'
+	ConditionEditors(15) = class'X2AbilityConditionEditor_Lootable'
+	ConditionEditors(16) = class'X2AbilityConditionEditor_MapProperty'
+	ConditionEditors(17) = class'X2AbilityConditionEditor_OnGroundTile'
+	ConditionEditors(18) = class'X2AbilityConditionEditor_PanicOnPod'
+	ConditionEditors(19) = class'X2AbilityConditionEditor_PlayerTurns'
+	ConditionEditors(20) = class'X2AbilityConditionEditor_StasisLanceTarget'
+	ConditionEditors(21) = class'X2AbilityConditionEditor_StasisTarget'
+	ConditionEditors(22) = class'X2AbilityConditionEditor_Stealth'
+	ConditionEditors(23) = class'X2AbilityConditionEditor_UnblockedNeighborTile'
+	ConditionEditors(24) = class'X2AbilityConditionEditor_UnitActionPoints'
+	ConditionEditors(25) = class'X2AbilityConditionEditor_UnitAlertStatus'
+	ConditionEditors(26) = class'X2AbilityConditionEditor_UnitEffects'
+	ConditionEditors(27) = class'X2AbilityConditionEditor_UnitImmunities'
+	ConditionEditors(28) = class'X2AbilityConditionEditor_UnitInEvacZone'
+	ConditionEditors(29) = class'X2AbilityConditionEditor_UnitInteractions'
+	ConditionEditors(30) = class'X2AbilityConditionEditor_UnitInventory'
+	ConditionEditors(31) = class'X2AbilityConditionEditor_UnitProperty'
+	ConditionEditors(32) = class'X2AbilityConditionEditor_UnitStatCheck'
+	ConditionEditors(33) = class'X2AbilityConditionEditor_UnitType'
+	ConditionEditors(34) = class'X2AbilityConditionEditor_UnitValue'
+	ConditionEditors(35) = class'X2AbilityConditionEditor_Visibility'
+	ConditionEditors(36) = class'X2AbilityConditionEditor_Base'
 }
