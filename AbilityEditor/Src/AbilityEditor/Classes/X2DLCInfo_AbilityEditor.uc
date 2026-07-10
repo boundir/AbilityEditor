@@ -8,6 +8,7 @@ var const array<class<X2AbilityChargesEditor> > ChargesEditors;
 var const array<class<X2AbilityCooldownEditor> > CooldownEditors;
 var const array<class<X2AbilityCostEditor> > CostEditors;
 var const array<class<X2AbilityConditionEditor> > ConditionEditors;
+var const array<class<X2AbilityEffectsEditor> > EffectsEditors;
 
 static event OnPostTemplatesCreated()
 {
@@ -39,6 +40,8 @@ static event OnPostTemplatesCreated()
 
 static function ApplyAbilityEdit(X2AbilityTemplate Template, AbilityEdit AbilityEdit)
 {
+	local int i;
+
 	if (AbilityEdit.SetHostility)
 	{
 		class'X2AbilityEditor_Logger'.static.LogInfo(
@@ -109,6 +112,11 @@ static function ApplyAbilityEdit(X2AbilityTemplate Template, AbilityEdit Ability
 		Template.AbilityMultiTargetConditions,
 		AbilityEdit.MultiTargetConditions
 	);
+
+	for (i = 0; i < AbilityEdit.Effects.Length; ++i)
+	{
+		class'X2AbilityEffectsEditor_Helper'.static.ApplyEffectEdit(Template, AbilityEdit.Effects[i]);
+	}
 }
 
 defaultproperties
@@ -175,4 +183,108 @@ defaultproperties
 	ConditionEditors(34) = class'X2AbilityConditionEditor_UnitValue'
 	ConditionEditors(35) = class'X2AbilityConditionEditor_Visibility'
 	ConditionEditors(36) = class'X2AbilityConditionEditor_Base'
+
+	// Order matters: first CanEdit match wins, so a class must come before its parents.
+	EffectsEditors(0) = class'X2AbilityEffectsEditor_Obsessed'
+	EffectsEditors(1) = class'X2AbilityEffectsEditor_Shattered'
+	EffectsEditors(2) = class'X2AbilityEffectsEditor_VanishingWind'
+	EffectsEditors(3) = class'X2AbilityEffectsEditor_KineticPlating'
+	EffectsEditors(4) = class'X2AbilityEffectsEditor_Vanish'
+	EffectsEditors(5) = class'X2AbilityEffectsEditor_BlastPadding'
+	EffectsEditors(6) = class'X2AbilityEffectsEditor_KillUnit'
+	EffectsEditors(7) = class'X2AbilityEffectsEditor_ParthenogenicPoison'
+	EffectsEditors(8) = class'X2AbilityEffectsEditor_PersistentStatChange'
+	EffectsEditors(9) = class'X2AbilityEffectsEditor_PersistentStatChangeRestoreDefault'
+	EffectsEditors(10) = class'X2AbilityEffectsEditor_SpawnPsiZombie'
+	EffectsEditors(11) = class'X2AbilityEffectsEditor_SpawnShadowbindUnit'
+	EffectsEditors(12) = class'X2AbilityEffectsEditor_ThreatAssessment'
+	EffectsEditors(13) = class'X2AbilityEffectsEditor_WallBreaking'
+	EffectsEditors(14) = class'X2AbilityEffectsEditor_Achilles'
+	EffectsEditors(15) = class'X2AbilityEffectsEditor_AdverseSoldierClasses'
+	EffectsEditors(16) = class'X2AbilityEffectsEditor_Amplify'
+	EffectsEditors(17) = class'X2AbilityEffectsEditor_ApplyBlazingPinionsTargetToWorld'
+	EffectsEditors(18) = class'X2AbilityEffectsEditor_ApplyFireToWorld'
+	EffectsEditors(19) = class'X2AbilityEffectsEditor_APRounds'
+	EffectsEditors(20) = class'X2AbilityEffectsEditor_Aura'
+	EffectsEditors(21) = class'X2AbilityEffectsEditor_Bewildered'
+	EffectsEditors(22) = class'X2AbilityEffectsEditor_BloodTrail'
+	EffectsEditors(23) = class'X2AbilityEffectsEditor_BonusArmor'
+	EffectsEditors(24) = class'X2AbilityEffectsEditor_BonusWeaponDamage'
+	EffectsEditors(25) = class'X2AbilityEffectsEditor_ConditionalDamageModifier'
+	EffectsEditors(26) = class'X2AbilityEffectsEditor_CoveringFire'
+	EffectsEditors(27) = class'X2AbilityEffectsEditor_DamageImmunity'
+	EffectsEditors(28) = class'X2AbilityEffectsEditor_DelayedAbilityActivation'
+	EffectsEditors(29) = class'X2AbilityEffectsEditor_FaceMultiRoundTarget'
+	EffectsEditors(30) = class'X2AbilityEffectsEditor_GenerateCover'
+	EffectsEditors(31) = class'X2AbilityEffectsEditor_Groundling'
+	EffectsEditors(32) = class'X2AbilityEffectsEditor_Guardian'
+	EffectsEditors(33) = class'X2AbilityEffectsEditor_HoloTarget'
+	EffectsEditors(34) = class'X2AbilityEffectsEditor_HolyWarriorDeath'
+	EffectsEditors(35) = class'X2AbilityEffectsEditor_HomingMine'
+	EffectsEditors(36) = class'X2AbilityEffectsEditor_HuntersInstinctDamage'
+	EffectsEditors(37) = class'X2AbilityEffectsEditor_ImmediateAbilityActivation'
+	EffectsEditors(38) = class'X2AbilityEffectsEditor_Impatient'
+	EffectsEditors(39) = class'X2AbilityEffectsEditor_Implacable'
+	EffectsEditors(40) = class'X2AbilityEffectsEditor_LaserSight'
+	EffectsEditors(41) = class'X2AbilityEffectsEditor_MeleeDamageAdjust'
+	EffectsEditors(42) = class'X2AbilityEffectsEditor_MindControl'
+	EffectsEditors(43) = class'X2AbilityEffectsEditor_ModifyReactionFire'
+	EffectsEditors(44) = class'X2AbilityEffectsEditor_ModifyStats'
+	EffectsEditors(45) = class'X2AbilityEffectsEditor_Nearsighted'
+	EffectsEditors(46) = class'X2AbilityEffectsEditor_Needle'
+	EffectsEditors(47) = class'X2AbilityEffectsEditor_Oblivious'
+	EffectsEditors(48) = class'X2AbilityEffectsEditor_OverrideDeathAnimOnLoad'
+	EffectsEditors(49) = class'X2AbilityEffectsEditor_PaleHorse'
+	EffectsEditors(50) = class'X2AbilityEffectsEditor_PersistentSquadViewer'
+	EffectsEditors(51) = class'X2AbilityEffectsEditor_PersistentTraversalChange'
+	EffectsEditors(52) = class'X2AbilityEffectsEditor_PersistentVoidConduit'
+	EffectsEditors(53) = class'X2AbilityEffectsEditor_Possessed'
+	EffectsEditors(54) = class'X2AbilityEffectsEditor_Reaper'
+	EffectsEditors(55) = class'X2AbilityEffectsEditor_Regeneration'
+	EffectsEditors(56) = class'X2AbilityEffectsEditor_RemoveEffectsByDamageType'
+	EffectsEditors(57) = class'X2AbilityEffectsEditor_ReserveOverwatchPoints'
+	EffectsEditors(58) = class'X2AbilityEffectsEditor_RunBehaviorTree'
+	EffectsEditors(59) = class'X2AbilityEffectsEditor_ScanningProtocol'
+	EffectsEditors(60) = class'X2AbilityEffectsEditor_SmokeGrenade'
+	EffectsEditors(61) = class'X2AbilityEffectsEditor_SpawnDestructible'
+	EffectsEditors(62) = class'X2AbilityEffectsEditor_SpawnUnit'
+	EffectsEditors(63) = class'X2AbilityEffectsEditor_Stasis'
+	EffectsEditors(64) = class'X2AbilityEffectsEditor_Stunned'
+	EffectsEditors(65) = class'X2AbilityEffectsEditor_SuperConcealModifier'
+	EffectsEditors(66) = class'X2AbilityEffectsEditor_Sustain'
+	EffectsEditors(67) = class'X2AbilityEffectsEditor_Sustained'
+	EffectsEditors(68) = class'X2AbilityEffectsEditor_TalonRounds'
+	EffectsEditors(69) = class'X2AbilityEffectsEditor_TargetDamageDistanceBonus'
+	EffectsEditors(70) = class'X2AbilityEffectsEditor_TargetDamageTypeBonus'
+	EffectsEditors(71) = class'X2AbilityEffectsEditor_ToHitModifier'
+	EffectsEditors(72) = class'X2AbilityEffectsEditor_TrackingShotMarkTarget'
+	EffectsEditors(73) = class'X2AbilityEffectsEditor_TurnStartActionPoints'
+	EffectsEditors(74) = class'X2AbilityEffectsEditor_VolatileMix'
+	EffectsEditors(75) = class'X2AbilityEffectsEditor_ApplyDirectionalWorldDamage'
+	EffectsEditors(76) = class'X2AbilityEffectsEditor_ApplyMedikitHeal'
+	EffectsEditors(77) = class'X2AbilityEffectsEditor_ApplyWeaponDamage'
+	EffectsEditors(78) = class'X2AbilityEffectsEditor_Brutal'
+	EffectsEditors(79) = class'X2AbilityEffectsEditor_EnableGlobalAbility'
+	EffectsEditors(80) = class'X2AbilityEffectsEditor_GetOverHere'
+	EffectsEditors(81) = class'X2AbilityEffectsEditor_GrantActionPoints'
+	EffectsEditors(82) = class'X2AbilityEffectsEditor_IncreaseBondmateCohesion'
+	EffectsEditors(83) = class'X2AbilityEffectsEditor_Knockback'
+	EffectsEditors(84) = class'X2AbilityEffectsEditor_LifeSteal'
+	EffectsEditors(85) = class'X2AbilityEffectsEditor_MarkValidActivationTiles'
+	EffectsEditors(86) = class'X2AbilityEffectsEditor_ModifyInitiativeOrder'
+	EffectsEditors(87) = class'X2AbilityEffectsEditor_ModifyTemplarFocus'
+	EffectsEditors(88) = class'X2AbilityEffectsEditor_LethalWeaponDamage'
+	EffectsEditors(89) = class'X2AbilityEffectsEditor_Persistent'
+	EffectsEditors(90) = class'X2AbilityEffectsEditor_ReduceCooldowns'
+	EffectsEditors(91) = class'X2AbilityEffectsEditor_RemoteStart'
+	EffectsEditors(92) = class'X2AbilityEffectsEditor_RemoveEffects'
+	EffectsEditors(93) = class'X2AbilityEffectsEditor_ReserveActionPoints'
+	EffectsEditors(94) = class'X2AbilityEffectsEditor_SetUnitValue'
+	EffectsEditors(95) = class'X2AbilityEffectsEditor_SoulSteal'
+	EffectsEditors(96) = class'X2AbilityEffectsEditor_Spotted'
+	EffectsEditors(97) = class'X2AbilityEffectsEditor_SuspendMissionTimer'
+	EffectsEditors(98) = class'X2AbilityEffectsEditor_TriggerEvent'
+	EffectsEditors(99) = class'X2AbilityEffectsEditor_VoidConduit'
+	EffectsEditors(100) = class'X2AbilityEffectsEditor_World'
+	EffectsEditors(101) = class'X2AbilityEffectsEditor_Base'
 }

@@ -605,6 +605,1044 @@ struct ConditionEdit
 	var array<AECustomProperty> CustomProperties;
 };
 
+struct StatChangeEdit
+{
+	var bool SetStatType;
+	var ECharStatType StatType;
+
+	var bool SetStatAmount;
+	var float StatAmount;
+
+	var bool SetModOp;
+	var EStatModOp ModOp;
+
+	var bool SetApplicationRule;
+	var ECharStatModApplicationRule ApplicationRule;
+};
+
+struct WeaponDamageValueEdit
+{
+	var bool SetDamage;
+	var int Damage;
+
+	var bool SetSpread;
+	var int Spread;
+
+	var bool SetPlusOne;
+	var int PlusOne;
+
+	var bool SetCrit;
+	var int Crit;
+
+	var bool SetPierce;
+	var int Pierce;
+
+	var bool SetRupture;
+	var int Rupture;
+
+	var bool SetShred;
+	var int Shred;
+
+	var bool SetTag;
+	var name Tag;
+
+	var bool SetDamageType;
+	var name DamageType;
+};
+
+struct EffectEdit
+{
+	var string Class;
+
+	var EAbilityEffectSlot Slot;
+	var EArrayEditMode Mode;
+
+	// Base effect parameters
+	var bool SetApplyOnHit;
+	var bool ApplyOnHit;
+
+	var bool SetApplyOnMiss;
+	var bool ApplyOnMiss;
+
+	var bool SetApplyChance;
+	var int ApplyChance;
+
+	var bool SetApplyToWorldOnHit;
+	var bool ApplyToWorldOnHit;
+
+	var bool SetApplyToWorldOnMiss;
+	var bool ApplyToWorldOnMiss;
+
+	var bool SetUseSourcePlayerState;
+	var bool UseSourcePlayerState;
+
+	var bool SetIsImpairing;
+	var bool IsImpairing;
+
+	var bool SetIsImpairingMomentarily;
+	var bool IsImpairingMomentarily;
+
+	var bool SetBringRemoveVisualizationForward;
+	var bool BringRemoveVisualizationForward;
+
+	var bool SetShowImmunity;
+	var bool ShowImmunity;
+
+	var bool SetShowImmunityAnyFailure;
+	var bool ShowImmunityAnyFailure;
+
+	var bool SetAppliesDamage;
+	var bool AppliesDamage;
+
+	var bool SetCanBeRedirected;
+	var bool CanBeRedirected;
+
+	var bool SetHideDeathWorldMessage;
+	var bool HideDeathWorldMessage;
+
+	var ENameArrayEditMode DamageTypesMode;
+	var array<name> DamageTypes;
+
+	// Conditions attached to the effect (X2Effect.TargetConditions)
+	var array<ConditionEdit> TargetConditions;
+
+	var bool SetMinStatContestResult;
+	var int MinStatContestResult;
+
+	var bool SetMaxStatContestResult;
+	var int MaxStatContestResult;
+
+	var bool SetDelayVisualizationSec;
+	var float DelayVisualizationSec;
+
+	var bool SetOverrideMissMessage;
+	var string OverrideMissMessage;
+
+	// Option child-class parameters
+	var bool SetNumTurns;
+	var int NumTurns;
+
+	var bool SetInitialShedChance;
+	var int InitialShedChance;
+
+	var bool SetPerTurnShedChance;
+	var int PerTurnShedChance;
+
+	var bool SetEffectRank;
+	var int EffectRank;
+
+	var bool SetEffectHierarchyValue;
+	var int EffectHierarchyValue;
+
+	var bool SetVisionArcDegreesOverride;
+	var float VisionArcDegreesOverride;
+
+	var bool SetInfiniteDuration;
+	var bool InfiniteDuration;
+
+	var bool SetTickWhenApplied;
+	var bool TickWhenApplied;
+
+	var bool SetCanTickEveryAction;
+	var bool CanTickEveryAction;
+
+	var bool SetConvertTurnsToActions;
+	var bool ConvertTurnsToActions;
+
+	var bool SetRemoveWhenSourceDies;
+	var bool RemoveWhenSourceDies;
+
+	var bool SetRemoveWhenTargetDies;
+	var bool RemoveWhenTargetDies;
+
+	var bool SetRemoveWhenSourceDamaged;
+	var bool RemoveWhenSourceDamaged;
+
+	var bool SetRemoveWhenTargetConcealmentBroken;
+	var bool RemoveWhenTargetConcealmentBroken;
+
+	var bool SetPersistThroughTacticalGameEnd;
+	var bool PersistThroughTacticalGameEnd;
+
+	var bool SetIgnorePlayerCheckOnTick;
+	var bool IgnorePlayerCheckOnTick;
+
+	var bool SetUniqueTarget;
+	var bool UniqueTarget;
+
+	var bool SetStackOnRefresh;
+	var bool StackOnRefresh;
+
+	var bool SetDupeForSameSourceOnly;
+	var bool DupeForSameSourceOnly;
+
+	var bool SetEffectForcesBleedout;
+	var bool EffectForcesBleedout;
+
+	var bool SetDisplayInUI;
+	var bool DisplayInUI;
+
+	var bool SetDisplayInSpecialDamageMessageUI;
+	var bool DisplayInSpecialDamageMessageUI;
+
+	var bool SetSourceDisplayInUI;
+	var bool SourceDisplayInUI;
+
+	var bool SetCustomIdleOverrideAnim;
+	var name CustomIdleOverrideAnim;
+
+	var bool SetEffectName;
+	var name EffectName;
+
+	var bool SetAbilitySourceName;
+	var name AbilitySourceName;
+
+	var bool SetEffectAppliedEventName;
+	var name EffectAppliedEventName;
+
+	var bool SetChanceEventTriggerName;
+	var name ChanceEventTriggerName;
+
+	var bool SetVFXSocket;
+	var name VFXSocket;
+
+	var bool SetVFXSocketsArrayName;
+	var name VFXSocketsArrayName;
+
+	var bool SetFriendlyName;
+	var string FriendlyName;
+
+	var bool SetFriendlyDescription;
+	var string FriendlyDescription;
+
+	var bool SetIconImage;
+	var string IconImage;
+
+	var bool SetSourceFriendlyName;
+	var string SourceFriendlyName;
+
+	var bool SetSourceFriendlyDescription;
+	var string SourceFriendlyDescription;
+
+	var bool SetSourceIconLabel;
+	var string SourceIconLabel;
+
+	var bool SetStatusIcon;
+	var string StatusIcon;
+
+	var bool SetVFXTemplateName;
+	var string VFXTemplateName;
+
+	var bool SetPersistentPerkName;
+	var string PersistentPerkName;
+
+	// X2Effect_ApplyWeaponDamage
+	var bool SetExplosiveDamage;
+	var bool ExplosiveDamage;
+
+	var bool SetIgnoreBaseDamage;
+	var bool IgnoreBaseDamage;
+
+	var bool SetDamageTag;
+	var name DamageTag;
+
+	var bool SetAlwaysKillsCivilians;
+	var bool AlwaysKillsCivilians;
+
+	var bool SetApplyWorldEffectsForEachTargetLocation;
+	var bool ApplyWorldEffectsForEachTargetLocation;
+
+	var bool SetAllowFreeKill;
+	var bool AllowFreeKill;
+
+	var bool SetAllowWeaponUpgrade;
+	var bool AllowWeaponUpgrade;
+
+	var bool SetBypassShields;
+	var bool BypassShields;
+
+	var bool SetIgnoreArmor;
+	var bool IgnoreArmor;
+
+	var bool SetBypassSustainEffects;
+	var bool BypassSustainEffects;
+
+	var bool SetEnvironmentalDamageAmount;
+	var int EnvironmentalDamageAmount;
+
+	var WeaponDamageValueEdit WeaponDamageValue;
+
+	// X2Effect_PersistentStatChange
+	var EStatChangeMode StatChangeMode;
+	var array<StatChangeEdit> StatChange;
+
+	var bool SetCHLForceReapplyOnRefresh;
+	var bool CHLForceReapplyOnRefresh;
+
+	// X2AbilityEffectsEditor_DamageImmunity
+	// Maps to X2Effect_DamageImmunity.ImmueTypesAreInclusive (typo is Firaxis's)
+	var bool SetImmuneTypesAreInclusive;
+	var bool ImmuneTypesAreInclusive;
+
+	var bool SetRemoveAfterAttackCount;
+	var int RemoveAfterAttackCount;
+
+	var ENameArrayEditMode ImmuneTypesMode;
+	var array<name> ImmuneTypes;
+
+	// X2Effect_GrantActionPoints
+	var bool SetNumActionPoints;
+	var int NumActionPoints;
+
+	var bool SetPointType;
+	var name PointType;
+
+	var bool SetApplyOnlyWhenOut;
+	var bool ApplyOnlyWhenOut;
+
+	var bool SetSelectUnit;
+	var bool SelectUnit;
+
+	var ENameArrayEditMode SkipWithEffectMode;
+	var array<name> SkipWithEffect;
+
+	// X2Effect_RemoveEffects
+	var ENameArrayEditMode EffectNamesToRemoveMode;
+	var array<name> EffectNamesToRemove;
+
+	var bool SetCleanse;
+	var bool Cleanse;
+
+	var bool SetCheckSource;
+	var bool CheckSource;
+
+	var bool SetDoNotVisualize;
+	var bool DoNotVisualize;
+
+	// X2Effect_SetUnitValue
+	var bool SetUnitName;
+	var name UnitName;
+
+	var bool SetNewValueToSet;
+	var float NewValueToSet;
+
+	var bool SetCleanupType;
+	var EUnitValueCleanup CleanupType;
+
+	// X2Effect_BonusArmor
+	var bool SetArmorMitigationAmount;
+	var int ArmorMitigationAmount;
+
+	// X2Effect_Stunned
+	var bool SetStunLevel;
+	var int StunLevel;
+
+	var bool SetSkipAnimation;
+	var bool SkipAnimation;
+
+	var bool SetStunStartAnimName;
+	var name StunStartAnimName;
+
+	var bool SetStunStopAnimName;
+	var name StunStopAnimName;
+
+	var bool SetStunnedTriggerName;
+	var name StunnedTriggerName;
+
+	// X2Effect_Sustained
+	var bool SetSustainedAbilityName;
+	var name SustainedAbilityName;
+
+	var bool SetFragileAmount;
+	var int FragileAmount;
+
+	var ENameArrayEditMode EffectsToRemoveFromSourceMode;
+	var array<name> EffectsToRemoveFromSource;
+
+	var ENameArrayEditMode EffectsToRemoveFromTargetMode;
+	var array<name> EffectsToRemoveFromTarget;
+
+	var ENameArrayEditMode RegisterAdditionalEventsLikeImpairMode;
+	var array<name> RegisterAdditionalEventsLikeImpair;
+
+	// X2Effect_Vanish
+	var bool SetReasonNotVisible;
+	var name ReasonNotVisible;
+
+	var bool SetVanishRevealAdditiveAnimName;
+	var name VanishRevealAdditiveAnimName;
+
+	var bool SetVanishRevealAnimName;
+	var name VanishRevealAnimName;
+
+	var bool SetVanishSyncAnimName;
+	var name VanishSyncAnimName;
+
+	// X2Effect_ReserveActionPoints
+	var bool SetReserveType;
+	var name ReserveType;
+
+	var bool SetNumPoints;
+	var int NumPoints;
+
+	// X2Effect_CoveringFire
+	var bool SetAbilityToActivate;
+	var name AbilityToActivate;
+
+	var bool SetGrantActionPoint;
+	var name GrantActionPoint;
+
+	var bool SetMaxPointsPerTurn;
+	var int MaxPointsPerTurn;
+
+	var bool SetDirectAttackOnly;
+	var bool DirectAttackOnly;
+
+	var bool SetPreEmptiveFire;
+	var bool PreEmptiveFire;
+
+	var bool SetOnlyDuringEnemyTurn;
+	var bool OnlyDuringEnemyTurn;
+
+	var bool SetUseMultiTargets;
+	var bool UseMultiTargets;
+
+	var bool SetOnlyWhenAttackMisses;
+	var bool OnlyWhenAttackMisses;
+
+	var bool SetSelfTargeting;
+	var bool SelfTargeting;
+
+	var bool SetActivationPercentChance;
+	var int ActivationPercentChance;
+
+	// X2Effect_PersistentTraversalChange (merged by Traversal)
+	var ENameArrayEditMode TraversalChangesMode;
+	var array<TraversalChange> TraversalChanges;
+
+	// X2Effect_Achilles
+	var bool SetToHitMin;
+	var int ToHitMin;
+
+	// X2Effect_Achilles, X2Effect_AdverseSoldierClasses, X2Effect_Bewildered, X2Effect_Impatient, X2Effect_Nearsighted, X2Effect_Oblivious
+	var bool SetDmgMod;
+	var float DmgMod;
+
+	// X2Effect_AdverseSoldierClasses
+	var ENameArrayEditMode AdverseClassesMode;
+	var array<name> AdverseClasses;
+
+	// X2Effect_Amplify
+	var bool SetBonusDamageMult;
+	var float BonusDamageMult;
+
+	// X2Effect_Amplify
+	var bool SetMinBonusDamage;
+	var int MinBonusDamage;
+
+	// X2Effect_ApplyBlazingPinionsTargetToWorld
+	var bool SetOverrideParticleSystemFill_Name;
+	var string OverrideParticleSystemFill_Name;
+
+	// X2Effect_ApplyDirectionalWorldDamage
+	var bool SetDamageTypeTemplateName;
+	var name DamageTypeTemplateName;
+
+	// X2Effect_ApplyDirectionalWorldDamage
+	var bool SetPlusNumZTiles;
+	var int PlusNumZTiles;
+
+	// X2Effect_ApplyDirectionalWorldDamage
+	var bool SetUseWeaponEnvironmentalDamage;
+	var bool UseWeaponEnvironmentalDamage;
+
+	// X2Effect_ApplyDirectionalWorldDamage
+	var bool SetUseWeaponDamageType;
+	var bool UseWeaponDamageType;
+
+	// X2Effect_ApplyDirectionalWorldDamage
+	var bool SetHitSourceTile;
+	var bool HitSourceTile;
+
+	// X2Effect_ApplyDirectionalWorldDamage
+	var bool SetHitTargetTile;
+	var bool HitTargetTile;
+
+	// X2Effect_ApplyDirectionalWorldDamage
+	var bool SetHitAdjacentDestructibles;
+	var bool HitAdjacentDestructibles;
+
+	// X2Effect_ApplyDirectionalWorldDamage
+	var bool SetAllowDestructionOfDamageCauseCover;
+	var bool AllowDestructionOfDamageCauseCover;
+
+	// X2Effect_ApplyFireToWorld
+	var bool SetFireChance_Level1;
+	var float FireChance_Level1;
+
+	// X2Effect_ApplyFireToWorld
+	var bool SetFireChance_Level2;
+	var float FireChance_Level2;
+
+	// X2Effect_ApplyFireToWorld
+	var bool SetFireChance_Level3;
+	var float FireChance_Level3;
+
+	// X2Effect_ApplyFireToWorld
+	var bool SetUseFireChanceLevel;
+	var bool UseFireChanceLevel;
+
+	// X2Effect_ApplyFireToWorld
+	var bool SetDamageFragileOnly;
+	var bool DamageFragileOnly;
+
+	// X2Effect_ApplyFireToWorld
+	var bool SetCheckForLOSFromTargetLocation;
+	var bool CheckForLOSFromTargetLocation;
+
+	// X2Effect_ApplyMedikitHeal
+	var bool SetPerUseHP;
+	var int PerUseHP;
+
+	// X2Effect_ApplyMedikitHeal
+	var bool SetIncreasedHealProject;
+	var name IncreasedHealProject;
+
+	// X2Effect_ApplyMedikitHeal
+	var bool SetIncreasedPerUseHP;
+	var int IncreasedPerUseHP;
+
+	// X2Effect_APRounds
+	var bool SetPierce;
+	var int Pierce;
+
+	// X2Effect_APRounds, X2Effect_TalonRounds
+	var bool SetCritChance;
+	var int CritChance;
+
+	// X2Effect_APRounds, X2Effect_TalonRounds
+	var bool SetCritDamage;
+	var int CritDamage;
+
+	// X2Effect_Aura
+	var ENameArrayEditMode EventsToUpdateMode;
+	var array<name> EventsToUpdate;
+
+	// X2Effect_Bewildered
+	var bool SetNumHitsForMod;
+	var int NumHitsForMod;
+
+	// X2Effect_BlastPadding
+	var bool SetExplosiveDamageReduction;
+	var float ExplosiveDamageReduction;
+
+	// X2Effect_BloodTrail, X2Effect_HuntersInstinctDamage, X2Effect_VolatileMix
+	var bool SetBonusDamage;
+	var int BonusDamage;
+
+	// X2Effect_BonusWeaponDamage
+	var bool SetBonusDmg;
+	var int BonusDmg;
+
+	// X2Effect_Brutal
+	var bool SetWillMod;
+	var int WillMod;
+
+	// X2Effect_ConditionalDamageModifier
+	var bool SetModifyOutgoingDamage;
+	var bool ModifyOutgoingDamage;
+
+	// X2Effect_ConditionalDamageModifier
+	var bool SetModifyIncomingDamage;
+	var bool ModifyIncomingDamage;
+
+	// X2Effect_ConditionalDamageModifier
+	var bool SetDamageModifier;
+	var float DamageModifier;
+
+	// X2Effect_ConditionalDamageModifier
+	var bool SetDamageBonus;
+	var int DamageBonus;
+
+	// X2Effect_DelayedAbilityActivation, X2Effect_FaceMultiRoundTarget, X2Effect_TriggerEvent
+	var bool SetTriggerEventName;
+	var name TriggerEventName;
+
+	// X2Effect_EnableGlobalAbility
+	var bool SetGlobalAbility;
+	var name GlobalAbility;
+
+	// X2Effect_GenerateCover
+	var bool SetCoverType;
+	var ECoverForceFlag CoverType;
+
+	// X2Effect_GenerateCover
+	var bool SetRemoveWhenMoved;
+	var bool RemoveWhenMoved;
+
+	// X2Effect_GenerateCover
+	var bool SetRemoveOnOtherActivation;
+	var bool RemoveOnOtherActivation;
+
+	// X2Effect_GetOverHere
+	var bool SetOverrideStartAnimName;
+	var Name OverrideStartAnimName;
+
+	// X2Effect_GetOverHere
+	var bool SetOverrideStopAnimName;
+	var Name OverrideStopAnimName;
+
+	// X2Effect_GetOverHere
+	var bool SetRequireVisibleTile;
+	var bool RequireVisibleTile;
+
+	// X2Effect_Groundling
+	var bool SetHeightBonus;
+	var int HeightBonus;
+
+	// X2Effect_Guardian
+	var ENameArrayEditMode AllowedAbilitiesMode;
+	var array<name> AllowedAbilities;
+
+	// X2Effect_Guardian
+	var bool SetProcChance;
+	var int ProcChance;
+
+	// X2Effect_HoloTarget, X2Effect_SmokeGrenade
+	var bool SetHitMod;
+	var int HitMod;
+
+	// X2Effect_HolyWarriorDeath
+	var bool SetDelayTimeS;
+	var float DelayTimeS;
+
+	// X2Effect_HomingMine
+	var bool SetAbilityToTrigger;
+	var name AbilityToTrigger;
+
+	// X2Effect_HuntersInstinctDamage
+	var bool SetBonusCritChance;
+	var int BonusCritChance;
+
+	// X2Effect_ImmediateAbilityActivation
+	var bool SetAbilityName;
+	var name AbilityName;
+
+	// X2Effect_ImmediateAbilityActivation
+	var bool SetActivateAbilityOnTarget;
+	var bool ActivateAbilityOnTarget;
+
+	// X2Effect_ImmediateAbilityActivation
+	var bool SetEffectTargetOnly;
+	var bool EffectTargetOnly;
+
+	// X2Effect_Implacable
+	var bool SetImplacableThisTurnValue;
+	var name ImplacableThisTurnValue;
+
+	// X2Effect_IncreaseBondmateCohesion
+	var bool SetCohesionAmount;
+	var int CohesionAmount;
+
+	// X2Effect_KineticPlating
+	var bool SetShieldPerMiss;
+	var int ShieldPerMiss;
+
+	// X2Effect_Knockback
+	var bool SetKnockbackDistance;
+	var int KnockbackDistance;
+
+	// X2Effect_Knockback
+	var bool SetKnockbackDestroysNonFragile;
+	var bool KnockbackDestroysNonFragile;
+
+	// X2Effect_Knockback
+	var bool SetOverrideRagdollFinishTimerSec;
+	var float OverrideRagdollFinishTimerSec;
+
+	// X2Effect_Knockback
+	var bool SetOnlyOnDeath;
+	var bool OnlyOnDeath;
+
+	// X2Effect_LaserSight
+	var bool SetBenefitFromEmpoweredUpgrades;
+	var bool BenefitFromEmpoweredUpgrades;
+
+	// X2Effect_LaserSight
+	var bool SetCritBonus;
+	var int CritBonus;
+
+	// X2Effect_LifeSteal
+	var bool SetLifeAmountMultiplier;
+	var float LifeAmountMultiplier;
+
+	// X2Effect_MarkValidActivationTiles
+	var bool SetAbilityToMark;
+	var name AbilityToMark;
+
+	// X2Effect_MarkValidActivationTiles
+	var bool SetOnlyUseTargetLocation;
+	var bool OnlyUseTargetLocation;
+
+	// X2Effect_MarkValidActivationTiles
+	var bool SetVisualizeFlagsOnCursor;
+	var bool VisualizeFlagsOnCursor;
+
+	// X2Effect_MeleeDamageAdjust
+	var bool SetDamageMod;
+	var int DamageMod;
+
+	// X2Effect_MeleeDamageAdjust
+	var bool SetMeleeDamageTypeName;
+	var name MeleeDamageTypeName;
+
+	// X2Effect_MindControl
+	var bool SetNumTurnsForAI;
+	var int NumTurnsForAI;
+
+	// X2Effect_ModifyInitiativeOrder
+	var bool SetRemoveGroupFromInitiativeOrder;
+	var bool RemoveGroupFromInitiativeOrder;
+
+	// X2Effect_ModifyInitiativeOrder
+	var bool SetAddGroupToInitiativeOrder;
+	var bool AddGroupToInitiativeOrder;
+
+	// X2Effect_ModifyReactionFire
+	var bool SetAllowCrit;
+	var bool AllowCrit;
+
+	// X2Effect_ModifyReactionFire
+	var bool SetReactionModifier;
+	var int ReactionModifier;
+
+	// X2Effect_ModifyTemplarFocus
+	var bool SetModifyFocus;
+	var int ModifyFocus;
+
+	// X2Effect_Needle
+	var bool SetArmorPierce;
+	var int ArmorPierce;
+
+	// X2Effect_Obsessed
+	var bool SetObsessedTargetValueName;
+	var Name ObsessedTargetValueName;
+
+	// X2Effect_OverrideDeathAnimOnLoad
+	var bool SetOverrideAnimNameOnLoad;
+	var name OverrideAnimNameOnLoad;
+
+	// X2Effect_PaleHorse
+	var bool SetCritBoostPerKill;
+	var int CritBoostPerKill;
+
+	// X2Effect_PaleHorse
+	var bool SetMaxCritBoost;
+	var int MaxCritBoost;
+
+	// X2Effect_ParthenogenicPoison
+	var bool SetParthenogenicPoisonType;
+	var name ParthenogenicPoisonType;
+
+	// X2Effect_ParthenogenicPoison
+	var bool SetParthenogenicPoisonCocoonSpawnedName;
+	var name ParthenogenicPoisonCocoonSpawnedName;
+
+	// X2Effect_ParthenogenicPoison, X2Effect_SpawnPsiZombie
+	var bool SetAltUnitToSpawnName;
+	var name AltUnitToSpawnName;
+
+	// X2Effect_PersistentSquadViewer
+	var bool SetUseWeaponRadius;
+	var bool UseWeaponRadius;
+
+	// X2Effect_PersistentSquadViewer
+	var bool SetViewRadius;
+	var float ViewRadius;
+
+	// X2Effect_PersistentSquadViewer
+	var bool SetUseSourceLocation;
+	var bool UseSourceLocation;
+
+	// X2Effect_PersistentVoidConduit
+	var bool SetInitialDamage;
+	var int InitialDamage;
+
+	// X2Effect_Possessed
+	var bool SetWeaponTemplateName;
+	var name WeaponTemplateName;
+
+	// X2Effect_Reaper
+	var bool SetReaperActivatedName;
+	var name ReaperActivatedName;
+
+	// X2Effect_Reaper
+	var bool SetReaperKillName;
+	var name ReaperKillName;
+
+	// X2Effect_ReduceCooldowns
+	var bool SetAmount;
+	var int Amount;
+
+	// X2Effect_ReduceCooldowns
+	var bool SetReduceAll;
+	var bool ReduceAll;
+
+	// X2Effect_ReduceCooldowns
+	var ENameArrayEditMode AbilitiesToTickMode;
+	var array<name> AbilitiesToTick;
+
+	// X2Effect_Regeneration
+	var bool SetHealAmount;
+	var int HealAmount;
+
+	// X2Effect_Regeneration
+	var bool SetMaxHealAmount;
+	var int MaxHealAmount;
+
+	// X2Effect_Regeneration
+	var bool SetHealthRegeneratedName;
+	var name HealthRegeneratedName;
+
+	// X2Effect_Regeneration
+	var bool SetEventToTriggerOnHeal;
+	var name EventToTriggerOnHeal;
+
+	// X2Effect_RemoteStart
+	var bool SetUnitDamageMultiplier;
+	var float UnitDamageMultiplier;
+
+	// X2Effect_RemoteStart
+	var bool SetDamageRadiusMultiplier;
+	var float DamageRadiusMultiplier;
+
+	// X2Effect_RemoveEffectsByDamageType
+	var ENameArrayEditMode DamageTypesToRemoveMode;
+	var array<name> DamageTypesToRemove;
+
+	// X2Effect_ReserveOverwatchPoints
+	var ENameArrayEditMode UseAllPointsWithAbilitiesMode;
+	var array<name> UseAllPointsWithAbilities;
+
+	// X2Effect_RunBehaviorTree
+	var bool SetNumActions;
+	var int NumActions;
+
+	// X2Effect_RunBehaviorTree
+	var bool SetBehaviorTreeName;
+	var name BehaviorTreeName;
+
+	// X2Effect_RunBehaviorTree
+	var bool SetInitFromPlayer;
+	var bool InitFromPlayer;
+
+	// X2Effect_RunBehaviorTree
+	var bool SetSetActionPointCount;
+	var int SetActionPointCount;
+
+	// X2Effect_ScanningProtocol
+	var bool SetLookAtDuration;
+	var float LookAtDuration;
+
+	// X2Effect_Shattered
+	var bool SetShatteredTargetValueName;
+	var Name ShatteredTargetValueName;
+
+	// X2Effect_SoulSteal
+	var bool SetUnitValueToRead;
+	var name UnitValueToRead;
+
+	// X2Effect_SpawnDestructible
+	var bool SetDestructibleArchetype;
+	var string DestructibleArchetype;
+
+	// X2Effect_SpawnDestructible
+	var bool SetDestroyOnRemoval;
+	var bool DestroyOnRemoval;
+
+	// X2Effect_SpawnDestructible
+	var bool SetTargetableBySpawnedTeamOnly;
+	var bool TargetableBySpawnedTeamOnly;
+
+	// X2Effect_SpawnPsiZombie
+	var bool SetAnimationName;
+	var name AnimationName;
+
+	// X2Effect_SpawnPsiZombie
+	var bool SetStartAnimationMinDelaySec;
+	var float StartAnimationMinDelaySec;
+
+	// X2Effect_SpawnPsiZombie
+	var bool SetStartAnimationMaxDelaySec;
+	var float StartAnimationMaxDelaySec;
+
+	// X2Effect_SpawnShadowbindUnit
+	var bool SetShadowbindUnconciousCheckName;
+	var name ShadowbindUnconciousCheckName;
+
+	// X2Effect_SpawnUnit
+	var bool SetUnitToSpawnName;
+	var name UnitToSpawnName;
+
+	// X2Effect_SpawnUnit
+	var bool SetClearTileBlockedByTargetUnitFlag;
+	var bool ClearTileBlockedByTargetUnitFlag;
+
+	// X2Effect_SpawnUnit
+	var bool SetCopyTargetAppearance;
+	var bool CopyTargetAppearance;
+
+	// X2Effect_SpawnUnit
+	var bool SetCopySourceAppearance;
+	var bool CopySourceAppearance;
+
+	// X2Effect_SpawnUnit
+	var bool SetKnockbackAffectsSpawnLocation;
+	var bool KnockbackAffectsSpawnLocation;
+
+	// X2Effect_SpawnUnit
+	var bool SetAddToSourceGroup;
+	var bool AddToSourceGroup;
+
+	// X2Effect_SpawnUnit
+	var bool SetCopyReanimatedFromUnit;
+	var bool CopyReanimatedFromUnit;
+
+	// X2Effect_SpawnUnit
+	var bool SetCopyReanimatedStatsFromUnit;
+	var bool CopyReanimatedStatsFromUnit;
+
+	// X2Effect_SpawnUnit
+	var bool SetSetProcessedScamperAs;
+	var bool SetProcessedScamperAs;
+
+	// X2Effect_Spotted
+	var bool SetBecomeUnspotted;
+	var bool BecomeUnspotted;
+
+	// X2Effect_Stasis
+	var bool SetStunStartAnim;
+	var name StunStartAnim;
+
+	// X2Effect_Stasis
+	var bool SetStunStopAnim;
+	var name StunStopAnim;
+
+	// X2Effect_Stasis
+	var bool SetSkipFlyover;
+	var bool SkipFlyover;
+
+	// X2Effect_Stasis
+	var bool SetStartAnimBlendTime;
+	var float StartAnimBlendTime;
+
+	// X2Effect_SuperConcealModifier
+	var bool SetConcealAmountScalar;
+	var float ConcealAmountScalar;
+
+	// X2Effect_SuperConcealModifier
+	var ENameArrayEditMode AbilitiesAffectedFilterMode;
+	var array<name> AbilitiesAffectedFilter;
+
+	// X2Effect_SuperConcealModifier
+	var ENameArrayEditMode RemoveOnAbilityActivationMode;
+	var array<name> RemoveOnAbilityActivation;
+
+	// X2Effect_SuspendMissionTimer
+	var bool SetResumeMissionTimer;
+	var bool ResumeMissionTimer;
+
+	// X2Effect_TalonRounds
+	var bool SetAimMod;
+	var int AimMod;
+
+	// X2Effect_TargetDamageDistanceBonus, X2Effect_TargetDamageTypeBonus
+	var bool SetBonusDmgFloat;
+	var float BonusDmgFloat;
+
+	// X2Effect_TargetDamageDistanceBonus, X2Effect_TargetDamageTypeBonus
+	var bool SetBonusModType;
+	var EStatModOp BonusModType;
+
+	// X2Effect_TargetDamageDistanceBonus
+	var bool SetWithinTileDistance;
+	var int WithinTileDistance;
+
+	// X2Effect_TargetDamageDistanceBonus
+	var bool SetPrimaryTargetOnly;
+	var bool PrimaryTargetOnly;
+
+	// X2Effect_TargetDamageTypeBonus
+	var ENameArrayEditMode BonusDamageTypesMode;
+	var array<name> BonusDamageTypes;
+
+	// X2Effect_ThreatAssessment
+	var bool SetImmediateActionPoint;
+	var name ImmediateActionPoint;
+
+	// X2Effect_ToHitModifier
+	var bool SetApplyAsTarget;
+	var bool ApplyAsTarget;
+
+	// X2Effect_TrackingShotMarkTarget
+	var bool SetConeLength;
+	var float ConeLength;
+
+	// X2Effect_TrackingShotMarkTarget
+	var bool SetConeEndDiameter;
+	var float ConeEndDiameter;
+
+	// X2Effect_TriggerEvent
+	var bool SetPassTargetAsSource;
+	var bool PassTargetAsSource;
+
+	// X2Effect_TurnStartActionPoints
+	var bool SetActionPointType;
+	var name ActionPointType;
+
+	// X2Effect_TurnStartActionPoints
+	var bool SetActionPointsRemoved;
+	var bool ActionPointsRemoved;
+
+	// X2Effect_VanishingWind
+	var bool SetMovingVanishRevealAdditiveAnimName;
+	var name MovingVanishRevealAdditiveAnimName;
+
+	// X2Effect_VoidConduit
+	var bool SetDamagePerAction;
+	var int DamagePerAction;
+
+	// X2Effect_VoidConduit
+	var bool SetHealthReturnMod;
+	var float HealthReturnMod;
+
+	// X2Effect_WallBreaking
+	var bool SetWallBreakingEffectName;
+	var name WallBreakingEffectName;
+
+	// X2Effect_World
+	var bool SetCenterTile;
+	var bool CenterTile;
+
+	// X2Effect_PersistentStatChangeRestoreDefault
+	var ENameArrayEditMode StatTypesToRestoreMode;
+	var array<ECharStatType> StatTypesToRestore;
+
+	// X2Effect_ConditionalDamageModifier
+	var array<ConditionEdit> ApplyDamageModConditions;
+
+	// X2Effect_LethalWeaponDamage
+	var array<ConditionEdit> LethalDamageConditions;
+
+	// X2Effect_ToHitModifier
+	var array<ConditionEdit> ToHitConditions;
+
+	// X2Effect_ToHitModifier: replace-only — when non-empty, replaces Modifiers entirely
+	var array<EffectHitModifier> EffectHitModifiers;
+
+	var array<AECustomProperty> CustomProperties;
+};
+
 struct AbilityEdit
 {
 	// Ability template name
@@ -631,6 +1669,8 @@ struct AbilityEdit
 	var array<CostEdit> Costs;
 
 	var ChargesEdit Charges;
+
+	var array<EffectEdit> Effects;
 
 	// Template-level condition arrays
 	var array<ConditionEdit> ShooterConditions;
