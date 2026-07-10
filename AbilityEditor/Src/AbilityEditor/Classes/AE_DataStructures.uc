@@ -1943,6 +1943,12 @@ struct AbilityEventListenerEdit
 	var int Priority;
 };
 
+struct ExtraEditorRegistration
+{
+	var string EditorClass;
+	var int Priority;
+};
+
 struct AbilityEdit
 {
 	// Ability template name

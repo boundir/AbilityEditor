@@ -68,6 +68,17 @@ static function class<X2AbilityCooldown> LoadCooldownClass(string ClassName)
 static function DispatchCooldownEdit(name AbilityName, X2AbilityCooldown AbilityCooldown, CooldownEdit CooldownEdit)
 {
 	local int i;
+	local class<X2AbilityCooldownEditor> ExtraEditor;
+
+	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ExtraCooldownEditors.Length; ++i)
+	{
+		ExtraEditor = class<X2AbilityCooldownEditor>(DynamicLoadObject(class'X2DLCInfo_AbilityEditor'.default.ExtraCooldownEditors[i].EditorClass, class'Class'));
+		if (ExtraEditor != none && ExtraEditor.static.CanEdit(AbilityCooldown))
+		{
+			ExtraEditor.static.ApplyEdit(AbilityName, AbilityCooldown, CooldownEdit);
+			return;
+		}
+	}
 
 	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.CooldownEditors.Length; ++i)
 	{

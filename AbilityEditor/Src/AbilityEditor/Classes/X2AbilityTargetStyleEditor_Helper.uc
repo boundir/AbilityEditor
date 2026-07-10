@@ -87,6 +87,17 @@ static function DispatchTargetStyleEdit(
 )
 {
 	local int i;
+	local class<X2AbilityTargetStyleEditor> ExtraEditor;
+
+	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ExtraTargetStyleEditors.Length; ++i)
+	{
+		ExtraEditor = class<X2AbilityTargetStyleEditor>(DynamicLoadObject(class'X2DLCInfo_AbilityEditor'.default.ExtraTargetStyleEditors[i].EditorClass, class'Class'));
+		if (ExtraEditor != none && ExtraEditor.static.CanEdit(TargetStyle))
+		{
+			ExtraEditor.static.ApplyEdit(AbilityName, Slot, TargetStyle, TargetStyleEdit);
+			return;
+		}
+	}
 
 	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.TargetStyleEditors.Length; ++i)
 	{

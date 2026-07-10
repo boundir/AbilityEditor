@@ -117,6 +117,22 @@ static function DispatchEffectEdit(
 )
 {
 	local int i;
+	local class<X2AbilityEffectsEditor> ExtraEditor;
+
+	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ExtraEffectsEditors.Length; ++i)
+	{
+		ExtraEditor = class<X2AbilityEffectsEditor>(DynamicLoadObject(class'X2DLCInfo_AbilityEditor'.default.ExtraEffectsEditors[i].EditorClass, class'Class'));
+		if (ExtraEditor != none && ExtraEditor.static.CanEdit(Effect))
+		{
+			ExtraEditor.static.ApplyEdit(
+				AbilityName,
+				Slot,
+				Effect,
+				EffectEdit
+			);
+			return;
+		}
+	}
 
 	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.EffectsEditors.Length; ++i)
 	{

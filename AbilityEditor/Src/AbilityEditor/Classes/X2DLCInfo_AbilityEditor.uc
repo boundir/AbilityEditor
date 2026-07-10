@@ -14,6 +14,18 @@ var const array<class<X2AbilityTargetStyleEditor> > TargetStyleEditors;
 var const array<class<X2AbilityMultiTargetStyleEditor> > MultiTargetStyleEditors;
 var const array<class<X2AbilityTriggerEditor> > TriggerEditors;
 
+// Bridge-mod registration: other mods append editor classes here from their own config.
+// Extras are dispatched BEFORE the built-in editors, sorted by Priority (descending).
+var config(AbilityEditor) array<ExtraEditorRegistration> ExtraEffectsEditors;
+var config(AbilityEditor) array<ExtraEditorRegistration> ExtraConditionEditors;
+var config(AbilityEditor) array<ExtraEditorRegistration> ExtraCostEditors;
+var config(AbilityEditor) array<ExtraEditorRegistration> ExtraCooldownEditors;
+var config(AbilityEditor) array<ExtraEditorRegistration> ExtraChargesEditors;
+var config(AbilityEditor) array<ExtraEditorRegistration> ExtraToHitCalcEditors;
+var config(AbilityEditor) array<ExtraEditorRegistration> ExtraTargetStyleEditors;
+var config(AbilityEditor) array<ExtraEditorRegistration> ExtraMultiTargetStyleEditors;
+var config(AbilityEditor) array<ExtraEditorRegistration> ExtraTriggerEditors;
+
 static event OnPostTemplatesCreated()
 {
 	local X2AbilityTemplateManager AbilityManager;
@@ -23,6 +35,8 @@ static event OnPostTemplatesCreated()
 
 	// Keep v1 alive
 	class'OPTC_Abilities'.static.EditAbilityTemplates();
+
+	ResolveExtraEditors();
 
 	AbilityManager = class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager();
 
@@ -40,6 +54,81 @@ static event OnPostTemplatesCreated()
 
 		ApplyAbilityEdit(Template, AbilityEdit);
 	}
+}
+
+// Sorts the Extra*Editors config registrations (bridge mods) by Priority descending and
+// logs any class that fails to load. Dispatchers resolve the classes on demand.
+static function ResolveExtraEditors()
+{
+	default.ExtraEffectsEditors = SortRegistrations(default.ExtraEffectsEditors);
+	ValidateRegistrations(default.ExtraEffectsEditors);
+
+	default.ExtraConditionEditors = SortRegistrations(default.ExtraConditionEditors);
+	ValidateRegistrations(default.ExtraConditionEditors);
+
+	default.ExtraCostEditors = SortRegistrations(default.ExtraCostEditors);
+	ValidateRegistrations(default.ExtraCostEditors);
+
+	default.ExtraCooldownEditors = SortRegistrations(default.ExtraCooldownEditors);
+	ValidateRegistrations(default.ExtraCooldownEditors);
+
+	default.ExtraChargesEditors = SortRegistrations(default.ExtraChargesEditors);
+	ValidateRegistrations(default.ExtraChargesEditors);
+
+	default.ExtraToHitCalcEditors = SortRegistrations(default.ExtraToHitCalcEditors);
+	ValidateRegistrations(default.ExtraToHitCalcEditors);
+
+	default.ExtraTargetStyleEditors = SortRegistrations(default.ExtraTargetStyleEditors);
+	ValidateRegistrations(default.ExtraTargetStyleEditors);
+
+	default.ExtraMultiTargetStyleEditors = SortRegistrations(default.ExtraMultiTargetStyleEditors);
+	ValidateRegistrations(default.ExtraMultiTargetStyleEditors);
+
+	default.ExtraTriggerEditors = SortRegistrations(default.ExtraTriggerEditors);
+	ValidateRegistrations(default.ExtraTriggerEditors);
+}
+
+static function ValidateRegistrations(array<ExtraEditorRegistration> Registrations)
+{
+	local int i;
+
+	for (i = 0; i < Registrations.Length; ++i)
+	{
+		LoadEditorClass(Registrations[i].EditorClass);
+	}
+}
+static function array<ExtraEditorRegistration> SortRegistrations(array<ExtraEditorRegistration> Registrations)
+{
+	local array<ExtraEditorRegistration> Sorted;
+	local int i, j;
+
+	for (i = 0; i < Registrations.Length; ++i)
+	{
+		for (j = 0; j < Sorted.Length; ++j)
+		{
+			if (Registrations[i].Priority > Sorted[j].Priority)
+			{
+				break;
+			}
+		}
+		Sorted.InsertItem(j, Registrations[i]);
+	}
+
+	return Sorted;
+}
+
+static function class<Object> LoadEditorClass(string ClassName)
+{
+	local class<Object> EditorClass;
+
+	EditorClass = class<Object>(DynamicLoadObject(ClassName, class'Class'));
+
+	if (EditorClass == none)
+	{
+		`log("AbilityEdit: Failed to load extra editor class:" @ ClassName, default.EnableDebug, 'AbilityEditor');
+	}
+
+	return EditorClass;
 }
 
 static function ApplyAbilityEdit(X2AbilityTemplate Template, AbilityEdit AbilityEdit)

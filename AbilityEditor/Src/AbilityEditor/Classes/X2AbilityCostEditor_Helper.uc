@@ -95,6 +95,17 @@ static function ApplyCostEdit(X2AbilityTemplate Template, AbilityEdit AbilityEdi
 static function DispatchCostEdit(name AbilityName, X2AbilityCost AbilityCost, CostEdit CostEdit)
 {
 	local int i;
+	local class<X2AbilityCostEditor> ExtraEditor;
+
+	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ExtraCostEditors.Length; ++i)
+	{
+		ExtraEditor = class<X2AbilityCostEditor>(DynamicLoadObject(class'X2DLCInfo_AbilityEditor'.default.ExtraCostEditors[i].EditorClass, class'Class'));
+		if (ExtraEditor != none && ExtraEditor.static.CanEdit(AbilityCost))
+		{
+			ExtraEditor.static.ApplyEdit(AbilityName, AbilityCost, CostEdit);
+			return;
+		}
+	}
 
 	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.CostEditors.Length; ++i)
 	{

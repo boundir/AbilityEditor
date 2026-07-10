@@ -75,6 +75,17 @@ static function class<X2AbilityCharges> LoadChargesClass(string ClassName)
 static function DispatchChargesEdit(name AbilityName, X2AbilityCharges AbilityCharges, ChargesEdit ChargesEdit)
 {
 	local int i;
+	local class<X2AbilityChargesEditor> ExtraEditor;
+
+	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ExtraChargesEditors.Length; ++i)
+	{
+		ExtraEditor = class<X2AbilityChargesEditor>(DynamicLoadObject(class'X2DLCInfo_AbilityEditor'.default.ExtraChargesEditors[i].EditorClass, class'Class'));
+		if (ExtraEditor != none && ExtraEditor.static.CanEdit(AbilityCharges))
+		{
+			ExtraEditor.static.ApplyEdit(AbilityName, AbilityCharges, ChargesEdit);
+			return;
+		}
+	}
 
 	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ChargesEditors.Length; ++i)
 	{

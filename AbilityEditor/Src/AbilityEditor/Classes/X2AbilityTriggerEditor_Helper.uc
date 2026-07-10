@@ -115,6 +115,17 @@ static function DispatchTriggerEdit(
 )
 {
 	local int i;
+	local class<X2AbilityTriggerEditor> ExtraEditor;
+
+	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ExtraTriggerEditors.Length; ++i)
+	{
+		ExtraEditor = class<X2AbilityTriggerEditor>(DynamicLoadObject(class'X2DLCInfo_AbilityEditor'.default.ExtraTriggerEditors[i].EditorClass, class'Class'));
+		if (ExtraEditor != none && ExtraEditor.static.CanEdit(Trigger))
+		{
+			ExtraEditor.static.ApplyEdit(AbilityName, Slot, Trigger, TriggerEdit);
+			return;
+		}
+	}
 
 	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.TriggerEditors.Length; ++i)
 	{

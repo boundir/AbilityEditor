@@ -97,6 +97,17 @@ static function DispatchToHitCalcEdit(
 )
 {
 	local int i;
+	local class<X2AbilityToHitCalcEditor> ExtraEditor;
+
+	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ExtraToHitCalcEditors.Length; ++i)
+	{
+		ExtraEditor = class<X2AbilityToHitCalcEditor>(DynamicLoadObject(class'X2DLCInfo_AbilityEditor'.default.ExtraToHitCalcEditors[i].EditorClass, class'Class'));
+		if (ExtraEditor != none && ExtraEditor.static.CanEdit(ToHitCalc))
+		{
+			ExtraEditor.static.ApplyEdit(AbilityName, Slot, ToHitCalc, ToHitCalcEdit);
+			return;
+		}
+	}
 
 	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ToHitCalcEditors.Length; ++i)
 	{

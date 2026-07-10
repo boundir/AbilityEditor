@@ -123,6 +123,22 @@ static function DispatchConditionEdit(
 )
 {
 	local int i;
+	local class<X2AbilityConditionEditor> ExtraEditor;
+
+	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ExtraConditionEditors.Length; ++i)
+	{
+		ExtraEditor = class<X2AbilityConditionEditor>(DynamicLoadObject(class'X2DLCInfo_AbilityEditor'.default.ExtraConditionEditors[i].EditorClass, class'Class'));
+		if (ExtraEditor != none && ExtraEditor.static.CanEdit(Condition))
+		{
+			ExtraEditor.static.ApplyEdit(
+				AbilityName,
+				Slot,
+				Condition,
+				ConditionEdit
+			);
+			return;
+		}
+	}
 
 	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ConditionEditors.Length; ++i)
 	{
