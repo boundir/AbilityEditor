@@ -8,31 +8,65 @@ tags= War of the Chosen, Gameplay, Config, Ability</Description>
     <SteamPublishID>0</SteamPublishID>
     <AssemblyName>AbilityEditor</AssemblyName>
     <RootNamespace>AbilityEditor</RootNamespace>
+    <ProjectGuid>{4c1b73b0-4c27-4c6d-867b-a0172af5c867}</ProjectGuid>
   </PropertyGroup>
+  <PropertyGroup>
+    <SolutionRoot>$(MSBuildProjectDirectory)\..\</SolutionRoot>
+    <ScriptsDir>$(SolutionRoot).scripts\</ScriptsDir>
+    <BuildCommonRoot>$(ScriptsDir)X2ModBuildCommon\</BuildCommonRoot>
+  </PropertyGroup>
+  <Import Project="$(BuildCommonRoot)XCOM2.targets" />
   <ItemGroup>
-    <Folder Include="Config\" />
-    <Folder Include="Localization\" />
-    <Folder Include="Src\" />
-    <Folder Include="Src\AbilityEditor\" />
-    <Folder Include="Src\AbilityEditor\Classes\" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Config\XComAbilityEditor.ini">
-      <SubType>Content</SubType>
-    </Content>
-    <Content Include="ReadMe.txt" />
-    <Content Include="ModPreview.jpg" />
+    <Folder Include="Config" />
+    <Folder Include="Config\2.0\" />
+    <Folder Include="Localization" />
+    <Folder Include="Src" />
+    <Folder Include="Src\AbilityEditor" />
+    <Folder Include="Src\AbilityEditor\Classes" />
+    <Content Include="Config\2.0\XComAbilityEditor.ini" />
+    <Content Include="Config\XComAbilityEditor.ini" />
     <Content Include="Config\XComEditor.ini" />
     <Content Include="Config\XComEngine.ini" />
     <Content Include="Config\XComGame.ini" />
     <Content Include="Localization\XComGame.int" />
-    <Content Include="Src\AbilityEditor\Classes\X2DownloadableContentInfo_AbilityEditor.uc" />
-    <Content Include="Src\AbilityEditor\Classes\OPTC_Abilities.uc">
-      <SubType>Content</SubType>
-    </Content>
-    <Content Include="Src\AbilityEditor\Classes\Helper_AbilityEditor.uc">
-      <SubType>Content</SubType>
-    </Content>
+    <Content Include="ModPreview.jpg" />
+    <Content Include="PublishedFileId.ID" />
+    <Content Include="ReadMe.txt" />
+    <Content Include="Src\AbilityEditor\Classes\AE_DataStructures.uc" />
+    <Content Include="Src\AbilityEditor\Classes\Helper_AbilityEditor.uc" />
+    <Content Include="Src\AbilityEditor\Classes\OPTC_Abilities.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityChargesEditor_Base.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityChargesEditor_CocoonSpawnChryssalid.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityChargesEditor_GremlinHeal.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityChargesEditor_Helper.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityChargesEditor_RevivalProtocol.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityChargesEditor_ScanningProtocol.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityChargesEditor_StasisLance.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityChargesEditor.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityCooldownEditor_AidProtocol.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityCooldownEditor_Base.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityCooldownEditor_Global.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityCooldownEditor_Helper.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityCooldownEditor_LocalAndGlobal.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityCooldownEditor_PerPlayerType.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityCooldownEditor_Rend.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityCooldownEditor.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityCostEditor_ActionPoints.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityCostEditor_Ammo.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityCostEditor_Base.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityCostEditor_Charges.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityCostEditor_ConsumeItem.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityCostEditor_Focus.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityCostEditor_HeavyWeaponActionPoints.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityCostEditor_Helper.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityCostEditor_QuickdrawActionPoints.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityCostEditor_ReserveActionPoints.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityCostEditor.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityEditor_Helper.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityEditor_Logger.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityEffectsEditor_Base.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityEffectsEditor_Helper.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2AbilityEffectsEditor.uc" />
+    <Content Include="Src\AbilityEditor\Classes\X2DLCInfo_AbilityEditor.uc" />
   </ItemGroup>
-  <Import Project="$(MSBuildLocalExtensionPath)\XCOM2.targets" />
 </Project>
