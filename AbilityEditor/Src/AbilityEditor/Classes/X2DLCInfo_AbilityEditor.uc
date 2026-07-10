@@ -9,6 +9,10 @@ var const array<class<X2AbilityCooldownEditor> > CooldownEditors;
 var const array<class<X2AbilityCostEditor> > CostEditors;
 var const array<class<X2AbilityConditionEditor> > ConditionEditors;
 var const array<class<X2AbilityEffectsEditor> > EffectsEditors;
+var const array<class<X2AbilityToHitCalcEditor> > ToHitCalcEditors;
+var const array<class<X2AbilityTargetStyleEditor> > TargetStyleEditors;
+var const array<class<X2AbilityMultiTargetStyleEditor> > MultiTargetStyleEditors;
+var const array<class<X2AbilityTriggerEditor> > TriggerEditors;
 
 static event OnPostTemplatesCreated()
 {
@@ -42,55 +46,16 @@ static function ApplyAbilityEdit(X2AbilityTemplate Template, AbilityEdit Ability
 {
 	local int i;
 
-	if (AbilityEdit.SetHostility)
-	{
-		class'X2AbilityEditor_Logger'.static.LogInfo(
-			Template.DataName,
-			"Template.Hostility",
-			string(Template.Hostility),
-			string(AbilityEdit.Hostility)
-		);
-		Template.Hostility = AbilityEdit.Hostility;
-	}
-
-	if (AbilityEdit.SetConcealmentRule)
-	{
-		class'X2AbilityEditor_Logger'.static.LogInfo(
-			Template.DataName,
-			"Template.ConcealmentRule",
-			string(Template.ConcealmentRule),
-			string(AbilityEdit.ConcealmentRule)
-		);
-		Template.ConcealmentRule = AbilityEdit.ConcealmentRule;
-	}
-
-	class'X2AbilityEditor_Helper'.static.ApplyNameArrayEdit(
-		Template.DataName,
-		"Template.AdditionalAbilities",
-		Template.AdditionalAbilities,
-		AbilityEdit.AdditionalAbilities,
-		AbilityEdit.AdditionalAbilitiesMode
-	);
-
-	class'X2AbilityEditor_Helper'.static.ApplyNameArrayEdit(
-		Template.DataName,
-		"Template.PrerequisiteAbilities",
-		Template.PrerequisiteAbilities,
-		AbilityEdit.PrerequisiteAbilities,
-		AbilityEdit.PrerequisiteAbilitiesMode
-	);
-
-	class'X2AbilityEditor_Helper'.static.ApplyNameArrayEdit(
-		Template.DataName,
-		"Template.OverrideAbilities",
-		Template.OverrideAbilities,
-		AbilityEdit.OverrideAbilities,
-		AbilityEdit.OverrideAbilitiesMode
-	);
+	class'X2AbilityTemplateEditor'.static.ApplyTemplateEdit(Template, AbilityEdit);
 
 	class'X2AbilityChargesEditor_Helper'.static.ApplyChargesEdit(Template, AbilityEdit.Charges);
 	class'X2AbilityCooldownEditor_Helper'.static.ApplyCooldownEdit(Template, AbilityEdit.Cooldown);
 	class'X2AbilityCostEditor_Helper'.static.ApplyCostEdit(Template, AbilityEdit);
+
+	for (i = 0; i < AbilityEdit.Effects.Length; ++i)
+	{
+		class'X2AbilityEffectsEditor_Helper'.static.ApplyEffectEdit(Template, AbilityEdit.Effects[i]);
+	}
 
 	class'X2AbilityConditionEditor_Helper'.static.ApplyConditionEdits(
 		Template.DataName,
@@ -113,10 +78,11 @@ static function ApplyAbilityEdit(X2AbilityTemplate Template, AbilityEdit Ability
 		AbilityEdit.MultiTargetConditions
 	);
 
-	for (i = 0; i < AbilityEdit.Effects.Length; ++i)
-	{
-		class'X2AbilityEffectsEditor_Helper'.static.ApplyEffectEdit(Template, AbilityEdit.Effects[i]);
-	}
+	class'X2AbilityToHitCalcEditor_Helper'.static.ApplyToHitCalcEdit(Template, AbilityEdit.ToHitCalc);
+	class'X2AbilityToHitCalcEditor_Helper'.static.ApplyToHitOwnerOnMissCalcEdit(Template, AbilityEdit.ToHitOwnerOnMissCalc);
+	class'X2AbilityTargetStyleEditor_Helper'.static.ApplyTargetStyleEdit(Template, AbilityEdit.TargetStyle);
+	class'X2AbilityMultiTargetStyleEditor_Helper'.static.ApplyMultiTargetStyleEdit(Template, AbilityEdit.MultiTargetStyle);
+	class'X2AbilityTriggerEditor_Helper'.static.ApplyTriggerEdits(Template, AbilityEdit.Triggers);
 }
 
 defaultproperties
@@ -145,7 +111,6 @@ defaultproperties
 	CostEditors(7) = class'X2AbilityCostEditor_ActionPoints'
 	CostEditors(8) = class'X2AbilityCostEditor_Base'
 
-	// X2Condition_UnitEffects subclasses must come before X2Condition_UnitEffects.
 	ConditionEditors(0) = class'X2AbilityConditionEditor_UnitEffectsApplying'
 	ConditionEditors(1) = class'X2AbilityConditionEditor_UnitEffectsOnSource'
 	ConditionEditors(2) = class'X2AbilityConditionEditor_UnitEffectsWithAbilitySource'
@@ -184,7 +149,6 @@ defaultproperties
 	ConditionEditors(35) = class'X2AbilityConditionEditor_Visibility'
 	ConditionEditors(36) = class'X2AbilityConditionEditor_Base'
 
-	// Order matters: first CanEdit match wins, so a class must come before its parents.
 	EffectsEditors(0) = class'X2AbilityEffectsEditor_Obsessed'
 	EffectsEditors(1) = class'X2AbilityEffectsEditor_Shattered'
 	EffectsEditors(2) = class'X2AbilityEffectsEditor_VanishingWind'
@@ -287,4 +251,34 @@ defaultproperties
 	EffectsEditors(99) = class'X2AbilityEffectsEditor_VoidConduit'
 	EffectsEditors(100) = class'X2AbilityEffectsEditor_World'
 	EffectsEditors(101) = class'X2AbilityEffectsEditor_Base'
+
+	ToHitCalcEditors(0) = class'X2AbilityToHitCalcEditor_StatCheck_UnitVsUnit'
+	ToHitCalcEditors(1) = class'X2AbilityToHitCalcEditor_PercentChancePlusFocus'
+	ToHitCalcEditors(2) = class'X2AbilityToHitCalcEditor_PercentChanceWithBuddyZone'
+	ToHitCalcEditors(3) = class'X2AbilityToHitCalcEditor_StandardAim'
+	ToHitCalcEditors(4) = class'X2AbilityToHitCalcEditor_PercentChance'
+	ToHitCalcEditors(5) = class'X2AbilityToHitCalcEditor_Hacking'
+	ToHitCalcEditors(6) = class'X2AbilityToHitCalcEditor_RollStat'
+	ToHitCalcEditors(7) = class'X2AbilityToHitCalcEditor_RollStatTiers'
+	ToHitCalcEditors(8) = class'X2AbilityToHitCalcEditor_StatCheck'
+	ToHitCalcEditors(9) = class'X2AbilityToHitCalcEditor_Base'
+
+	TargetStyleEditors(0) = class'X2AbilityTargetStyleEditor_MovingMelee'
+	TargetStyleEditors(1) = class'X2AbilityTargetStyleEditor_Single'
+	TargetStyleEditors(2) = class'X2AbilityTargetStyleEditor_Cursor'
+	TargetStyleEditors(3) = class'X2AbilityTargetStyleEditor_Base'
+
+	MultiTargetStyleEditors(0) = class'X2AbilityMultiTargetStyleEditor_Cone'
+	MultiTargetStyleEditors(1) = class'X2AbilityMultiTargetStyleEditor_Cylinder'
+	MultiTargetStyleEditors(2) = class'X2AbilityMultiTargetStyleEditor_AllUnits'
+	MultiTargetStyleEditors(3) = class'X2AbilityMultiTargetStyleEditor_ClaymoreRadius'
+	MultiTargetStyleEditors(4) = class'X2AbilityMultiTargetStyleEditor_Radius'
+	MultiTargetStyleEditors(5) = class'X2AbilityMultiTargetStyleEditor_Line'
+	MultiTargetStyleEditors(6) = class'X2AbilityMultiTargetStyleEditor_BurstFire'
+	MultiTargetStyleEditors(7) = class'X2AbilityMultiTargetStyleEditor_Base'
+
+	TriggerEditors(0) = class'X2AbilityTriggerEditor_UnitPostBeginPlay'
+	TriggerEditors(1) = class'X2AbilityTriggerEditor_EventListener'
+	TriggerEditors(2) = class'X2AbilityTriggerEditor_Event'
+	TriggerEditors(3) = class'X2AbilityTriggerEditor_Base'
 }

@@ -1643,6 +1643,306 @@ struct EffectEdit
 	var array<AECustomProperty> CustomProperties;
 };
 
+struct ToHitCalcEdit
+{
+	// Class name of the to-hit calc to target/instantiate.
+	// Empty = edit the template's existing calc in place.
+	var string Class;
+
+	// Replace-only: when non-empty, replaces the calc's HitModifiers array entirely
+	var array<ShotModifierInfo> HitModifiers;
+
+	// X2AbilityToHitCalc_StandardAim
+	var bool SetIndirectFire;
+	var bool IndirectFire;
+
+	var bool SetMeleeAttack;
+	var bool MeleeAttack;
+
+	var bool SetReactionFire;
+	var bool ReactionFire;
+
+	var bool SetAllowCrit;
+	var bool AllowCrit;
+
+	var bool SetHitsAreCrits;
+	var bool HitsAreCrits;
+
+	var bool SetMultiTargetOnly;
+	var bool MultiTargetOnly;
+
+	var bool SetOnlyMultiHitWithSuccess;
+	var bool OnlyMultiHitWithSuccess;
+
+	var bool SetGuaranteedHit;
+	var bool GuaranteedHit;
+
+	var bool SetIgnoreCoverBonus;
+	var bool IgnoreCoverBonus;
+
+	var bool SetFinalMultiplier;
+	var float FinalMultiplier;
+
+	var bool SetBuiltInHitMod;
+	var int BuiltInHitMod;
+
+	var bool SetBuiltInCritMod;
+	var int BuiltInCritMod;
+
+	// X2AbilityToHitCalc_PercentChance
+	var bool SetPercentToHit;
+	var int PercentToHit;
+
+	var bool SetNoGameStateOnMiss;
+	var bool NoGameStateOnMiss;
+
+	// X2AbilityToHitCalc_PercentChancePlusFocus
+	var bool SetFocusMultiplier;
+	var int FocusMultiplier;
+
+	// X2AbilityToHitCalc_PercentChanceWithBuddyZone
+	var bool SetPercentToHitInBuddyZone;
+	var int PercentToHitInBuddyZone;
+
+	// X2AbilityToHitCalc_Hacking
+	var bool SetAlwaysSucceed;
+	var bool AlwaysSucceed;
+
+	// X2AbilityToHitCalc_RollStat, X2AbilityToHitCalc_RollStatTiers
+	var bool SetStatToRoll;
+	var ECharStatType StatToRoll;
+
+	var bool SetBaseChance;
+	var int BaseChance;
+
+	// X2AbilityToHitCalc_StatCheck
+	var bool SetBaseValue;
+	var int BaseValue;
+
+	// X2AbilityToHitCalc_StatCheck_UnitVsUnit
+	var bool SetAttackerStat;
+	var ECharStatType AttackerStat;
+
+	var bool SetDefenderStat;
+	var ECharStatType DefenderStat;
+
+	var array<AECustomProperty> CustomProperties;
+};
+
+struct TargetStyleEdit
+{
+	// Class name of the target style to target/instantiate.
+	// Empty = edit the template's existing style in place.
+	var string Class;
+
+	// X2AbilityTarget_Single
+	var bool SetOnlyIncludeTargetsInsideWeaponRange;
+	var bool OnlyIncludeTargetsInsideWeaponRange;
+
+	var bool SetAllowInteractiveObjects;
+	var bool AllowInteractiveObjects;
+
+	var bool SetAllowDestructibleObjects;
+	var bool AllowDestructibleObjects;
+
+	var bool SetIncludeSelf;
+	var bool IncludeSelf;
+
+	var bool SetShowAOE;
+	var bool ShowAOE;
+
+	// X2AbilityTarget_Cursor
+	var bool SetRestrictToWeaponRange;
+	var bool RestrictToWeaponRange;
+
+	var bool SetIncreaseWeaponRange;
+	var int IncreaseWeaponRange;
+
+	var bool SetRestrictToSquadsightRange;
+	var bool RestrictToSquadsightRange;
+
+	var bool SetFixedAbilityRange;
+	var int FixedAbilityRange;
+
+	// X2AbilityTarget_MovingMelee
+	var bool SetMovementRangeAdjustment;
+	var int MovementRangeAdjustment;
+
+	var array<AECustomProperty> CustomProperties;
+};
+
+struct MultiTargetStyleEdit
+{
+	// Class name of the multi-target style to target/instantiate.
+	// Empty = edit the template's existing style in place.
+	var string Class;
+
+	// X2AbilityMultiTargetStyle (shared)
+	var bool SetAllowSameTarget;
+	var bool AllowSameTarget;
+
+	var bool SetUseSourceWeaponLocation;
+	var bool UseSourceWeaponLocation;
+
+	var bool SetNumTargetsRequired;
+	var int NumTargetsRequired;
+
+	// X2AbilityMultiTarget_Radius
+	var bool SetUseWeaponRadius;
+	var bool UseWeaponRadius;
+
+	var bool SetUseWeaponBlockingCoverFlag;
+	var bool UseWeaponBlockingCoverFlag;
+
+	var bool SetIgnoreBlockingCover;
+	var bool IgnoreBlockingCover;
+
+	var bool SetTargetRadius;
+	var float TargetRadius;
+
+	var bool SetTargetCoveragePercentage;
+	var float TargetCoveragePercentage;
+
+	var bool SetAddPrimaryTargetAsMultiTarget;
+	var bool AddPrimaryTargetAsMultiTarget;
+
+	var bool SetAllowDeadMultiTargetUnits;
+	var bool AllowDeadMultiTargetUnits;
+
+	var bool SetExcludeSelfAsTargetIfWithinRadius;
+	var bool ExcludeSelfAsTargetIfWithinRadius;
+
+	// merged by RequiredAbility
+	var ENameArrayEditMode AbilityBonusRadiiMode;
+	var array<AbilityGrantedBonusRadius> AbilityBonusRadii;
+
+	// X2AbilityMultiTarget_Cone
+	var bool SetConeEndDiameter;
+	var float ConeEndDiameter;
+
+	var bool SetConeLength;
+	var float ConeLength;
+
+	var bool SetUseWeaponRangeForLength;
+	var bool UseWeaponRangeForLength;
+
+	var bool SetLockShooterZ;
+	var bool LockShooterZ;
+
+	// merged by RequiredAbility
+	var ENameArrayEditMode AbilityBonusConesMode;
+	var array<AbilityGrantedBonusCone> AbilityBonusCones;
+
+	// X2AbilityMultiTarget_Line
+	var bool SetTileWidthExtension;
+	var int TileWidthExtension;
+
+	var bool SetSightRangeLimited;
+	var bool SightRangeLimited;
+
+	// merged by RequiredAbility
+	var ENameArrayEditMode AbilityBonusWidthsMode;
+	var array<AbilityGrantedBonusWidth> AbilityBonusWidths;
+
+	// X2AbilityMultiTarget_Cylinder
+	var bool SetTargetHeight;
+	var float TargetHeight;
+
+	var bool SetUseOnlyGroundTiles;
+	var bool UseOnlyGroundTiles;
+
+	// X2AbilityMultiTarget_BurstFire
+	var bool SetNumExtraShots;
+	var int NumExtraShots;
+
+	// X2AbilityMultiTarget_AllUnits
+	var bool SetOnlyAllyOfType;
+	var name OnlyAllyOfType;
+
+	var bool SetAcceptFriendlyUnits;
+	var bool AcceptFriendlyUnits;
+
+	var bool SetAcceptEnemyUnits;
+	var bool AcceptEnemyUnits;
+
+	var bool SetOnlyAcceptRoboticUnits;
+	var bool OnlyAcceptRoboticUnits;
+
+	var bool SetOnlyAcceptAlienUnits;
+	var bool OnlyAcceptAlienUnits;
+
+	var bool SetOnlyAcceptAdventUnits;
+	var bool OnlyAcceptAdventUnits;
+
+	var bool SetRandomlySelectOne;
+	var bool RandomlySelectOne;
+
+	var bool SetDontAcceptNeutralUnits;
+	var bool DontAcceptNeutralUnits;
+
+	var bool SetRandomChance;
+	var int RandomChance;
+
+	var bool SetUseAbilitySourceAsPrimaryTarget;
+	var bool UseAbilitySourceAsPrimaryTarget;
+
+	// X2AbilityMultiTarget_ClaymoreRadius
+	var bool SetClaymoreEnvironmentalDamage;
+	var int ClaymoreEnvironmentalDamage;
+
+	var array<AECustomProperty> CustomProperties;
+};
+
+struct TriggerEdit
+{
+	// Class name of the trigger to target/instantiate within Template.AbilityTriggers
+	var string Class;
+
+	// How this entry combines with the existing triggers of the array
+	var EArrayEditMode Mode;
+
+	// X2AbilityTrigger_UnitPostBeginPlay
+	var bool SetPriority;
+	var int Priority;
+
+	// X2AbilityTrigger_EventListener (ListenerData members; EventFn cannot be set from config)
+	var bool SetListenerEventID;
+	var name ListenerEventID;
+
+	var bool SetListenerDeferral;
+	var EventListenerDeferral ListenerDeferral;
+
+	var bool SetListenerFilter;
+	var AbilityEventFilter ListenerFilter;
+
+	var bool SetListenerPriority;
+	var int ListenerPriority;
+
+	// X2AbilityTrigger_Event
+	var bool SetMethodName;
+	var name MethodName;
+
+	// Class path loaded via DynamicLoadObject
+	var bool SetEventObserverClass;
+	var string EventObserverClass;
+
+	var array<AECustomProperty> CustomProperties;
+};
+
+struct AbilityEventListenerEdit
+{
+	var name EventID;
+
+	var bool SetDeferral;
+	var EventListenerDeferral Deferral;
+
+	var bool SetFilter;
+	var AbilityEventFilter Filter;
+
+	var bool SetPriority;
+	var int Priority;
+};
+
 struct AbilityEdit
 {
 	// Ability template name
@@ -1676,5 +1976,143 @@ struct AbilityEdit
 	var array<ConditionEdit> ShooterConditions;
 	var array<ConditionEdit> TargetConditions;
 	var array<ConditionEdit> MultiTargetConditions;
+
+	// To-hit calc slots
+	var ToHitCalcEdit ToHitCalc;
+	var ToHitCalcEdit ToHitOwnerOnMissCalc;
+
+	// Targeting style slots
+	var TargetStyleEdit TargetStyle;
+	var MultiTargetStyleEdit MultiTargetStyle;
+
+	// Trigger array + event listener edits
+	var array<TriggerEdit> Triggers;
+	var array<AbilityEventListenerEdit> AbilityEventListenerEdits;
+
+	// --- Template scalars: gameplay ---
+	var bool SetCrossClassEligible;
+	var bool CrossClassEligible;
+
+	var bool SetIsPassive;
+	var bool IsPassive;
+
+	var bool SetUniqueSource;
+	var bool UniqueSource;
+
+	var bool SetAllowedByDefault;
+	var bool AllowedByDefault;
+
+	var bool SetTriggerChance;
+	var float TriggerChance;
+
+	var bool SetSuperConcealmentLoss;
+	var int SuperConcealmentLoss;
+
+	var bool SetChosenActivationIncreasePerUse;
+	var int ChosenActivationIncreasePerUse;
+
+	var bool SetLostSpawnIncreasePerUse;
+	var int LostSpawnIncreasePerUse;
+
+	var bool SetAbilityPointCost;
+	var int AbilityPointCost;
+
+	var bool SetDefaultSourceItemSlot;
+	var EInventorySlot DefaultSourceItemSlot;
+
+	var bool SetUseThrownGrenadeEffects;
+	var bool UseThrownGrenadeEffects;
+
+	var bool SetUseLaunchedGrenadeEffects;
+	var bool UseLaunchedGrenadeEffects;
+
+	var bool SetAllowFreeFireWeaponUpgrade;
+	var bool AllowFreeFireWeaponUpgrade;
+
+	var bool SetAllowAmmoEffects;
+	var bool AllowAmmoEffects;
+
+	var bool SetAllowBonusWeaponEffects;
+	var bool AllowBonusWeaponEffects;
+
+	var bool SetSilentAbility;
+	var bool SilentAbility;
+
+	var bool SetCannotTeleport;
+	var bool CannotTeleport;
+
+	var bool SetPreventsTargetTeleport;
+	var bool PreventsTargetTeleport;
+
+	var bool SetFinalizeAbilityName;
+	var name FinalizeAbilityName;
+
+	var bool SetCancelAbilityName;
+	var name CancelAbilityName;
+
+	var bool SetTwoTurnAttackAbility;
+	var name TwoTurnAttackAbility;
+
+	// --- Template scalars: HUD / icons ---
+	var bool SetIconImage;
+	var string IconImage;
+
+	var bool SetAbilityIconColor;
+	var string AbilityIconColor;
+
+	var bool SetAbilityIconBehaviorHUD;
+	var EAbilityIconBehavior AbilityIconBehaviorHUD;
+
+	var bool SetShotHUDPriority;
+	var int ShotHUDPriority;
+
+	var bool SetDisplayInUITooltip;
+	var bool DisplayInUITooltip;
+
+	var bool SetDisplayInUITacticalText;
+	var bool DisplayInUITacticalText;
+
+	var bool SetDontDisplayInAbilitySummary;
+	var bool DontDisplayInAbilitySummary;
+
+	var bool SetDisplayTargetHitChance;
+	var bool DisplayTargetHitChance;
+
+	var bool SetHideOnClassUnlock;
+	var bool HideOnClassUnlock;
+
+	var bool SetAbilitySourceName;
+	var name AbilitySourceName;
+
+	var bool SetLimitTargetIcons;
+	var bool LimitTargetIcons;
+
+	var bool SetBypassAbilityConfirm;
+	var bool BypassAbilityConfirm;
+
+	var bool SetUseAmmoAsChargesForHUD;
+	var bool UseAmmoAsChargesForHUD;
+
+	var bool SetAmmoAsChargesDivisor;
+	var int AmmoAsChargesDivisor;
+
+	var bool SetFriendlyFireWarning;
+	var bool FriendlyFireWarning;
+
+	var bool SetFriendlyFireWarningRobotsOnly;
+	var bool FriendlyFireWarningRobotsOnly;
+
+	var bool SetCommanderAbility;
+	var bool CommanderAbility;
+
+	// --- Template name arrays ---
+	var ENameArrayEditMode AssociatedPassivesMode;
+	var array<name> AssociatedPassives;
+
+	var ENameArrayEditMode PostActivationEventsMode;
+	var array<name> PostActivationEvents;
+
+	var ENameArrayEditMode HideIfAvailableMode;
+	var array<name> HideIfAvailable;
 };
 
