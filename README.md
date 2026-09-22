@@ -3620,7 +3620,7 @@ Not editable via config: `TargetingIcon` *(type `Texture2D`)*
 | Config key | Type | Requires | Game field | Notes |
 |---|---|---|---|---|
 | `ApplyAsTarget` | `bool` | `SetApplyAsTarget=true` | `bApplyAsTarget` |  |
-| `EffectHitModifiers` | `array<EffectHitModifier>` | `EffectHitModifiersMode` | `Modifiers` | X2Effect_ToHitModifier: replace-only — when non-empty, replaces Modifiers entirely |
+| `EffectHitModifiers` | `array<EffectHitModifier>` | non-empty *(replace-only)* | `Modifiers` | X2Effect_ToHitModifier: replace-only — when non-empty, replaces Modifiers entirely |
 | `ToHitConditions` | `array<ConditionEdit>` | &mdash; |  | X2Effect_ToHitModifier &mdash; see [Conditions](#conditions) |
 | `InfiniteDuration` | `bool` | `SetInfiniteDuration=true` | `bInfiniteDuration` | *(shared &mdash; from `X2AbilityEffectsEditor_Persistent`)* |
 | `TickWhenApplied` | `bool` | `SetTickWhenApplied=true` | `bTickWhenApplied` | *(shared &mdash; from `X2AbilityEffectsEditor_Persistent`)* |
@@ -4433,7 +4433,7 @@ Shared fields (available for **every** class of this family):
 
 | Config key | Type | Requires | Game field | Notes |
 |---|---|---|---|---|
-| `HitModifiers` | `array<ShotModifierInfo>` | `HitModifiersMode` | `HitModifiers` | Replace-only: when non-empty, replaces the calc's HitModifiers array entirely |
+| `HitModifiers` | `array<ShotModifierInfo>` | non-empty *(replace-only)* | `HitModifiers` | Replace-only: when non-empty, replaces the calc's HitModifiers array entirely |
 
 #### `X2AbilityToHitCalc_StatCheck_UnitVsUnit`
 
@@ -4952,12 +4952,41 @@ For data the shared edit structs don't carry, every `EffectEdit`/`ConditionEdit`
 
 ## For developers
 
+### Build prerequisite: Community Highlander sources
+
+**Building this mod requires an SDK whose `Development/Src` is Community Highlander-patched.** It is
+not a requirement for *players* — see below.
+
+`X2AbilityEffectsEditor_Helper.uc` writes `Template.AbilityTargetEffects`,
+`AbilityMultiTargetEffects` and `AbilityShooterEffects`. In stock Firaxis sources those three are
+`protectedwrite`, so the writes will not compile. Community Highlander
+[Issue #68](https://github.com/X2CommunityCore/X2WOTCCommunityHighlander/issues/68) removes that
+modifier (`X2AbilityTemplate.uc`, "Start Issue #68 / End Issue #68").
+
+This is a **compile-time** dependency only. Issue #68 changes nothing but the accessibility
+modifier — same types, same declaration order, same class layout — and UnrealScript access
+modifiers do not affect the compiled property layout, so the resulting `.u` loads and runs against
+vanilla `XComGame` as well as the Highlander's. No `RequiredHighlanderVersion` is declared, and none
+is needed.
+
+If you see `Error, Can't write to protected variable` on `AbilityTargetEffects` during a build, your
+SDK sources are stock; deploy the Highlander into the SDK.
+
+### Regenerating the docs
+
 The [Reference](#reference), [Supported at a glance](#supported-at-a-glance) and [Edit modes](#edit-modes) sections above are **generated** from the UnrealScript sources. After adding or changing an editor class, regenerate them with:
 
 ```powershell
-.\.scripts\generate-docs.ps1            # updates README.md and docs/schema.json
-.\.scripts\generate-docs.ps1 -CheckOnly # exits 1 if the docs are stale (for CI)
+.\.scripts\generate-docs.ps1 -SdkPath '<path to WOTC SDK>'   # updates README.md and docs/schema.json
+.\.scripts\generate-docs.ps1 -CheckOnly                      # exits 1 if the docs are stale
+.\.scripts\generate-docs.ps1 -PrintSourceHash                # prints the .uc source hash and exits
 ```
+
+Always pass `-SdkPath`: without it the generator silently skips abstract-class badges, the
+per-class "not editable via config" lists, and the **dispatch-order check** — the only automated
+guard against registering an editor after one of its game class's ancestors, which makes it dead
+code. `-PrintSourceHash` is the CI-friendly staleness check: it needs no SDK, so CI can compare it
+against `sourceHash` in the committed `docs/schema.json`.
 
 The script also emits [`docs/schema.json`](docs/schema.json), a machine-readable description of the whole config API (enums, structs, families, editors, fields), meant to be consumed by external tooling such as a config-builder web app.
 
@@ -4966,6 +4995,12 @@ For the docs to pick up a new editor class automatically, follow the existing co
 1. Declare the handled game class with a single `IsA('X2Thing_Class')` in `CanEdit()`.
 2. Apply optional scalars with the `if (Edit.SetX) { LogInfo(...); Target.Field = Edit.X; }` triplet, and name arrays through `X2AbilityEditor_Helper.ApplyNameArrayEdit`.
 3. Register the class in the family's registry in `X2DLCInfo_AbilityEditor.uc` `defaultproperties` — **before** any editor whose game class is a parent of yours (first match wins).
-4. Declare new config fields in `AE_DataStructures.uc` as `Set`/value pairs (with a `// comment` above the pair: it becomes the field's documentation).
+4. Declare new config fields in `AE_DataStructures.uc` as `Set`/value pairs. To document a field, put the `// comment` **directly above the value var, not above the `Set` guard** — the parser attaches a comment to the next `var` it sees, and guards are not documented fields, so a comment above the pair is dropped. Comments above a guard are therefore free to act as section headers (`// X2Condition_UnitValue`), which is how the file already uses them.
+
+   ```unrealscript
+   var bool SetNumAmmo;
+   // Rounds consumed per shot. 0 makes the ability free to fire.
+   var int NumAmmo;
+   ```
 
 Everything hand-written in this file lives outside the `<!-- BEGIN:GENERATED ... -->` markers and survives regeneration.
