@@ -1,0 +1,81 @@
+site_name: Ability Editor
+site_description: >-
+  Retune XCOM 2 (War of the Chosen) abilities entirely from .ini config -
+  costs, cooldowns, charges, effects, conditions and template fields.
+site_url: https://boundir.github.io/AbilityEditor/
+repo_url: https://github.com/boundir/AbilityEditor
+repo_name: boundir/AbilityEditor
+edit_uri: edit/master/docs/
+
+docs_dir: docs
+site_dir: site
+
+theme:
+  name: material
+  features:
+    - navigation.indexes
+    - navigation.top
+    - navigation.tracking
+    - content.code.copy
+    - search.highlight
+    - search.suggest
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+plugins:
+  - search
+  - gen-files:
+      scripts:
+        - scripts/gen_reference.py
+        - scripts/gen_coverage.py
+  - literate-nav:
+      nav_file: SUMMARY.md
+  - section-index
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.snippets
+
+nav:
+  - Home: index.md
+  - Getting started:
+      - getting-started/installation.md
+      - getting-started/config-syntax.md
+      - getting-started/edit-modes.md
+  - Guides:
+      - guides/examples.md
+      - guides/troubleshooting.md
+      - guides/bridge-mods.md
+      - guides/legacy-1x.md
+  - Reference: reference/
+  - Contributing:
+      - contributing/adding-an-editor.md
+      - contributing/doc-coverage.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/boundir/AbilityEditor

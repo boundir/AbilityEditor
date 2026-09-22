@@ -1637,7 +1637,7 @@ struct EffectEdit
 	// X2Effect_ToHitModifier
 	var array<ConditionEdit> ToHitConditions;
 
-	// X2Effect_ToHitModifier: replace-only — when non-empty, replaces Modifiers entirely
+	// X2Effect_ToHitModifier: replace-only - when non-empty, replaces Modifiers entirely
 	var array<EffectHitModifier> EffectHitModifiers;
 
 	var array<AECustomProperty> CustomProperties;
@@ -1955,9 +1955,12 @@ struct AbilityEdit
 	var name Ability;
 
 	var bool SetHostility;
+	// Whether the ability is offensive, defensive or neutral. Drives AI targeting and the
+	// reticle colour. One of eHostility_Offensive, eHostility_Defensive, eHostility_Neutral.
 	var EAbilityHostility Hostility;
 
 	var bool SetConcealmentRule;
+	// What happens to the shooter's concealment when the ability is used.
 	var EConcealmentRule ConcealmentRule;
 
 	var array<name> AdditionalAbilities;

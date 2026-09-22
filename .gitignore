@@ -4,3 +4,7 @@
 # Build output
 BuildCache/
 obj/
+
+# Documentation site
+.venv/
+site/
