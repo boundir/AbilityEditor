@@ -1,0 +1,42 @@
+name: Schema freshness
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'AbilityEditor/Src/AbilityEditor/Classes/**'
+      - 'docs/schema.json'
+      - '.scripts/generate-docs.ps1'
+      - '.github/workflows/schema-check.yml'
+  pull_request:
+    paths:
+      - 'AbilityEditor/Src/AbilityEditor/Classes/**'
+      - 'docs/schema.json'
+      - '.scripts/generate-docs.ps1'
+      - '.github/workflows/schema-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hash:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compare source hash against the committed schema
+        shell: pwsh
+        run: |
+          $computed = & .\.scripts\generate-docs.ps1 -PrintSourceHash
+          $committed = (Get-Content .\docs\schema.json -Raw | ConvertFrom-Json).sourceHash
+
+          Write-Host "computed  : $computed"
+          Write-Host "committed : $committed"
+
+          if ($computed -ne $committed) {
+              Write-Host "::error::docs/schema.json is stale. The UnrealScript sources changed but the schema was not regenerated. Run: .\.scripts\generate-docs.ps1 -SdkPath '<path to WOTC SDK>'"
+              exit 1
+          }
+
+          Write-Host "Schema is current."

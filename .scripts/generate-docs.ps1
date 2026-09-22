@@ -227,27 +227,27 @@ $Curated = @{
         @{ Name = 'Costs';    ConfigKey = 'Costs';    Struct = 'CostEdit';     Root = 'X2AbilityCostEditor';     Registry = 'CostEditors';     HelperApply = 'ApplyCostEdit'
            Intro = 'Edits the `AbilityCosts` array of the template. Costs are edited **in place** when a cost of the given `Class` already exists; otherwise behaviour depends on the modes below. Fields you do not `Set` keep their current value.' }
         @{ Name = 'Cooldown'; ConfigKey = 'Cooldown'; Struct = 'CooldownEdit'; Root = 'X2AbilityCooldownEditor'; Registry = 'CooldownEditors'; HelperApply = 'ApplyCooldownEdit'
-           Intro = 'Edits the template''s `AbilityCooldown`. With `Class` **omitted**, the existing cooldown is edited **in place** (no-op if the ability has none). With `Class` set, the existing cooldown is edited in place when it is already exactly that class; otherwise it is **replaced** by a new instance — any field you do not `Set` then takes the class''s default value.' }
+           Intro = 'Edits the template''s `AbilityCooldown`. With `Class` **omitted**, the existing cooldown is edited **in place** (no-op if the ability has none). With `Class` set, the existing cooldown is edited in place when it is already exactly that class; otherwise it is **replaced** by a new instance - any field you do not `Set` then takes the class''s default value.' }
         @{ Name = 'Charges';  ConfigKey = 'Charges';  Struct = 'ChargesEdit';  Root = 'X2AbilityChargesEditor';  Registry = 'ChargesEditors';  HelperApply = 'ApplyChargesEdit'
-           Intro = 'Edits the template''s `AbilityCharges`. With `Class` **omitted**, the existing charges object is edited **in place** (no-op if the ability has none). With `Class` set, the existing object is edited in place when it is already exactly that class; otherwise it is **replaced** by a new instance — any field you do not `Set` then takes the class''s default value. `RemoveCharges=true` removes the charges object entirely.' }
+           Intro = 'Edits the template''s `AbilityCharges`. With `Class` **omitted**, the existing charges object is edited **in place** (no-op if the ability has none). With `Class` set, the existing object is edited in place when it is already exactly that class; otherwise it is **replaced** by a new instance - any field you do not `Set` then takes the class''s default value. `RemoveCharges=true` removes the charges object entirely.' }
         @{ Name = 'Effects';  ConfigKey = 'Effects';  Struct = 'EffectEdit';   Root = 'X2AbilityEffectsEditor';  Registry = 'EffectsEditors';  HelperApply = 'ApplyEffectEdit'
            Intro = 'Edits the effect arrays of the template. `Slot` selects which array is edited (see `EAbilityEffectSlot`). Within the selected array the effect of class `Class` is edited **in place** if present; otherwise behaviour depends on `Mode`.' }
         @{ Name = 'Conditions'; ConfigKey = ''; Struct = 'ConditionEdit'; Root = 'X2AbilityConditionEditor'; Registry = 'ConditionEditors'; HelperApply = 'ApplyConditionEdits'
            Intro = 'Conditions can be edited in seven places: the template-level arrays (`ShooterConditions`, `TargetConditions`, `MultiTargetConditions` directly inside an `AbilityEdit`) and, inside an `Effects` entry, the effect''s own `TargetConditions` plus the class-specific `ApplyDamageModConditions`, `LethalDamageConditions` and `ToHitConditions`. All take an array of `ConditionEdit` entries. Within the targeted array, the condition of class `Class` is edited **in place** if present; otherwise behaviour depends on `Mode`.' }
         @{ Name = 'ToHitCalc'; ConfigKey = 'ToHitCalc'; Struct = 'ToHitCalcEdit'; Root = 'X2AbilityToHitCalcEditor'; Registry = 'ToHitCalcEditors'; HelperApply = 'ApplyToHitCalcEdit'
-           Intro = 'Edits the template''s to-hit calculation. Two slots exist: `ToHitCalc` (`Template.AbilityToHitCalc`) and `ToHitOwnerOnMissCalc` (`Template.AbilityToHitOwnerOnMissCalc`), both taking a `ToHitCalcEdit` block. With `Class` **omitted**, the existing calc is edited **in place**; with `Class` set, the existing calc is edited in place when it is already exactly that class, otherwise it is **replaced** by a new instance (unset fields then take class defaults). Classes without a dedicated editor below (e.g. `X2AbilityToHitCalc_StandardMelee`, `X2AbilityToHitCalc_DeadEye`) are still valid `Class` values — they get the fields of their nearest listed ancestor.' }
+           Intro = 'Edits the template''s to-hit calculation. Two slots exist: `ToHitCalc` (`Template.AbilityToHitCalc`) and `ToHitOwnerOnMissCalc` (`Template.AbilityToHitOwnerOnMissCalc`), both taking a `ToHitCalcEdit` block. With `Class` **omitted**, the existing calc is edited **in place**; with `Class` set, the existing calc is edited in place when it is already exactly that class, otherwise it is **replaced** by a new instance (unset fields then take class defaults). Classes without a dedicated editor below (e.g. `X2AbilityToHitCalc_StandardMelee`, `X2AbilityToHitCalc_DeadEye`) are still valid `Class` values - they get the fields of their nearest listed ancestor.' }
         @{ Name = 'TargetStyle'; ConfigKey = 'TargetStyle'; Struct = 'TargetStyleEdit'; Root = 'X2AbilityTargetStyleEditor'; Registry = 'TargetStyleEditors'; HelperApply = 'ApplyTargetStyleEdit'
            Intro = 'Edits `Template.AbilityTargetStyle` (how the ability picks its primary target). Same in-place/replace semantics as `ToHitCalc`. Field-less styles (`X2AbilityTarget_Self`, `X2AbilityTarget_Path`, ...) are valid `Class` values for swapping the style.' }
         @{ Name = 'MultiTargetStyle'; ConfigKey = 'MultiTargetStyle'; Struct = 'MultiTargetStyleEdit'; Root = 'X2AbilityMultiTargetStyleEditor'; Registry = 'MultiTargetStyleEditors'; HelperApply = 'ApplyMultiTargetStyleEdit'
            Intro = 'Edits the template''s multi-target styles. Two slots exist: `MultiTargetStyle` (`Template.AbilityMultiTargetStyle`) and `PassiveAOEStyle` (`Template.AbilityPassiveAOEStyle`), both taking a `MultiTargetStyleEdit` block. Same in-place/replace semantics as `ToHitCalc`.' }
         @{ Name = 'Triggers'; ConfigKey = 'Triggers'; Struct = 'TriggerEdit'; Root = 'X2AbilityTriggerEditor'; Registry = 'TriggerEditors'; HelperApply = 'ApplyTriggerEdits'
-           Intro = 'Edits the `AbilityTriggers` array of the template. The trigger of class `Class` is edited **in place** if present; otherwise behaviour depends on `Mode`. **Caveat:** adding a *new* `X2AbilityTrigger_EventListener` from config is rarely useful — its `ListenerData.EventFn` delegate can only be assigned in code and stays `none`. Editing an existing listener trigger preserves its `EventFn`. `X2AbilityTrigger_OnAbilityActivated` is handled by the EventListener editor (its `MatchAbilityActivated` field is protected and cannot be set). See also `AbilityEventListenerEdits` in the template fields for the separate `Template.AbilityEventListeners` array.' }
+           Intro = 'Edits the `AbilityTriggers` array of the template. The trigger of class `Class` is edited **in place** if present; otherwise behaviour depends on `Mode`. **Caveat:** adding a *new* `X2AbilityTrigger_EventListener` from config is rarely useful - its `ListenerData.EventFn` delegate can only be assigned in code and stays `none`. Editing an existing listener trigger preserves its `EventFn`. `X2AbilityTrigger_OnAbilityActivated` is handled by the EventListener editor (its `MatchAbilityActivated` field is protected and cannot be set). See also `AbilityEventListenerEdits` in the template fields for the separate `Template.AbilityEventListeners` array.' }
     )
 
     StructuralFieldNotes = @{
         'AbilityEdit.Ability'              = 'Required. Template name of the ability to edit (e.g. `SwordSlice`).'
         'CostEdit.Class'                   = 'Cost class to target/instantiate, e.g. `X2AbilityCost_ActionPoints`. Bare names are auto-prefixed with `XComGame.`; empty falls back to `X2AbilityCost`.'
-        'CostEdit.Mode'                    = 'Per-entry edit mode (`EAbilityCostEditMode`), see [Edit modes](#edit-modes).'
+        'CostEdit.Mode'                    = 'Per-entry edit mode (`EAbilityCostEditMode`). Defaults to the enum''s first value, which clears the existing list.'
         'CooldownEdit.Class'               = 'Optional. Omitted = edit the existing cooldown in place. Set = target/instantiate that class, e.g. `X2AbilityCooldown_PerPlayerType`. Bare names are auto-prefixed with `XComGame.`.'
         'ChargesEdit.Class'                = 'Optional. Omitted = edit the existing charges object in place. Set = target/instantiate that class, e.g. `X2AbilityCharges_GremlinHeal`. Bare names are auto-prefixed with `XComGame.`.'
         'ChargesEdit.RemoveCharges'        = 'Set to true to remove the ability''s charges object entirely. No `Class` needed; the other fields of the block are ignored.'
@@ -259,7 +259,7 @@ $Curated = @{
         'MultiTargetStyleEdit.Class'       = 'Optional. Omitted = edit the existing style in place. Set = target/instantiate that class, e.g. `X2AbilityMultiTarget_Radius`. Bare names are auto-prefixed with `XComGame.`.'
         'MultiTargetStyleEdit.CustomProperties' = 'Free-form key/value pairs for bridge-mod editors; ignored by the built-in editors.'
         'TriggerEdit.Class'                = 'Trigger class to target/instantiate, e.g. `X2AbilityTrigger_UnitPostBeginPlay`. Bare names are auto-prefixed with `XComGame.`.'
-        'TriggerEdit.Mode'                 = 'Per-entry edit mode (`EArrayEditMode`), see [Edit modes](#edit-modes).'
+        'TriggerEdit.Mode'                 = 'Per-entry edit mode (`EArrayEditMode`). Defaults to the enum''s first value, which clears the existing array.'
         'TriggerEdit.CustomProperties'     = 'Free-form key/value pairs for bridge-mod editors; ignored by the built-in editors.'
         'EffectEdit.EffectHitModifiers'    = '**Replace-only**: when non-empty, replaces `X2Effect_ToHitModifier.Modifiers` entirely (`EffectHitModifier` entries, incl. `MatchToHit` class ref via qualified name).'
         'EffectEdit.CustomProperties'      = 'Free-form key/value pairs for bridge-mod editors; ignored by the built-in editors.'
@@ -267,9 +267,9 @@ $Curated = @{
         'AbilityEventListenerEdit.EventID' = 'Matches the existing `Template.AbilityEventListeners` entry to edit. Entries cannot be added (their `EventFn` delegate is code-only).'
         'EffectEdit.Class'                 = 'Effect class to target/instantiate, e.g. `X2Effect_ApplyWeaponDamage`. Bare names are auto-prefixed with `XComGame.`; empty falls back to `X2Effect`.'
         'EffectEdit.Slot'                  = 'Which effect array to edit (`EAbilityEffectSlot`): `eAES_Target`, `eAES_MultiTarget` or `eAES_Shooter`.'
-        'EffectEdit.Mode'                  = 'Per-entry edit mode (`EArrayEditMode`), see [Edit modes](#edit-modes).'
+        'EffectEdit.Mode'                  = 'Per-entry edit mode (`EArrayEditMode`). Defaults to the enum''s first value, which clears the existing array.'
         'ConditionEdit.Class'              = 'Condition class to target/instantiate, e.g. `X2Condition_UnitProperty`. Bare names are auto-prefixed with `XComGame.`.'
-        'ConditionEdit.Mode'               = 'Per-entry edit mode (`EArrayEditMode`), see [Edit modes](#edit-modes).'
+        'ConditionEdit.Mode'               = 'Per-entry edit mode (`EArrayEditMode`). Defaults to the enum''s first value, which clears the existing array.'
         'AdditionalCooldownEdit.AbilityName'   = 'Ability whose cooldown entry is added/updated in `AditionalAbilityCooldowns`.'
         'AdditionalCooldownEdit.ApplyCooldownType' = '`AdditionalCooldown_ApplyLarger` or `AdditionalCooldown_ApplySmaller`. Applied when non-empty.'
         'BonusChargeEdit.AbilityName'      = 'Ability that grants the bonus charges.'
@@ -1043,83 +1043,6 @@ $schemaJson = ($schema | ConvertTo-Json -Depth 14) + "`n"
 
 #region 6. Render the markdown blocks
 
-function ConvertTo-CellText {
-    param([string] $Text)
-
-    if ($null -eq $Text) { return '' }
-    return ($Text -replace '\|', '\|')
-}
-
-function Format-FieldTable {
-    param([object[]] $Fields)
-
-    $sb = [System.Text.StringBuilder]::new()
-    [void]$sb.Append("| Config key | Type | Requires | Game field | Notes |$nl")
-    [void]$sb.Append("|---|---|---|---|---|$nl")
-
-    foreach ($f in $Fields) {
-        $requires = ''
-        switch ($f.kind) {
-            'scalar' { $requires = '`' + $f.guard + '=true`' }
-            'namearray' {
-                if ($f.Contains('replaceOnly') -and $f.replaceOnly) { $requires = 'non-empty *(replace-only)*' }
-                else { $requires = '`' + $f.modeField + '`' }
-            }
-            'nested' {
-                if ($f.Contains('modeField') -and $f.modeField) { $requires = '`' + $f.modeField + '`' }
-                else { $requires = '&mdash;' }
-            }
-        }
-
-        $gameField = ''
-        if ($f.gameField) { $gameField = '`' + $f.gameField + '`' }
-
-        $notes = ConvertTo-CellText $f.description
-        if ($f.inheritedFrom) {
-            $inh = "*(shared &mdash; from ``$($f.inheritedFrom)``)*"
-            if ($notes) { $notes = "$notes $inh" } else { $notes = $inh }
-        }
-        if ($f.kind -eq 'nested') {
-            $nestedType = $f.type -replace 'array<|>', ''
-            if ($Curated.NestedLinks.ContainsKey($nestedType)) {
-                $link = "see $($Curated.NestedLinks[$nestedType])"
-            }
-            else {
-                $link = "see [``$nestedType``](#nested-structs)"
-            }
-            if ($notes) { $notes = "$notes &mdash; $link" } else { $notes = $link }
-        }
-
-        [void]$sb.Append("| ``$($f.config)`` | ``$($f.type)`` | $requires | $gameField | $notes |$nl")
-    }
-
-    return $sb.ToString()
-}
-
-function Format-StructTable {
-    param([string] $StructName)
-
-    $sb = [System.Text.StringBuilder]::new()
-    [void]$sb.Append("| Config key | Type | Requires | Notes |$nl")
-    [void]$sb.Append("|---|---|---|---|$nl")
-
-    foreach ($f in $Structs[$StructName]) {
-        if ($f.Kind -eq 'guard' -or $f.Kind -eq 'mode') { continue }
-
-        $requires = '&mdash;'
-        if ($f.Kind -eq 'optionalScalar') { $requires = '`' + $f.Guard + '=true`' }
-        if ($f.ModeField) { $requires = '`' + $f.ModeField + '`' }
-
-        $desc = $f.Description
-        $key = "$StructName.$($f.Name)"
-        if ($Curated.StructuralFieldNotes.ContainsKey($key)) { $desc = $Curated.StructuralFieldNotes[$key] }
-
-        [void]$sb.Append("| ``$($f.Name)`` | ``$($f.Type)`` | $requires | $(ConvertTo-CellText $desc) |$nl")
-    }
-
-    return $sb.ToString()
-}
-
 # ---- summary block ----
 $summary = [System.Text.StringBuilder]::new()
 [void]$summary.Append("An ``+AbilityEdits`` entry can change:$nl$nl")
@@ -1142,121 +1065,6 @@ foreach ($fam in $FamilyModels) {
 }
 $summaryMd = $summary.ToString()
 
-# ---- enums block ----
-$enumsBuilder = [System.Text.StringBuilder]::new()
-foreach ($e in $schemaEnums) {
-    [void]$enumsBuilder.Append("#### ``$($e.name)``$nl$nl")
-    [void]$enumsBuilder.Append("| Value | Meaning |$nl|---|---|$nl")
-    foreach ($v in $e.values) {
-        $d = $v.description
-        if (-not $d) { $d = '&mdash;' }
-        [void]$enumsBuilder.Append("| ``$($v.name)`` | $(ConvertTo-CellText $d) |$nl")
-    }
-    [void]$enumsBuilder.Append($nl)
-}
-$enumsMd = $enumsBuilder.ToString()
-
-# ---- reference block ----
-$reference = [System.Text.StringBuilder]::new()
-
-[void]$reference.Append("### Template fields$nl$nl")
-[void]$reference.Append("Applied directly to the ``X2AbilityTemplate``.$nl$nl")
-[void]$reference.Append("| Config key | Requires | Game field |$nl|---|---|---|$nl")
-[void]$reference.Append("| ``Ability`` | required | template lookup (``FindAbilityTemplate``) |$nl")
-foreach ($t in $schemaTemplate) {
-    $requires = ''
-    if ($t.kind -eq 'scalar') { $requires = '`' + $t.guard + '=true`' }
-    if ($t.kind -eq 'namearray') { $requires = '`' + $t.modeField + '`' }
-    [void]$reference.Append("| ``$($t.config)`` | $requires | ``$($t.gameField)`` |$nl")
-}
-[void]$reference.Append("| ``AbilityEventListenerEdits`` | ``EventID`` match | ``AbilityEventListeners`` &mdash; edit-existing-only, see [``AbilityEventListenerEdit``](#nested-structs) |$nl")
-
-if ($TemplateNotEditable.Count -gt 0) {
-    [void]$reference.Append($nl)
-    [void]$reference.Append("<details><summary>Template fields not editable via config ($($TemplateNotEditable.Count))</summary>$nl$nl")
-    [void]$reference.Append((($TemplateNotEditable | ForEach-Object { '`' + $_.name + '` *(' + $_.reason + ')*' }) -join ', ') + $nl)
-    [void]$reference.Append($nl + "</details>$nl")
-}
-[void]$reference.Append($nl)
-
-foreach ($fam in $FamilyModels) {
-    if ($fam.configKey) {
-        [void]$reference.Append("### $($fam.name) (``$($fam.configKey)``)$nl$nl")
-    }
-    else {
-        [void]$reference.Append("### $($fam.name)$nl$nl")
-    }
-    if (-not $fam.wired) {
-        [void]$reference.Append("> &#9888;&#65039; **Not yet functional.** This section documents the upcoming release; these entries are currently ignored by the mod.$nl$nl")
-    }
-    [void]$reference.Append("$($fam.intro)$nl$nl")
-
-    # structural (plain / mode-less) fields of the family struct that are not covered by editor tables
-    [void]$reference.Append("Structural fields:$nl$nl")
-    $sb = [System.Text.StringBuilder]::new()
-    [void]$sb.Append("| Config key | Type | Notes |$nl|---|---|---|$nl")
-    foreach ($f in $Structs[$fam.editStruct]) {
-        if ($f.Kind -ne 'plain' -and $f.Name -ne 'CustomProperties') { continue }
-        $desc = $f.Description
-        $key = "$($fam.editStruct).$($f.Name)"
-        if ($Curated.StructuralFieldNotes.ContainsKey($key)) { $desc = $Curated.StructuralFieldNotes[$key] }
-        [void]$sb.Append("| ``$($f.Name)`` | ``$($f.Type)`` | $(ConvertTo-CellText $desc) |$nl")
-    }
-    [void]$reference.Append($sb.ToString())
-    [void]$reference.Append($nl)
-
-    $dispatch = @($fam.editors | ForEach-Object { if ($_.catchAll) { 'any other class' } else { '`' + $_.gameClass + '`' } })
-    [void]$reference.Append("Editor dispatch order (first match wins): " + ($dispatch -join ' &rarr; ') + "$nl$nl")
-
-    # Base fields are defined on the family root, so they are identical for every editor: render once.
-    $firstEditor = $fam.editors | Select-Object -First 1
-    $familyShared = @()
-    if ($firstEditor) {
-        # inheritedFrom is redundant inside the family-wide shared table; suppress it there
-        $familyShared = @($firstEditor.fields | Where-Object { $_.origin -eq 'base' } | ForEach-Object {
-            $copy = [ordered]@{}
-            foreach ($k in $_.Keys) { $copy[$k] = $_[$k] }
-            $copy.inheritedFrom = $null
-            $copy
-        })
-    }
-    if ($familyShared.Count -gt 0) {
-        [void]$reference.Append("Shared fields (available for **every** class of this family):$nl$nl")
-        [void]$reference.Append((Format-FieldTable $familyShared) + $nl)
-    }
-
-    foreach ($ed in $fam.editors) {
-        if ($ed.catchAll) {
-            [void]$reference.Append("#### Any other class$nl$nl")
-            [void]$reference.Append("Handled by ``$($ed.class)``: only the shared fields above apply.$nl$nl")
-            continue
-        }
-
-        [void]$reference.Append("#### ``$($ed.gameClass)``$nl$nl")
-        if ($ed.Contains('abstract') -and $ed.abstract) {
-            [void]$reference.Append("*Abstract class &mdash; existing instances (of its subclasses) can be edited in place, but it cannot be added as a new instance from config.*$nl$nl")
-        }
-
-        $derived = @($ed.fields | Where-Object { $_.origin -eq 'derived' })
-        if ($derived.Count -gt 0) {
-            [void]$reference.Append((Format-FieldTable $derived) + $nl)
-        }
-        else {
-            [void]$reference.Append("No class-specific fields; the shared fields above apply.$nl$nl")
-        }
-
-        if ($ed.Contains('notEditable') -and $ed.notEditable.Count -gt 0) {
-            [void]$reference.Append("Not editable via config: " + (($ed.notEditable | ForEach-Object { '`' + $_.name + '` *(' + $_.reason + ')*' }) -join ', ') + "$nl$nl")
-        }
-    }
-}
-
-[void]$reference.Append("### Nested structs$nl$nl")
-foreach ($nested in @('AdditionalCooldownEdit', 'BonusChargeEdit', 'StatChangeEdit', 'WeaponDamageValueEdit', 'AbilityEventListenerEdit', 'AECustomProperty')) {
-    [void]$reference.Append("#### ``$nested``$nl$nl")
-    [void]$reference.Append((Format-StructTable $nested) + $nl)
-}
-$referenceMd = $reference.ToString()
 
 #endregion
 
@@ -1264,10 +1072,11 @@ $referenceMd = $reference.ToString()
 
 if (-not (Test-Path $DocsDir)) { $null = New-Item -ItemType Directory -Path $DocsDir }
 
+# Only the "supported at a glance" summary is injected into README.md. The full reference and the
+# edit-mode tables are rendered from docs/schema.json by scripts/gen_reference.py at docs-build
+# time, so producing them here as well would be a second source of truth for the same data.
 $GeneratedBlocks = [ordered]@{
-    'summary'   = $summaryMd
-    'enums'     = $enumsMd
-    'reference' = $referenceMd
+    'summary' = $summaryMd
 }
 
 $stale = $false

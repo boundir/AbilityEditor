@@ -1,7 +1,7 @@
 # Changelog
 
 All notable changes to **Ability Editor** are documented here. The mod lets you retune
-XCOM 2 (War of the Chosen) abilities entirely from `.ini` config — no scripting, no
+XCOM 2 (War of the Chosen) abilities entirely from `.ini` config - no scripting, no
 rebuilds. See the [README](README.md) for the full field reference.
 
 This project follows [Keep a Changelog](https://keepachangelog.com/) and
@@ -9,12 +9,18 @@ This project follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added
+
+- **A documentation site** at [boundir.github.io/AbilityEditor](https://boundir.github.io/AbilityEditor/),
+  built with mkdocs-material and published by GitHub Actions. Game classes haves their own page
+  with a guessable URL (`/reference/effects/x2effect_achilles/`), so a link can point at one class instead of one page documentation.
+
 ### Fixed
 
 - **Replace-only array fields no longer advertise a mode field that doesn't exist.** The reference
   tables listed `HitModifiersMode` and `EffectHitModifiersMode` in the "Requires" column for
-  `ToHitCalcEdit.HitModifiers` and `EffectEdit.EffectHitModifiers`. Neither field exists — both
-  arrays are replace-only — so anyone who wrote them was silently ignored. They now render as
+  `ToHitCalcEdit.HitModifiers` and `EffectEdit.EffectHitModifiers`. Neither field exists - both
+  arrays are replace-only - so anyone who wrote them was silently ignored. They now render as
   "non-empty *(replace-only)*". This affected 11 entries in `docs/schema.json` too, so any tooling
   consuming the schema inherited the same wrong information.
 
@@ -31,7 +37,7 @@ This project follows [Keep a Changelog](https://keepachangelog.com/) and
 - Documented that building the mod requires Community Highlander-patched SDK sources
   ([Issue #68](https://github.com/X2CommunityCore/X2WOTCCommunityHighlander/issues/68) removes
   `protectedwrite` from the three `X2AbilityTemplate` effect arrays this mod writes). This is a
-  build-time requirement only — the compiled mod runs against vanilla `XComGame`.
+  build-time requirement only - the compiled mod runs against vanilla `XComGame`.
 - Corrected the field-documentation convention: a `//` comment must sit directly above the **value**
   var, not above the `Set`/value pair. A comment above the pair attaches to the guard and is
   dropped, which is why 219 existing comments act as section headers rather than field docs.
@@ -47,7 +53,7 @@ A ground-up rewrite. The old options still work, but there's now a single, consi
   under `[AbilityEditor.X2DLCInfo_AbilityEditor]` in `XComAbilityEditor.ini`. One entry can
   change as much or as little of an ability as you like.
 
-- **Costs** — action points, ammo, charges, focus, "consume item", and the special
+- **Costs** - action points, ammo, charges, focus, "consume item", and the special
   reserve/heavy-weapon/quickdraw action-point costs. Add, remove, or tweak them per ability.
   ```ini
   ; Let Ranger's Slash keep the turn going (1 point, don't end turn) for Blademaster users
@@ -60,15 +66,15 @@ A ground-up rewrite. The old options still work, but there's now a single, consi
   )
   ```
 
-- **Cooldowns & charges** — set turn cooldowns (including separate XCOM/AI values and
+- **Cooldowns & charges** - set turn cooldowns (including separate XCOM/AI values and
   shared cooldowns with other abilities), initial charges, and bonus charges granted by
   other abilities.
 
-- **Effects** — change what an ability actually *does*: weapon damage, stat changes,
+- **Effects** - change what an ability actually *does*: weapon damage, stat changes,
   stuns, armor, damage immunities, action-point grants, effect removal, covering fire,
   and dozens more. Every applicable in-game effect type is supported.
 
-- **Conditions** — control *who and when* an ability can affect: unit type, health,
+- **Conditions** - control *who and when* an ability can affect: unit type, health,
   cover, range, alert status, active effects, inventory, visibility, and more. Attach
   them to the ability or to an individual effect.
   ```ini
@@ -82,15 +88,15 @@ A ground-up rewrite. The old options still work, but there's now a single, consi
   )
   ```
 
-- **Aim & hit chance** — edit an ability's to-hit calculation: built-in aim/crit
+- **Aim & hit chance** - edit an ability's to-hit calculation: built-in aim/crit
   modifiers, guaranteed hits, flat percent-to-hit, stat rolls, and more.
 
-- **Targeting shape** — change how an ability picks targets: single-target rules, cursor
+- **Targeting shape** - change how an ability picks targets: single-target rules, cursor
   range, moving-melee reach, and area shapes (radius, cone, line, cylinder, burst, all-units).
 
-- **Triggers** — change what makes an ability fire (e.g. passive on spawn, event-driven).
+- **Triggers** - change what makes an ability fire (e.g. passive on spawn, event-driven).
 
-- **Ability template settings** — hostility, concealment rules, cross-class eligibility,
+- **Ability template settings** - hostility, concealment rules, cross-class eligibility,
   passive/unique flags, HUD icon and color, tooltip/summary visibility, point cost, default
   item slot, friendly-fire warnings, added/prerequisite/override abilities, and more.
 

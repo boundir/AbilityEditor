@@ -1637,7 +1637,7 @@ struct EffectEdit
 	// X2Effect_ToHitModifier
 	var array<ConditionEdit> ToHitConditions;
 
-	// X2Effect_ToHitModifier: replace-only — when non-empty, replaces Modifiers entirely
+	// X2Effect_ToHitModifier: replace-only - when non-empty, replaces Modifiers entirely
 	var array<EffectHitModifier> EffectHitModifiers;
 
 	var array<AECustomProperty> CustomProperties;
