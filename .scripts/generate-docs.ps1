@@ -57,6 +57,7 @@ function Get-SourceHash {
 
     $files = @(Get-ChildItem -LiteralPath $Path -Filter '*.uc' -File | Sort-Object Name)
     $text = ($files | ForEach-Object { [System.IO.File]::ReadAllText($_.FullName) }) -join "`n"
+    $text = $text -replace "`r`n", "`n" -replace "`r", "`n"
 
     $sha256 = [System.Security.Cryptography.SHA256]::Create()
     try {
