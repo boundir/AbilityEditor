@@ -8,3 +8,7 @@ obj/
 # Documentation site
 .venv/
 site/
+
+# Config builder app
+app/node_modules/
+app/dist/

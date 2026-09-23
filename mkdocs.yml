@@ -61,6 +61,7 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - Config builder: app/index.md
   - Getting started:
       - getting-started/installation.md
       - getting-started/config-syntax.md

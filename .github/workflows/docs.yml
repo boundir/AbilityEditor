@@ -6,6 +6,7 @@ on:
     paths:
       - 'docs/**'
       - 'scripts/**'
+      - 'app/**'
       - 'mkdocs.yml'
       - 'requirements-docs.txt'
       - '.github/workflows/docs.yml'
@@ -13,6 +14,7 @@ on:
     paths:
       - 'docs/**'
       - 'scripts/**'
+      - 'app/**'
       - 'mkdocs.yml'
       - 'requirements-docs.txt'
       - '.github/workflows/docs.yml'
@@ -40,10 +42,29 @@ jobs:
       - name: Install toolchain
         run: pip install -r requirements-docs.txt
 
-      # --strict turns broken internal links into failures. With ~200 generated
-      # pages that is the only realistic way to catch a bad cross-reference.
-      - name: Build
+      - name: Build docs
         run: mkdocs build --strict
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install config builder
+        working-directory: app
+        run: npm ci
+
+      - name: Test config builder
+        working-directory: app
+        run: npm test
+
+      - name: Build config builder
+        working-directory: app
+        run: npm run build
+
+      - name: Place config builder at /app
+        run: cp -r app/dist/. site/app/
 
       - name: Upload Pages artifact
         if: github.event_name != 'pull_request'
@@ -52,7 +73,6 @@ jobs:
           path: site
 
   deploy:
-    # Pull requests build but do not publish.
     if: github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
