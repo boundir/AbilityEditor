@@ -25,10 +25,17 @@ Letting a Ranger keep acting after Slash is just:
 )
 ```
 
+!!! tip "Build it without hand-writing the .ini"
+    The **[config builder](app/index.md)** turns the reference below into a form: pick an ability, pick a
+    class, tick the fields you want. It writes the entry for you and flags the mistakes the mod
+    itself never reports - a missing `Set` guard, or a `Mode` left at its default where that
+    quietly deletes the ability's existing costs.
+
 ## Start here
 
 <div class="grid cards" markdown>
 
+- **[Config builder](app/index.md)** - fill in a form, get a valid entry.
 - **[Install](getting-started/installation.md)** - get the mod running and find your config file.
 - **[Config syntax](getting-started/config-syntax.md)** - how an entry is put together, and the
   `Set` guard rule that trips up everyone once.
