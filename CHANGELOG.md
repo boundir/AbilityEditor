@@ -11,6 +11,29 @@ This project follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ### Added
 
+- **Damage-over-time effects can now be retuned.** A persistent effect is only the *state*;
+  what it does each turn lives in a child effect inside its `ApplyOnTick` list. Editing
+  `X2Effect_Burning` reached its duration but never its damage, which sits in a nested
+  `X2Effect_ApplyWeaponDamage`. Three new `EffectEdit` keys — `ApplyOnTickClass`,
+  `ApplyOnTickIndex` and `ApplyOnTickMode` - redirect an entry at that child, so the rest of
+  the entry edits it instead.
+
+  ```ini
+  ; Molotov burn ticks for 5 (+/-2) instead of its usual damage
+  +AbilityEdits=( \\
+      Ability=ThrowMolotov, \\
+      Effects=( \\
+          ( Class="X2Effect_Burning", Mode=eAEM_Merge, \\
+            ApplyOnTickClass="X2Effect_ApplyWeaponDamage", ApplyOnTickMode=eAEM_Merge, \\
+            WeaponDamageValue=(SetDamage=true, Damage=5, SetSpread=true, Spread=2) ) \\
+      ) \\
+  )
+  ```
+
+  This is not specific to burning. It reaches every vanilla effect that uses the pattern -
+  poisoned, bleeding, parthenogenic poison, Steady Hands, Void Conduit, the evac delay and
+  Alert Mechanics - and modded ones too.
+
 - **A documentation site** at [boundir.github.io/AbilityEditor](https://boundir.github.io/AbilityEditor/),
   built with mkdocs-material and published by GitHub Actions. Game classes haves their own page
   with a guessable URL (`/reference/effects/x2effect_achilles/`), so a link can point at one class instead of one page documentation.

@@ -123,6 +123,56 @@ targets.
 The template-level `TargetConditions` edits the existing `X2Condition_UnitProperty` **in place** if
 the ability has one - changing only the fields you `Set` - and adds a new one otherwise.
 
+## Change how much damage burning does
+
+Damage-over-time effects are two objects, not one. `X2Effect_Burning` is the *state* — how
+long it lasts, what removes it — while the damage itself lives in an
+`X2Effect_ApplyWeaponDamage` nested in the parent's `ApplyOnTick` list. Editing the burning
+effect directly only reaches the first half.
+
+`ApplyOnTickClass` redirects an entry at the child, so the rest of the entry edits that
+instead:
+
+```ini
++AbilityEdits=( \\
+    Ability=ThrowMolotov, \\
+    Effects=( \\
+        ( \\
+            Class="X2Effect_Burning", \\
+            Mode=eAEM_Merge, \\
+            SetNumTurns=true, \\
+            NumTurns=3 \\
+        ), \\
+        ( \\
+            Class="X2Effect_Burning", \\
+            Mode=eAEM_Merge, \\
+            ApplyOnTickClass="X2Effect_ApplyWeaponDamage", \\
+            ApplyOnTickMode=eAEM_Merge, \\
+            WeaponDamageValue=( \\
+                SetDamage=true, \\
+                Damage=5, \\
+                SetSpread=true, \\
+                Spread=2 \\
+            ) \\
+        ) \\
+    ) \\
+)
+```
+
+Two entries for one effect: the first sets the duration on the burning state, the second
+reaches through it to the damage. Both name the same `Class`, because both are addressing
+the same parent — the second just redirects before editing.
+
+This works for any persistent effect with a tick child, not just burning. Poisoned and
+bleeding use `X2Effect_ApplyWeaponDamage` the same way; Steady Hands nests an
+`X2Effect_PersistentStatChange`, and Void Conduit an `X2Effect_VoidConduit`. Whatever the
+child class is, it is dispatched to its own editor, so it accepts that class's fields.
+
+!!! warning "Crit and graze are suppressed on tick damage"
+    The game branches on `ApplyOnTickIndex` when applying damage, so damage delivered by a
+    tick never crits or grazes. Setting crit fields on a tick child will not do what the
+    same fields do on a normal damage effect.
+
 ## Tweak aim and targeting shape
 
 Give an ability +15 built-in aim and widen its cone. No `Class` on either block, so both edit

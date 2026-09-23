@@ -657,6 +657,19 @@ struct EffectEdit
 	var EAbilityEffectSlot Slot;
 	var EArrayEditMode Mode;
 
+	// Nested tick effects (X2Effect_Persistent.ApplyOnTick)
+	//
+	// A persistent effect is a state; the thing it actually does each turn lives in a
+	// child effect inside its ApplyOnTick array. Burning for example:
+	// X2Effect_Burning object only carries duration, while the damage sits in an
+	// X2Effect_ApplyWeaponDamage that SetBurnDamage() puts at ApplyOnTick[0].
+	//
+	// Setting ApplyOnTickClass redirects this whole entry at that child, so every field
+	// below applies to it instead of to the parent.
+	var string ApplyOnTickClass;
+	var int ApplyOnTickIndex;
+	var EArrayEditMode ApplyOnTickMode;
+
 	// Base effect parameters
 	var bool SetApplyOnHit;
 	var bool ApplyOnHit;
