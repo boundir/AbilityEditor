@@ -78,63 +78,84 @@ struct CostEdit
 
 	var EAbilityCostEditMode Mode;
 
-	// Base cost parameters
 	var bool SetFreeCost;
+	// Makes the ability cost nothing. The ability must satisfy the requirement to be usable, but using it doesn't consume action point.
 	var bool FreeCost;
 
-	// Optional child-class parameters
 	var bool SetNumPoints;
+	// Action points the ability consumes.
 	var int NumPoints;
 
 	var bool SetAddWeaponTypicalCost;
+	// Adds the weapon's own typical action cost on top of NumPoints.
 	var bool AddWeaponTypicalCost;
 
 	var bool SetConsumeAllPoints;
+	// Ends the turn by consuming every remaining action point, rather than just NumPoints.
 	var bool ConsumeAllPoints;
 
 	var bool SetMoveCost;
+	// Treats the cost as movement, so effects and abilities that key off moving apply.
 	var bool MoveCost;
 
+	// Action point types that may pay this cost. Restricting it stops the ability being
+	// paid for with, say, a Run-and-Gun point.
 	var array<name> AllowedTypes;
 	var ENameArrayEditMode AllowedTypesMode;
 
+	// If the user is under any of these effects, ConsumeAllPoints is ignored and the turn does not end.
 	var array<name> DoNotConsumeAllEffects;
 	var ENameArrayEditMode DoNotConsumeAllEffectsMode;
 
+	// If the user has any of these abilities, ConsumeAllPoints is ignored. This is how Blademaster lets Slash keep the turn going.
 	var array<name> DoNotConsumeAllSoldierAbilities;
 	var ENameArrayEditMode DoNotConsumeAllSoldierAbilitiesMode;
 
+	// Other abilities whose charges are spent alongside this one, as Skulljack and
+	// Skullmine share a pool. Applied when paying, never when checking affordability.
 	var array<name> SharedAbilityCharges;
 	var ENameArrayEditMode SharedAbilityChargesMode;
 
 	var bool SetFocusAmount;
+	// Templar focus consumed.
 	var int FocusAmount;
 
 	var bool SetConsumeAllFocus;
+	// Spends the user's entire focus pool rather than FocusAmount.
 	var bool ConsumeAllFocus;
 
 	var bool SetGhostOnlyCost;
+	// Only charges focus to a Ghost, leaving the original Templar's pool untouched.
 	var bool GhostOnlyCost;
 
 	var bool SetNumAmmo;
+	// Ammo consumed per use. With ConsumeAllAmmo set this becomes the minimum needed to
+	// fire, rather than the amount spent.
 	var int NumAmmo;
 
 	var bool SetUseLoadedAmmo;
+	// Draws from the loaded grenade rather than the weapon's ammo, for grenade-launcher abilities.
 	var bool UseLoadedAmmo;
 
 	var bool SetReturnChargesError;
+	// Reports a shortfall as "out of charges" instead of "out of ammo", for abilities
+	// presented to the player as charge-based.
 	var bool ReturnChargesError;
 
 	var bool SetConsumeAllAmmo;
+	// Spends the whole magazine. NumAmmo then only sets the minimum required to fire.
 	var bool ConsumeAllAmmo;
 
 	var bool SetNumCharges;
+	// Charges consumed per use.
 	var int NumCharges;
 
 	var bool SetOnlyOnHit;
+	// Only spends the charge when the ability hits, so a miss costs nothing.
 	var bool OnlyOnHit;
 
 	var bool SetAlsoExpendChargesOnSharedBondmateAbility;
+	// Also spends the bondmate's charges of the shared ability.
 	var bool AlsoExpendChargesOnSharedBondmateAbility;
 };
 
@@ -143,22 +164,27 @@ struct CooldownEdit
 	// Class name of the cooldown to instantiate
 	var string Class;
 
-	// Base cooldown parameters
 	var bool SetNumTurns;
 	// Turns the ability is unavailable after use.
 	var int NumTurns;
 
 	var bool SetIgnoreOnHit;
+	// Skips applying the cooldown when the ability hits, so only a miss puts it on cooldown.
 	var bool IgnoreOnHit;
 
 	var EAdditionalCooldownEditMode AdditionalCooldownMode;
+	// Cooldowns this ability also puts on *other* abilities, keyed by AbilityName. Used
+	// where firing one thing should lock out another.
 	var array<AdditionalCooldownEdit> AdditionalCooldowns;
 
-	// Optional child-class parameters
 	var bool SetNumTurnsForAI;
+	// Cooldown used when the unit is AI-controlled, letting XCOM and the enemy run
+	// different timings. Only on X2AbilityCooldown_PerPlayerType.
 	var int NumTurnsForAI;
 
 	var bool SetNumGlobalTurns;
+	// Cooldown applied across every unit on the team, not just the one that used the
+	// ability. Only on the global cooldown classes.
 	var int NumGlobalTurns;
 };
 
@@ -167,17 +193,19 @@ struct ChargesEdit
 	// Class name of the charge to instantiate
 	var string Class;
 
-	// Base cooldown parameters
 	var bool SetInitialCharges;
+	// Charges the ability starts a mission with.
 	var int InitialCharges;
 
 	var EChargesBonusMode BonusChargesMode;
+	// Extra charges granted when the unit has another ability, keyed by AbilityName.
+	// This is how Restoration adds charges to the medikit heal.
 	var array<BonusChargeEdit> BonusCharges;
 
 	var bool RemoveCharges;
 
-	// Optional child-class parameters
 	var bool SetStabilize;
+	// Whether the charges behave as the stabilise-style pool, on the charge classes that support it.
 	var bool Stabilize;
 };
 
@@ -672,7 +700,6 @@ struct EffectEdit
 	var int ApplyOnTickIndex;
 	var EArrayEditMode ApplyOnTickMode;
 
-	// Base effect parameters
 	var bool SetApplyOnHit;
 	// Whether the effect is applied when the ability hits. Most effects want this true;
 	// setting it false is how an effect is made to trigger only on a miss.
@@ -770,7 +797,6 @@ struct EffectEdit
 	// should read as something else.
 	var string OverrideMissMessage;
 
-	// Option child-class parameters
 	var bool SetNumTurns;
 	// How many turns the effect lasts. Ignored when InfiniteDuration is true.
 	var int NumTurns;
@@ -1765,76 +1791,98 @@ struct ToHitCalcEdit
 
 	// X2AbilityToHitCalc_StandardAim
 	var bool SetIndirectFire;
+	// Treats the attack as indirect, like a grenade: it always hits, though crit, dodge and armour mitigation still apply.
 	var bool IndirectFire;
 
 	var bool SetMeleeAttack;
+	// Treats the attack as melee, which ignores cover and applies the intrinsic melee hit bonus.
 	var bool MeleeAttack;
 
 	var bool SetReactionFire;
+	// Treats the attack as reaction fire, which takes the reaction penalty and forgoes the flanking bonus.
 	var bool ReactionFire;
 
 	var bool SetAllowCrit;
+	// Whether crits are built into the hit table at all. Turning it off makes the ability incapable of critting.
 	var bool AllowCrit;
 
 	var bool SetHitsAreCrits;
+	// Converts every successful hit into a crit after the roll is made.
 	var bool HitsAreCrits;
 
 	var bool SetMultiTargetOnly;
+	// Guarantees success when the ability has no primary target, for abilities that only ever hit multi-targets.
 	var bool MultiTargetOnly;
 
 	var bool SetOnlyMultiHitWithSuccess;
+	// Multi-target hits only land if the roll succeeded, as with Faceoff.
 	var bool OnlyMultiHitWithSuccess;
 
 	var bool SetGuaranteedHit;
+	// Always hits, skipping the normal hit modifiers. Armour mitigation still rolls.
 	var bool GuaranteedHit;
 
 	var bool SetIgnoreCoverBonus;
+	// Ignores the target's high and low cover bonuses.
 	var bool IgnoreCoverBonus;
 
 	var bool SetFinalMultiplier;
+	// Scales the final hit chance after everything else. Appears in the shot breakdown attributed to the ability.
 	var float FinalMultiplier;
 
 	var bool SetBuiltInHitMod;
+	// Flat aim modifier the ability always carries.
 	var int BuiltInHitMod;
 
 	var bool SetBuiltInCritMod;
+	// Flat crit modifier the ability always carries.
 	var int BuiltInCritMod;
 
 	// X2AbilityToHitCalc_PercentChance
 	var bool SetPercentToHit;
+	// Flat percentage chance to hit, ignoring aim entirely. For abilities whose odds are fixed rather than calculated.
 	var int PercentToHit;
 
 	var bool SetNoGameStateOnMiss;
+	// Produces no game state at all on a miss, so nothing is recorded or visualised.
 	var bool NoGameStateOnMiss;
 
 	// X2AbilityToHitCalc_PercentChancePlusFocus
 	var bool SetFocusMultiplier;
+	// Percentage points added to the hit chance per point of Templar focus.
 	var int FocusMultiplier;
 
 	// X2AbilityToHitCalc_PercentChanceWithBuddyZone
 	var bool SetPercentToHitInBuddyZone;
+	// Replaces PercentToHit when the target is inside the buddy zone.
 	var int PercentToHitInBuddyZone;
 
 	// X2AbilityToHitCalc_Hacking
 	var bool SetAlwaysSucceed;
+	// Makes the hack always succeed.
 	var bool AlwaysSucceed;
 
 	// X2AbilityToHitCalc_RollStat, X2AbilityToHitCalc_RollStatTiers
 	var bool SetStatToRoll;
+	// Which unit stat the roll is made against.
 	var ECharStatType StatToRoll;
 
 	var bool SetBaseChance;
+	// Base percentage before the stat is taken into account.
 	var int BaseChance;
 
 	// X2AbilityToHitCalc_StatCheck
 	var bool SetBaseValue;
+	// Base value the stat contest is measured against.
 	var int BaseValue;
 
 	// X2AbilityToHitCalc_StatCheck_UnitVsUnit
 	var bool SetAttackerStat;
+	// Attacker's stat in a unit-versus-unit contest.
 	var ECharStatType AttackerStat;
 
 	var bool SetDefenderStat;
+	// Defender's stat in a unit-versus-unit contest.
 	var ECharStatType DefenderStat;
 
 	var array<AECustomProperty> CustomProperties;
@@ -1848,35 +1896,45 @@ struct TargetStyleEdit
 
 	// X2AbilityTarget_Single
 	var bool SetOnlyIncludeTargetsInsideWeaponRange;
+	// Excludes targets beyond the weapon's range from selection.
 	var bool OnlyIncludeTargetsInsideWeaponRange;
 
 	var bool SetAllowInteractiveObjects;
+	// Lets the ability target interactive objects such as doors and consoles.
 	var bool AllowInteractiveObjects;
 
 	var bool SetAllowDestructibleObjects;
+	// Lets the ability target destructible scenery.
 	var bool AllowDestructibleObjects;
 
 	var bool SetIncludeSelf;
+	// Lets the user target itself.
 	var bool IncludeSelf;
 
 	var bool SetShowAOE;
+	// Draws the area-of-effect preview while aiming.
 	var bool ShowAOE;
 
 	// X2AbilityTarget_Cursor
 	var bool SetRestrictToWeaponRange;
+	// Limits the cursor to the weapon's range.
 	var bool RestrictToWeaponRange;
 
 	var bool SetIncreaseWeaponRange;
+	// Extra range in tiles beyond the weapon's own, when restricted to weapon range.
 	var int IncreaseWeaponRange;
 
 	var bool SetRestrictToSquadsightRange;
+	// Limits the cursor to squadsight range rather than the weapon's.
 	var bool RestrictToSquadsightRange;
 
 	var bool SetFixedAbilityRange;
+	// Fixed range in tiles, ignoring the weapon entirely.
 	var int FixedAbilityRange;
 
 	// X2AbilityTarget_MovingMelee
 	var bool SetMovementRangeAdjustment;
+	// Tiles added to or removed from how far the unit may move to reach a melee target.
 	var int MovementRangeAdjustment;
 
 	var array<AECustomProperty> CustomProperties;
@@ -1890,115 +1948,150 @@ struct MultiTargetStyleEdit
 
 	// X2AbilityMultiTargetStyle (shared)
 	var bool SetAllowSameTarget;
+	// Lets the primary target also be picked up as a multi-target.
 	var bool AllowSameTarget;
 
 	var bool SetUseSourceWeaponLocation;
+	// Measures the area from the shooter's weapon rather than the unit.
 	var bool UseSourceWeaponLocation;
 
 	var bool SetNumTargetsRequired;
+	// Minimum targets that must be in the area for the ability to be usable.
 	var int NumTargetsRequired;
 
 	// X2AbilityMultiTarget_Radius
 	var bool SetUseWeaponRadius;
+	// Takes the radius from the weapon. TargetRadius is then added on top.
 	var bool UseWeaponRadius;
 
 	var bool SetUseWeaponBlockingCoverFlag;
+	// Takes the weapon's setting for whether cover blocks the area.
 	var bool UseWeaponBlockingCoverFlag;
 
 	var bool SetIgnoreBlockingCover;
+	// Lets the area pass through cover that would otherwise block it.
 	var bool IgnoreBlockingCover;
 
 	var bool SetTargetRadius;
+	// Radius of the area in metres. Added to the weapon's radius when UseWeaponRadius is set.
 	var float TargetRadius;
 
 	var bool SetTargetCoveragePercentage;
+	// How much of a tile the area must cover before that tile counts as affected.
 	var float TargetCoveragePercentage;
 
 	var bool SetAddPrimaryTargetAsMultiTarget;
+	// Moves the primary target into the multi-target list, so it is treated as part of the area rather than separately.
 	var bool AddPrimaryTargetAsMultiTarget;
 
 	var bool SetAllowDeadMultiTargetUnits;
+	// Includes already-dead units in the area.
 	var bool AllowDeadMultiTargetUnits;
 
 	var bool SetExcludeSelfAsTargetIfWithinRadius;
+	// Leaves the user out of its own area of effect.
 	var bool ExcludeSelfAsTargetIfWithinRadius;
 
 	// merged by RequiredAbility
 	var ENameArrayEditMode AbilityBonusRadiiMode;
+	// Extra radius granted when the unit has a particular ability, merged by
+	// RequiredAbility. Lets a perk widen the blast without a separate ability.
 	var array<AbilityGrantedBonusRadius> AbilityBonusRadii;
 
 	// X2AbilityMultiTarget_Cone
 	var bool SetConeEndDiameter;
+	// Width of the cone at its far end, in metres.
 	var float ConeEndDiameter;
 
 	var bool SetConeLength;
+	// How far the cone reaches, in metres.
 	var float ConeLength;
 
 	var bool SetUseWeaponRangeForLength;
+	// Takes the cone's length from the weapon's range instead of ConeLength.
 	var bool UseWeaponRangeForLength;
 
 	var bool SetLockShooterZ;
+	// Restricts the cone to tiles at the shooter's own height, so it does not spread up or down floors.
 	var bool LockShooterZ;
 
 	// merged by RequiredAbility
 	var ENameArrayEditMode AbilityBonusConesMode;
+	// Extra cone length and width granted by a particular ability, merged by RequiredAbility.
 	var array<AbilityGrantedBonusCone> AbilityBonusCones;
 
 	// X2AbilityMultiTarget_Line
 	var bool SetTileWidthExtension;
+	// Extra tiles of width added to the line.
 	var int TileWidthExtension;
 
 	var bool SetSightRangeLimited;
+	// Stops the line at the limit of sight.
 	var bool SightRangeLimited;
 
 	// merged by RequiredAbility
 	var ENameArrayEditMode AbilityBonusWidthsMode;
+	// Extra line width granted by a particular ability, merged by RequiredAbility.
 	var array<AbilityGrantedBonusWidth> AbilityBonusWidths;
 
 	// X2AbilityMultiTarget_Cylinder
 	var bool SetTargetHeight;
+	// Height of the cylinder in metres.
 	var float TargetHeight;
 
 	var bool SetUseOnlyGroundTiles;
+	// Restricts the cylinder to ground-level tiles.
 	var bool UseOnlyGroundTiles;
 
 	// X2AbilityMultiTarget_BurstFire
 	var bool SetNumExtraShots;
+	// Additional shots fired at the same target beyond the first.
 	var int NumExtraShots;
 
 	// X2AbilityMultiTarget_AllUnits
 	var bool SetOnlyAllyOfType;
+	// Restricts targeting to allies of this character type.
 	var name OnlyAllyOfType;
 
 	var bool SetAcceptFriendlyUnits;
+	// Includes friendly units.
 	var bool AcceptFriendlyUnits;
 
 	var bool SetAcceptEnemyUnits;
+	// Includes hostile units.
 	var bool AcceptEnemyUnits;
 
 	var bool SetOnlyAcceptRoboticUnits;
+	// Restricts targeting to robotic units.
 	var bool OnlyAcceptRoboticUnits;
 
 	var bool SetOnlyAcceptAlienUnits;
+	// Restricts targeting to aliens.
 	var bool OnlyAcceptAlienUnits;
 
 	var bool SetOnlyAcceptAdventUnits;
+	// Restricts targeting to ADVENT units.
 	var bool OnlyAcceptAdventUnits;
 
 	var bool SetRandomlySelectOne;
+	// Picks a single target at random from everything that qualified.
 	var bool RandomlySelectOne;
 
 	var bool SetDontAcceptNeutralUnits;
+	// Leaves civilians and other neutrals out.
 	var bool DontAcceptNeutralUnits;
 
 	var bool SetRandomChance;
+	// Percentage chance each qualifying unit is actually included.
 	var int RandomChance;
 
 	var bool SetUseAbilitySourceAsPrimaryTarget;
+	// Treats the ability's user as the primary target.
 	var bool UseAbilitySourceAsPrimaryTarget;
 
 	// X2AbilityMultiTarget_ClaymoreRadius
 	var bool SetClaymoreEnvironmentalDamage;
+	// Environmental damage the claymore blast does to scenery.
 	var int ClaymoreEnvironmentalDamage;
 
 	var array<AECustomProperty> CustomProperties;
@@ -2014,27 +2107,35 @@ struct TriggerEdit
 
 	// X2AbilityTrigger_UnitPostBeginPlay
 	var bool SetPriority;
+	// Order this trigger runs in relative to others on the same event. Lower runs first.
 	var int Priority;
 
 	// X2AbilityTrigger_EventListener (ListenerData members; EventFn cannot be set from config)
 	var bool SetListenerEventID;
+	// Event this listener waits for. The handling function can only be assigned in code,
+	// so a listener added purely from config never fires - editing an existing one does.
 	var name ListenerEventID;
 
 	var bool SetListenerDeferral;
+	// When the listener runs relative to the event being processed.
 	var EventListenerDeferral ListenerDeferral;
 
 	var bool SetListenerFilter;
+	// Which units the event is accepted from, such as only the source or only the target.
 	var AbilityEventFilter ListenerFilter;
 
 	var bool SetListenerPriority;
+	// Order among listeners for the same event.
 	var int ListenerPriority;
 
 	// X2AbilityTrigger_Event
 	var bool SetMethodName;
+	// Method on the observer class that the trigger calls.
 	var name MethodName;
 
 	// Class path loaded via DynamicLoadObject
 	var bool SetEventObserverClass;
+	// Class that observes the event. Loaded by name at runtime.
 	var string EventObserverClass;
 
 	var array<AECustomProperty> CustomProperties;
