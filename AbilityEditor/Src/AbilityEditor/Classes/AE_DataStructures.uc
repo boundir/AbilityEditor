@@ -54,6 +54,7 @@ struct AdditionalCooldownEdit
 	var name AbilityName;
 
 	var bool SetNumTurns;
+	// Cooldown applied to that other ability, in turns.
 	var int NumTurns;
 
 	var bool SetUseAbilityCooldownNumTurns;
@@ -144,6 +145,7 @@ struct CooldownEdit
 
 	// Base cooldown parameters
 	var bool SetNumTurns;
+	// Turns the ability is unavailable after use.
 	var int NumTurns;
 
 	var bool SetIgnoreOnHit;
@@ -672,181 +674,277 @@ struct EffectEdit
 
 	// Base effect parameters
 	var bool SetApplyOnHit;
+	// Whether the effect is applied when the ability hits. Most effects want this true;
+	// setting it false is how an effect is made to trigger only on a miss.
 	var bool ApplyOnHit;
 
 	var bool SetApplyOnMiss;
+	// Whether the effect is applied even when the ability misses.
 	var bool ApplyOnMiss;
 
 	var bool SetApplyChance;
+	// Percentage chance the effect applies at all, rolled per target. 0 behaves as
+	// "always", since the roll is only made when a chance is set.
 	var int ApplyChance;
 
 	var bool SetApplyToWorldOnHit;
+	// Whether the effect is applied to the world (tiles, cover, environment) on a hit,
+	// rather than to a unit. Used by fire, smoke, acid and the other world effects.
 	var bool ApplyToWorldOnHit;
 
 	var bool SetApplyToWorldOnMiss;
+	// As ApplyToWorldOnHit, but for a miss. Grenades typically set both, so they still
+	// affect the ground when they scatter.
 	var bool ApplyToWorldOnMiss;
 
 	var bool SetUseSourcePlayerState;
+	// Records the source player on the effect when it is applied, so later logic can tell
+	// whose effect it was. Needed by effects that behave differently for XCOM and the AI.
 	var bool UseSourcePlayerState;
 
 	var bool SetIsImpairing;
+	// Marks the effect as impairing the unit, which fires the impairment event and makes
+	// the unit report as impaired. This is what stuns, panic and disorientation use.
 	var bool IsImpairing;
 
 	var bool SetIsImpairingMomentarily;
+	// Fires the impairment event without leaving the unit flagged as impaired afterwards.
+	// For effects that interrupt an action but do not linger.
 	var bool IsImpairingMomentarily;
 
 	var bool SetBringRemoveVisualizationForward;
+	// Moves this effect's removal visualization earlier in the sequence, taking the whole
+	// context's visualization with it. Used when a removal must be seen before what follows.
 	var bool BringRemoveVisualizationForward;
 
 	var bool SetShowImmunity;
+	// Shows a flyover when the target is immune to this effect. Only when the application
+	// actually failed because of immunity.
 	var bool ShowImmunity;
 
 	var bool SetShowImmunityAnyFailure;
+	// Shows the immunity flyover whenever the effect fails to apply for any reason, not
+	// only immunity. Broader, and noisier, than ShowImmunity.
 	var bool ShowImmunityAnyFailure;
 
 	var bool SetAppliesDamage;
+	// Marks the effect as dealing damage, so it counts towards damage statistics and
+	// raises the generic ability-damage events. Set it on any custom source of damage.
 	var bool AppliesDamage;
 
 	var bool SetCanBeRedirected;
+	// Whether the effect is eligible to be redirected onto another target, by Untouchable,
+	// Bladestorm parries and similar. Leave false for effects that must hit their target.
 	var bool CanBeRedirected;
 
 	var bool SetHideDeathWorldMessage;
+	// Suppresses the usual death message when this effect is what kills the unit, for
+	// deaths that should read as something other than a normal kill.
 	var bool HideDeathWorldMessage;
 
 	var ENameArrayEditMode DamageTypesMode;
+	// Damage types this effect counts as. A unit immune to any type listed here resists the
+	// effect, and cleansing effects look at these types to decide what they can remove.
 	var array<name> DamageTypes;
 
 	// Conditions attached to the effect (X2Effect.TargetConditions)
 	var array<ConditionEdit> TargetConditions;
 
 	var bool SetMinStatContestResult;
+	// For effects resolved by a stat contest: the contest result must be at least this for
+	// the effect to apply. Used to band outcomes, so a stronger roll applies a stronger effect.
 	var int MinStatContestResult;
 
 	var bool SetMaxStatContestResult;
+	// Upper bound of the same stat-contest band. Ignored when it is below
+	// MinStatContestResult.
 	var int MaxStatContestResult;
 
 	var bool SetDelayVisualizationSec;
+	// Seconds to delay this effect's visualization, for sequencing it against the rest of
+	// the ability rather than changing any game state.
 	var float DelayVisualizationSec;
 
 	var bool SetOverrideMissMessage;
+	// Replaces the usual "Miss" flyover with your own text, for abilities where a miss
+	// should read as something else.
 	var string OverrideMissMessage;
 
 	// Option child-class parameters
 	var bool SetNumTurns;
+	// How many turns the effect lasts. Ignored when InfiniteDuration is true.
 	var int NumTurns;
 
 	var bool SetInitialShedChance;
+	// Percentage chance the effect is shed immediately on the first tick, before PerTurnShedChance takes over.
 	var int InitialShedChance;
 
 	var bool SetPerTurnShedChance;
+	// Percentage chance per tick that the effect wears off early. 0 means it only ends
+	// when its turns run out.
 	var int PerTurnShedChance;
 
 	var bool SetEffectRank;
+	// Precedence among effects of the same kind, used by auras so a stronger source
+	// wins over a weaker one.
 	var int EffectRank;
 
 	var bool SetEffectHierarchyValue;
+	// Decides which effect controls the unit’s animation when several apply at once.
+	// The higher value wins.
 	var int EffectHierarchyValue;
 
 	var bool SetVisionArcDegreesOverride;
+	// Narrows the unit’s sight arc to this many degrees. When two effects both set it,
+	// the smaller arc applies.
 	var float VisionArcDegreesOverride;
 
 	var bool SetInfiniteDuration;
+	// The effect never expires on its own. It then only ends through one of the
+	// RemoveWhen... rules below, or by something cleansing it.
 	var bool InfiniteDuration;
 
 	var bool SetTickWhenApplied;
+	// Ticks once the moment it is applied, rather than waiting for the turn to come
+	// round. Damage-over-time effects use this to hurt immediately.
 	var bool TickWhenApplied;
 
 	var bool SetCanTickEveryAction;
+	// Ticks after every action the target takes rather than once a turn, where the
+	// character template supports it.
 	var bool CanTickEveryAction;
 
 	var bool SetConvertTurnsToActions;
+	// When ticking per action, multiplies NumTurns by the actions available per turn,
+	// so a "3 turn" effect still lasts roughly three turns.
 	var bool ConvertTurnsToActions;
 
 	var bool SetRemoveWhenSourceDies;
+	// Removes the effect when whoever applied it dies. Typical for effects sustained
+	// by their caster, such as mind control.
 	var bool RemoveWhenSourceDies;
 
 	var bool SetRemoveWhenTargetDies;
+	// Removes the effect when the affected unit dies, rather than leaving it on the body.
 	var bool RemoveWhenTargetDies;
 
 	var bool SetRemoveWhenSourceDamaged;
+	// Removes the effect as soon as the source takes damage, for concentration-style
+	// effects broken by being hit.
 	var bool RemoveWhenSourceDamaged;
 
 	var bool SetRemoveWhenTargetConcealmentBroken;
+	// Removes the effect when the target loses concealment. Used by effects that only
+	// make sense while hidden.
 	var bool RemoveWhenTargetConcealmentBroken;
 
 	var bool SetPersistThroughTacticalGameEnd;
+	// Keeps the effect on the unit after it leaves play, until the mission ends. Needed
+	// by effects that must still be read when the mission is scored.
 	var bool PersistThroughTacticalGameEnd;
 
 	var bool SetIgnorePlayerCheckOnTick;
+	// Ticks regardless of whose turn it is. Normally an effect only ticks on its owner’s turn.
 	var bool IgnorePlayerCheckOnTick;
 
 	var bool SetUniqueTarget;
+	// Only one target may carry this effect from a given source at a time; applying it
+	// elsewhere removes the earlier one.
 	var bool UniqueTarget;
 
 	var bool SetStackOnRefresh;
+	// Re-applying the effect increments a stack counter instead of simply refreshing
+	// its duration, so effects that grow with repetition can read the count.
 	var bool StackOnRefresh;
 
 	var bool SetDupeForSameSourceOnly;
+	// When checking whether the target already has this effect, only consider copies
+	// from the same source. Lets several units apply their own instance.
 	var bool DupeForSameSourceOnly;
 
 	var bool SetEffectForcesBleedout;
+	// A unit reduced to zero health while under this effect bleeds out instead of dying outright.
 	var bool EffectForcesBleedout;
 
 	var bool SetDisplayInUI;
+	// Whether the effect appears in the unit’s status UI at all. An effect with no
+	// FriendlyName set will show as blank.
 	var bool DisplayInUI;
 
 	var bool SetDisplayInSpecialDamageMessageUI;
+	// Shows FriendlyName in the damage feedback as a distinct source, so its damage
+	// reads separately from the weapon’s.
 	var bool DisplayInSpecialDamageMessageUI;
 
 	var bool SetSourceDisplayInUI;
+	// As DisplayInUI, but for the unit that applied the effect rather than the one carrying it.
 	var bool SourceDisplayInUI;
 
 	var bool SetCustomIdleOverrideAnim;
+	// Idle animation to play while the effect is active, taking over the unit’s normal idle.
 	var name CustomIdleOverrideAnim;
 
 	var bool SetEffectName;
+	// Identifier used when deciding how this effect stacks with others, and the name
+	// other effects use to find or remove it.
 	var name EffectName;
 
 	var bool SetAbilitySourceName;
+	// Which ability this is presented as coming from. Controls how a passive buff is
+	// coloured in the HUD.
 	var name AbilitySourceName;
 
 	var bool SetEffectAppliedEventName;
+	// Event fired when the effect is applied, for listeners and triggered abilities to react to.
 	var name EffectAppliedEventName;
 
 	var bool SetChanceEventTriggerName;
+	// Event fired when the per-turn shed-chance roll succeeds.
 	var name ChanceEventTriggerName;
 
 	var bool SetVFXSocket;
+	// Socket on the unit’s skeleton to attach the particle system to.
 	var name VFXSocket;
 
 	var bool SetVFXSocketsArrayName;
+	// Named array of sockets to attach the particle system to, for effects that appear
+	// in several places at once. Optional.
 	var name VFXSocketsArrayName;
 
 	var bool SetFriendlyName;
+	// Name shown in the unit’s status UI.
 	var string FriendlyName;
 
 	var bool SetFriendlyDescription;
+	// Description shown beneath FriendlyName in the status UI.
 	var string FriendlyDescription;
 
 	var bool SetIconImage;
+	// Path to the status icon shown in the UI.
 	var string IconImage;
 
 	var bool SetSourceFriendlyName;
+	// Name shown on the unit that applied the effect, as opposed to the one carrying it.
 	var string SourceFriendlyName;
 
 	var bool SetSourceFriendlyDescription;
+	// Description shown on the applying unit.
 	var string SourceFriendlyDescription;
 
 	var bool SetSourceIconLabel;
+	// Short label drawn on the applying unit’s icon.
 	var string SourceIconLabel;
 
 	var bool SetStatusIcon;
+	// Path to the small status icon used in condensed UI, alongside IconImage.
 	var string StatusIcon;
 
 	var bool SetVFXTemplateName;
+	// Particle system played on the unit for as long as the effect lasts.
 	var string VFXTemplateName;
 
 	var bool SetPersistentPerkName;
+	// Perk effect played on the unit while this effect is active.
 	var string PersistentPerkName;
 
 	// X2Effect_ApplyWeaponDamage
