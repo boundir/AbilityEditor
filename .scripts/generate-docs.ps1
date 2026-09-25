@@ -466,14 +466,37 @@ foreach ($structName in $StructOrder) {
 $dlcLines = Read-TextFile $DlcInfoFile
 $dlcText = $dlcLines -join "`n"
 
+$Warnings = [System.Collections.Generic.List[string]]::new()
+
 $Registries = @{}
-foreach ($m in [regex]::Matches($dlcText, "(?m)^\s*(\w+Editors)\((\d+)\)\s*=\s*class'(\w+)'")) {
+$registryPattern = "(?m)^\s*(\w+Editors)(?:\((\d+)\)\s*=|\.Add\()\s*class'(\w+)'"
+
+$ordinal = 0
+foreach ($m in [regex]::Matches($dlcText, $registryPattern)) {
     $reg = $m.Groups[1].Value
     if (-not $Registries.ContainsKey($reg)) { $Registries[$reg] = [System.Collections.Generic.List[object]]::new() }
-    $Registries[$reg].Add(@{ Index = [int]$m.Groups[2].Value; Class = $m.Groups[3].Value })
+
+    $indexed = $m.Groups[2].Success
+    $Registries[$reg].Add(@{
+        Indexed  = $indexed
+        Index    = if ($indexed) { [int]$m.Groups[2].Value } else { $ordinal }
+        Ordinal  = $ordinal
+        Class    = $m.Groups[3].Value
+    })
+    $ordinal++
 }
+
 foreach ($reg in @($Registries.Keys)) {
-    $Registries[$reg] = @($Registries[$reg] | Sort-Object { $_.Index } | ForEach-Object { $_.Class })
+    $entries = $Registries[$reg]
+    $indexedCount = @($entries | Where-Object { $_.Indexed }).Count
+
+    if ($indexedCount -gt 0 -and $indexedCount -lt $entries.Count) {
+        $Warnings.Add("Registry $reg mixes Foo(n) = class'...' with Foo.Add(class'...'). Dispatch order follows the numbered entries first, which is unlikely to be what the file reads as.")
+    }
+
+    # Sorting by Index then Ordinal keeps appends in source order, since every append
+    # shares the running ordinal as its index.
+    $Registries[$reg] = @($entries | Sort-Object { $_.Index }, { $_.Ordinal } | ForEach-Object { $_.Class })
 }
 
 $dlcBlocks = Get-FunctionBlockMap $dlcLines
@@ -594,7 +617,6 @@ function Get-DefinerChain {
     return $result.ToArray()
 }
 
-$Warnings = [System.Collections.Generic.List[string]]::new()
 $FamilyModels = [System.Collections.Generic.List[object]]::new()
 
 foreach ($fam in $Curated.Families) {

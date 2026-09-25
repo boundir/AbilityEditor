@@ -142,7 +142,8 @@ static function DispatchConditionEdit(
 
 	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ConditionEditors.Length; ++i)
 	{
-		if (class'X2DLCInfo_AbilityEditor'.default.ConditionEditors[i].static.CanEdit(Condition))
+		if (class'X2DLCInfo_AbilityEditor'.default.ConditionEditors[i] != none &&
+			class'X2DLCInfo_AbilityEditor'.default.ConditionEditors[i].static.CanEdit(Condition))
 		{
 			class'X2DLCInfo_AbilityEditor'.default.ConditionEditors[i].static.ApplyEdit(
 				AbilityName,

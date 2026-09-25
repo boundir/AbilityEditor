@@ -89,7 +89,8 @@ static function DispatchChargesEdit(name AbilityName, X2AbilityCharges AbilityCh
 
 	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ChargesEditors.Length; ++i)
 	{
-		if (class'X2DLCInfo_AbilityEditor'.default.ChargesEditors[i].static.CanEdit(AbilityCharges))
+		if (class'X2DLCInfo_AbilityEditor'.default.ChargesEditors[i] != none &&
+			class'X2DLCInfo_AbilityEditor'.default.ChargesEditors[i].static.CanEdit(AbilityCharges))
 		{
 			class'X2DLCInfo_AbilityEditor'.default.ChargesEditors[i].static.ApplyEdit(AbilityName, AbilityCharges, ChargesEdit);
 			return;

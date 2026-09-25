@@ -101,7 +101,8 @@ static function DispatchTargetStyleEdit(
 
 	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.TargetStyleEditors.Length; ++i)
 	{
-		if (class'X2DLCInfo_AbilityEditor'.default.TargetStyleEditors[i].static.CanEdit(TargetStyle))
+		if (class'X2DLCInfo_AbilityEditor'.default.TargetStyleEditors[i] != none &&
+			class'X2DLCInfo_AbilityEditor'.default.TargetStyleEditors[i].static.CanEdit(TargetStyle))
 		{
 			class'X2DLCInfo_AbilityEditor'.default.TargetStyleEditors[i].static.ApplyEdit(AbilityName, Slot, TargetStyle, TargetStyleEdit);
 			return;

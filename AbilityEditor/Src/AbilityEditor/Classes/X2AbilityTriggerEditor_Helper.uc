@@ -129,7 +129,8 @@ static function DispatchTriggerEdit(
 
 	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.TriggerEditors.Length; ++i)
 	{
-		if (class'X2DLCInfo_AbilityEditor'.default.TriggerEditors[i].static.CanEdit(Trigger))
+		if (class'X2DLCInfo_AbilityEditor'.default.TriggerEditors[i] != none &&
+			class'X2DLCInfo_AbilityEditor'.default.TriggerEditors[i].static.CanEdit(Trigger))
 		{
 			class'X2DLCInfo_AbilityEditor'.default.TriggerEditors[i].static.ApplyEdit(AbilityName, Slot, Trigger, TriggerEdit);
 			return;

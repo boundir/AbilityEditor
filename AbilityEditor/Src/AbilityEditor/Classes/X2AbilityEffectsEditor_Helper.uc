@@ -235,7 +235,8 @@ static function DispatchEffectEdit(
 
 	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.EffectsEditors.Length; ++i)
 	{
-		if (class'X2DLCInfo_AbilityEditor'.default.EffectsEditors[i].static.CanEdit(Effect))
+		if (class'X2DLCInfo_AbilityEditor'.default.EffectsEditors[i] != none &&
+			class'X2DLCInfo_AbilityEditor'.default.EffectsEditors[i].static.CanEdit(Effect))
 		{
 			class'X2DLCInfo_AbilityEditor'.default.EffectsEditors[i].static.ApplyEdit(
 				AbilityName,

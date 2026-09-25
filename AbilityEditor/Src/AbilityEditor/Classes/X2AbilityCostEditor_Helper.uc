@@ -109,7 +109,8 @@ static function DispatchCostEdit(name AbilityName, X2AbilityCost AbilityCost, Co
 
 	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.CostEditors.Length; ++i)
 	{
-		if (class'X2DLCInfo_AbilityEditor'.default.CostEditors[i].static.CanEdit(AbilityCost))
+		if (class'X2DLCInfo_AbilityEditor'.default.CostEditors[i] != none &&
+			class'X2DLCInfo_AbilityEditor'.default.CostEditors[i].static.CanEdit(AbilityCost))
 		{
 			class'X2DLCInfo_AbilityEditor'.default.CostEditors[i].static.ApplyEdit(AbilityName, AbilityCost, CostEdit);
 			return;

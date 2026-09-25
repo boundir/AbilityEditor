@@ -102,7 +102,8 @@ static function DispatchMultiTargetStyleEdit(
 
 	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.MultiTargetStyleEditors.Length; ++i)
 	{
-		if (class'X2DLCInfo_AbilityEditor'.default.MultiTargetStyleEditors[i].static.CanEdit(MultiTargetStyle))
+		if (class'X2DLCInfo_AbilityEditor'.default.MultiTargetStyleEditors[i] != none &&
+			class'X2DLCInfo_AbilityEditor'.default.MultiTargetStyleEditors[i].static.CanEdit(MultiTargetStyle))
 		{
 			class'X2DLCInfo_AbilityEditor'.default.MultiTargetStyleEditors[i].static.ApplyEdit(AbilityName, Slot, MultiTargetStyle, MultiTargetStyleEdit);
 			return;
