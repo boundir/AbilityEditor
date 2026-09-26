@@ -1277,6 +1277,26 @@ struct EffectEdit
 	var bool SetBonusDamage;
 	var int BonusDamage;
 
+	// X2Effect_BondmateAimAdjust
+	var bool SetThreatenedBondmateAimBonus;
+	// Aim bonus, from bond level 2, against a target that threatens the bondmate.
+	var int ThreatenedBondmateAimBonus;
+
+	// X2Effect_BondmateAimAdjust
+	var bool SetBondmateTargetAimBonus;
+	// Aim bonus, from bond level 3, against a target the bondmate attacked since last turn.
+	var int BondmateTargetAimBonus;
+
+	// X2Effect_BondmateAimAdjust
+	var bool SetBondmateTargetCritBonus;
+	// Crit bonus, from bond level 3, against a target the bondmate attacked since last turn.
+	var int BondmateTargetCritBonus;
+
+	// X2Effect_BondmateBleedout
+	var bool SetBleedoutDurationAdjustment;
+	// Turns added to the bleedout duration.
+	var int BleedoutDurationAdjustment;
+
 	// X2Effect_BonusWeaponDamage
 	var bool SetBonusDmg;
 	var int BonusDmg;
@@ -1284,6 +1304,11 @@ struct EffectEdit
 	// X2Effect_Brutal
 	var bool SetWillMod;
 	var int WillMod;
+
+	// X2Effect_CombatStims, X2Effect_Solace
+	var ENameArrayEditMode DamageTypeImmunitiesMode;
+	// Damage types the affected unit is immune to while the effect lasts.
+	var array<name> DamageTypeImmunities;
 
 	// X2Effect_ConditionalDamageModifier
 	var bool SetModifyOutgoingDamage;
@@ -1433,6 +1458,11 @@ struct EffectEdit
 	var bool SetMeleeDamageTypeName;
 	var name MeleeDamageTypeName;
 
+	// X2Effect_MimicBeacon
+	var ENameArrayEditMode AbilitiesAllowedToHitMode;
+	// Abilities that may still target the mimic beacon.
+	var array<name> AbilitiesAllowedToHit;
+
 	// X2Effect_MindControl
 	var bool SetNumTurnsForAI;
 	var int NumTurnsForAI;
@@ -1561,7 +1591,7 @@ struct EffectEdit
 	var ENameArrayEditMode UseAllPointsWithAbilitiesMode;
 	var array<name> UseAllPointsWithAbilities;
 
-	// X2Effect_RunBehaviorTree
+	// X2Effect_RunBehaviorTree, X2Effect_ChryssalidBurrowedAttack
 	var bool SetNumActions;
 	var int NumActions;
 

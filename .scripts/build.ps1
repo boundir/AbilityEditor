@@ -12,6 +12,8 @@ Write-Host "Sourcing $common"
 
 $builder = [BuildProject]::new("AbilityEditor", $srcDirectory, $sdkPath, $gamePath)
 
+$builder.IncludeSrc((Join-Path $srcDirectory "SdkOverlay"))
+
 switch ($config)
 {
     "debug" {

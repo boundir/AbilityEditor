@@ -75,6 +75,7 @@ nav:
   - Contributing:
       - contributing/adding-an-editor.md
       - contributing/doc-coverage.md
+      - contributing/coverage-triage.md
 
 extra:
   social:

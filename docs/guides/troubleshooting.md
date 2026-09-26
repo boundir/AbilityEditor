@@ -59,23 +59,18 @@ ability's old values.
 
 Some things genuinely cannot be edited per ability:
 
-- **The field is `config` on the game class.** It is read from the game's own `.ini`, not from the
-  template, so it is global rather than per-ability. Set it in your own mod's `XComGameCore.ini`
-  instead. For example:
+- **The game reads the field from the class default, not from the ability.** Usually the field is
+  `config` on the game class and read as `default.X`. Editing the template's copy changes nothing,
+  because the game never looks at it. These fields are global by design: set them in your own mod's
+  `XComGameCore.ini` instead. For example:
 
   ```ini
-  [XComGame.X2Effect_BondmateAimAdjust]
-  ThreatenedBondmateAimBonus=10
-  BondmateTargetAimBonus=20
-  BondmateTargetCritBonus=0
-
-  [XComGame.X2Effect_BondmateBleedout]
-  BleedoutDurationAdjustment=2
+  [XComGame.X2Effect_Vengeance]
+  AIM_BASE=10
   ```
 
-- **The field is read via the class default rather than the instance.** Editing the template's copy
-  changes nothing because the game never reads it. These are listed as *not editable* on the
-  relevant reference page, with the reason.
+  The reference pages list them as *not editable*, with the reason;
+  [Why isn't this editable?](../contributing/coverage-triage.md) has the full list.
 
 - **The behaviour lives in native code or in a different config file entirely.** Fire's
   tile-to-tile spread is one of these: it is native, and the only knob is the global
