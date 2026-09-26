@@ -225,45 +225,58 @@ struct ConditionEdit
 
 	// X2Condition_AbilityProperty
 	var ENameArrayEditMode OwnerHasSoldierAbilitiesMode;
+	// Soldier abilities the unit owning the ability must have.
 	var array<name> OwnerHasSoldierAbilities;
 
 	var bool SetTargetMustBeInValidTiles;
+	// Reject targets standing outside the ability's valid tiles.
 	var bool TargetMustBeInValidTiles;
 
 	// X2Condition_AbilitySourceWeapon
 	var bool SetWantsReload;
+	// Fail with AA_AmmoAlreadyFull when the source weapon's clip is already full.
 	var bool WantsReload;
 
 	var bool SetCheckAmmo;
+	// Compare the source weapon's ammo against CheckAmmoData.
 	var bool CheckAmmo;
 
 	var bool SetCheckAmmoData;
+	// The ammo check used when CheckAmmo is true: Value, CheckType, and ValueMin/ValueMax for range checks.
 	var CheckConfig CheckAmmoData;
 
 	var bool SetNotLoadedAmmoInSecondaryWeapon;
+	// Fail when the source weapon is currently loaded as ammo in the secondary weapon.
 	var bool NotLoadedAmmoInSecondaryWeapon;
 
 	var bool SetMatchGrenadeType;
+	// Grenade template the source weapon, or its loaded ammo, must be.
 	var name MatchGrenadeType;
 
 	var bool SetCheckGrenadeFriendlyFire;
+	// Reject friendly targets unless the grenade template allows friendly fire.
 	var bool CheckGrenadeFriendlyFire;
 
 	var bool SetCheckAmmoTechLevel;
+	// Reject the source ammo when it is not valid for the unit's primary weapon.
 	var bool CheckAmmoTechLevel;
 
 	var bool SetMatchWeaponTemplate;
+	// Weapon template the source weapon must be, exact match on its DataName.
 	var name MatchWeaponTemplate;
 
 	// X2Condition_DarkEvent
 	var bool SetStilettoRounds;
+	// Pass only while the Stiletto Rounds dark event is active.
 	var bool StilettoRounds;
 
 	// X2Condition_GameplayTag
 	var bool SetRequiredGameplayTag;
+	// Tactical gameplay tag XCOM HQ must carry for the ability to be valid.
 	var name RequiredGameplayTag;
 
 	var bool SetDisallowGameplayTag;
+	// Tactical gameplay tag that makes the ability invalid while XCOM HQ carries it.
 	var name DisallowGameplayTag;
 
 	// X2Condition_GameTime
@@ -273,368 +286,478 @@ struct ConditionEdit
 
 	// X2Condition_PlayerTurns
 	var bool SetNumTurnsCheck;
+	// Check against the number of turns the target's controlling player has taken.
 	var CheckConfig NumTurnsCheck;
 
 	// X2Condition_UnitActionPoints (merged by ActionPointType)
 	var ENameArrayEditMode ActionPointChecksMode;
+	// Action point checks; passes when any one of them does. Each names an action point type, whether to count reserved points, and the value check.
 	var array<ActionPointCheck> ActionPointChecks;
 
 	// X2Condition_UnitAlertStatus
 	var bool SetRequiredAlertStatusMaximum;
+	// Highest alert level the unit may have. -1 ignores it; the condition fails when both limits are -1.
 	var int RequiredAlertStatusMaximum;
 
 	var bool SetRequiredAlertStatusMinimum;
+	// Lowest alert level the unit may have. -1 ignores it; the condition fails when both limits are -1.
 	var int RequiredAlertStatusMinimum;
 
 	// X2Condition_UnitEffects and its subclasses (merged by EffectName)
 	var ENameArrayEditMode ExcludeEffectsMode;
+	// Effects that reject the unit when present, each with the failure reason to return.
 	var array<EffectReason> ExcludeEffects;
 
 	var ENameArrayEditMode RequireEffectsMode;
+	// Effects that must all be present on the unit, each with the failure reason to return.
 	var array<EffectReason> RequireEffects;
 
 	// X2Condition_UnitImmunities
 	var ENameArrayEditMode ExcludeDamageTypesMode;
+	// Damage types; a unit immune to any of them is rejected.
 	var array<name> ExcludeDamageTypes;
 
 	var bool SetOnlyOnCharacterTemplate;
+	// Consider only the immunities of the unit's character template, not those granted by effects.
 	var bool OnlyOnCharacterTemplate;
 
-	// X2Condition_UnitInteractions
+	// X2Condition_UnitInteractions, X2Condition_Interactive
 	var bool SetInteractionType;
+	// Kind of interaction point the unit must be next to: eInteractionType_Normal or eInteractionType_Hack.
 	var UnitInterationType InteractionType;
 
 	// X2Condition_UnitInventory
 	var bool SetRelevantSlot;
+	// Inventory slot whose item is checked.
 	var EInventorySlot RelevantSlot;
 
 	var bool SetExcludeWeaponCategory;
+	// Weapon category that rejects the unit when the item in RelevantSlot has it.
 	var name ExcludeWeaponCategory;
 
 	var bool SetRequireWeaponCategory;
+	// Weapon category the item in RelevantSlot must have. Fails when the slot is empty.
 	var name RequireWeaponCategory;
 
 	// X2Condition_UnitProperty
 	var bool SetExcludeAlive;
+	// Reject living units.
 	var bool ExcludeAlive;
 
 	var bool SetExcludeDead;
+	// Reject dead units.
 	var bool ExcludeDead;
 
 	var bool SetExcludeRobotic;
+	// Reject robotic units.
 	var bool ExcludeRobotic;
 
 	var bool SetExcludeOrganic;
+	// Reject organic units.
 	var bool ExcludeOrganic;
 
 	var bool SetExcludeCivilian;
+	// Reject units whose character template is civilian, whatever their team.
 	var bool ExcludeCivilian;
 
 	var bool SetExcludeNonCivilian;
+	// Reject units whose character template is not civilian, whatever their team.
 	var bool ExcludeNonCivilian;
 
 	var bool SetExcludeCosmetic;
+	// Reject cosmetic units, such as Gremlins.
 	var bool ExcludeCosmetic;
 
 	var bool SetExcludeImpaired;
+	// Reject impaired units.
 	var bool ExcludeImpaired;
 
 	var bool SetExcludePanicked;
+	// Reject panicked units.
 	var bool ExcludePanicked;
 
 	var bool SetExcludeInStasis;
+	// Reject units in stasis.
 	var bool ExcludeInStasis;
 
 	var bool SetExcludeTurret;
+	// Reject turrets.
 	var bool ExcludeTurret;
 
 	var bool SetExcludePsionic;
+	// Reject psionic units.
 	var bool ExcludePsionic;
 
 	var bool SetExcludeNonPsionic;
+	// Reject non-psionic units.
 	var bool ExcludeNonPsionic;
 
 	var bool SetIsAdvent;
+	// Require an ADVENT unit.
 	var bool IsAdvent;
 
 	var bool SetExcludeAdvent;
+	// Reject ADVENT units.
 	var bool ExcludeAdvent;
 
 	var bool SetExcludeNoCover;
+	// Reject units that are not in cover.
 	var bool ExcludeNoCover;
 
 	var bool SetExcludeNoCoverToSource;
+	// Reject units with no cover between them and the source.
 	var bool ExcludeNoCoverToSource;
 
 	var bool SetExcludeFullHealth;
+	// Reject units at full HP, unless a persistent damage effect listed in MedikitHealEffectTypes is on them.
 	var bool ExcludeFullHealth;
 
 	var bool SetIsBleedingOut;
+	// Require a unit that is bleeding out.
 	var bool IsBleedingOut;
 
 	var bool SetIsUnspotted;
+	// Require a unit that has not been spotted.
 	var bool IsUnspotted;
 
 	var bool SetCanBeCarried;
+	// Require a unit that can be carried.
 	var bool CanBeCarried;
 
 	var bool SetIsOutdoors;
+	// Require a unit standing outdoors.
 	var bool IsOutdoors;
 
 	var bool SetIsConcealed;
+	// Require a concealed unit.
 	var bool IsConcealed;
 
 	var bool SetExcludeConcealed;
+	// Reject concealed units. Only applies to the check without a source; visibility rules normally cover this.
 	var bool ExcludeConcealed;
 
 	var bool SetIsSuperConcealed;
+	// Require a unit in super concealment.
 	var bool IsSuperConcealed;
 
 	var bool SetIsImpaired;
+	// Require an impaired unit.
 	var bool IsImpaired;
 
 	var bool SetHasClearanceToMaxZ;
+	// Require open space above the unit up to the map ceiling.
 	var bool HasClearanceToMaxZ;
 
 	var bool SetExcludeAlien;
+	// Reject alien units.
 	var bool ExcludeAlien;
 
 	var bool SetExcludeNonHumanoidAliens;
+	// Reject aliens that are not humanoid.
 	var bool ExcludeNonHumanoidAliens;
 
 	var bool SetExcludeStunned;
+	// Reject stunned units.
 	var bool ExcludeStunned;
 
 	var bool SetExcludeDazed;
+	// Reject dazed units.
 	var bool ExcludeDazed;
 
 	var bool SetExcludeUnableToAct;
+	// Reject units that are unable to act.
 	var bool ExcludeUnableToAct;
 
 	var bool SetIsPlayerControlled;
+	// Require a player-controlled unit.
 	var bool IsPlayerControlled;
 
 	var bool SetExcludeUnrevealedAI;
+	// Reject AI units that have not been revealed yet.
 	var bool ExcludeUnrevealedAI;
 
 	var bool SetIncludeWeakAgainstTechLikeRobot;
+	// Treat units flagged as weak against tech as robotic for the robotic checks.
 	var bool IncludeWeakAgainstTechLikeRobot;
 
 	var bool SetImpairedIgnoresStuns;
+	// Do not count stuns when deciding whether a unit is impaired.
 	var bool ImpairedIgnoresStuns;
 
 	var bool SetIsScampering;
+	// Require a unit that is currently scampering.
 	var bool IsScampering;
 
 	var bool SetExcludeDeadFromSpecialDeath;
+	// Reject units killed by a special death.
 	var bool ExcludeDeadFromSpecialDeath;
 
 	var bool SetExcludeLargeUnits;
+	// Reject units larger than one tile.
 	var bool ExcludeLargeUnits;
 
 	var bool SetImpairedIgnoresImpairingMomentarily;
+	// Do not count momentary impairment when deciding whether a unit is impaired.
 	var bool ImpairedIgnoresImpairingMomentarily;
 
 	var bool SetMinRank;
+	// Lowest soldier rank allowed.
 	var int MinRank;
 
 	var bool SetMaxRank;
+	// Highest soldier rank allowed.
 	var int MaxRank;
 
 	var ENameArrayEditMode ExcludeSoldierClassesMode;
+	// Soldier classes that reject the unit. Non-soldiers always pass.
 	var array<name> ExcludeSoldierClasses;
 
 	var ENameArrayEditMode RequireSoldierClassesMode;
+	// Soldier classes the unit must be one of, when non-empty. Non-soldiers always fail.
 	var array<name> RequireSoldierClasses;
 
 	var bool SetExcludeHostileToSource;
+	// Reject units hostile to the source.
 	var bool ExcludeHostileToSource;
 
 	var bool SetExcludeFriendlyToSource;
+	// Reject units friendly to the source.
 	var bool ExcludeFriendlyToSource;
 
 	var bool SetTreatMindControlledSquadmateAsHostile;
+	// Count a mind-controlled squadmate as hostile rather than friendly.
 	var bool TreatMindControlledSquadmateAsHostile;
 
 	var bool SetExcludeSquadmates;
+	// Reject units on the same team as the source.
 	var bool ExcludeSquadmates;
 
 	var bool SetRequireSquadmates;
+	// Require the unit to be on the same team as the source.
 	var bool RequireSquadmates;
 
 	var bool SetRequireWithinRange;
+	// Require the unit to be within WithinRange of the source.
 	var bool RequireWithinRange;
 
 	var bool SetWithinRange;
+	// Maximum distance between source and target, in Unreal units. A tile is 96.
 	var float WithinRange;
 
 	var bool SetRequireWithinMinRange;
+	// Require the unit to be within WithinMinRange of the source.
 	var bool RequireWithinMinRange;
 
 	var bool SetWithinMinRange;
+	// Distance for the minimum-range check, in Unreal units. A tile is 96.
 	var float WithinMinRange;
 
 	var bool SetBeingCarriedBySource;
+	// Require a unit currently carried by the source.
 	var bool BeingCarriedBySource;
 
 	var bool SetRequireUnitSelectedFromHQ;
+	// Require a unit that was selected from Headquarters for the mission. XCOM only.
 	var bool RequireUnitSelectedFromHQ;
 
 	var bool SetFailOnNonUnits;
+	// Fail with AA_NotAUnit on non-unit targets instead of passing them through.
 	var bool FailOnNonUnits;
 
 	// X2Condition_UnitStatCheck (merged by StatType)
 	var ENameArrayEditMode CheckStatsMode;
+	// Stat checks that must all pass: the stat, the value check, and whether to compare as a percentage of the stat's maximum.
 	var array<CheckStat> CheckStats;
 
 	// X2Condition_UnitType
 	var ENameArrayEditMode IncludeTypesMode;
+	// Character groups the unit must belong to, when non-empty. Takes precedence over ExcludeTypes.
 	var array<name> IncludeTypes;
 
 	var ENameArrayEditMode ExcludeTypesMode;
+	// Character groups that reject the unit. Ignored while IncludeTypes is non-empty.
 	var array<name> ExcludeTypes;
 
 	// X2Condition_UnitValue (merged by UnitValue)
 	var ENameArrayEditMode CheckValuesMode;
+	// Unit value checks that must all pass: the value name, the value check, and an optional failure code to return instead of the default.
 	var array<CheckValue> CheckValues;
 
 	// X2Condition_Visibility
 	var bool SetNoEnemyViewers;
+	// Fail when any enemy can see the target.
 	var bool NoEnemyViewers;
 
 	var bool SetRequireMatchCoverType;
+	// Require the target to be in the cover type given by TargetCover.
 	var bool RequireMatchCoverType;
 
 	var bool SetRequireNotMatchCoverType;
+	// Require the target not to be in the cover type given by TargetCover.
 	var bool RequireNotMatchCoverType;
 
 	var bool SetTargetCover;
+	// Cover type used by RequireMatchCoverType and RequireNotMatchCoverType.
 	var ECoverType TargetCover;
 
 	var bool SetCannotPeek;
+	// Require the shooter to see the target from its own tile, without peeking.
 	var bool CannotPeek;
 
 	var bool SetRequireLOS;
+	// Require line of sight.
 	var bool RequireLOS;
 
 	var bool SetRequireBasicVisibility;
+	// Require line of sight and range.
 	var bool RequireBasicVisibility;
 
 	var bool SetRequireGameplayVisible;
+	// Require line of sight, range and the situational gameplay-visibility rules.
 	var bool RequireGameplayVisible;
 
 	var bool SetAllowSquadsight;
+	// Accept any squadmate's view of the target if the unit has Squadsight. Overrides RequireGameplayVisible.
 	var bool AllowSquadsight;
 
 	var bool SetActAsSquadsight;
+	// Accept any squadmate's view of the target whether or not the unit has Squadsight. Overrides RequireGameplayVisible.
 	var bool ActAsSquadsight;
 
 	var bool SetVisibleToAnyAlly;
+	// Accept the target when any squadmate can see it, without line of sight from the unit itself. Overrides RequireGameplayVisible.
 	var bool VisibleToAnyAlly;
 
 	var bool SetDisablePeeksOnMovement;
+	// Forbid peeking once the target has moved.
 	var bool DisablePeeksOnMovement;
 
 	var bool SetExcludeGameplayVisible;
+	// Fail when the target has gameplay visibility of the source.
 	var bool ExcludeGameplayVisible;
 
 	var ENameArrayEditMode RequireGameplayVisibleTagsMode;
+	// Visibility tags that must be present on the visibility info, such as concealed or stealthed.
 	var array<name> RequireGameplayVisibleTags;
 
 	// X2Condition_BattleState
 	var bool SetMissionAborted;
+	// Require the mission to have been aborted.
 	var bool MissionAborted;
 
 	// X2Condition_BattleState
 	var bool SetMissionNotAborted;
+	// Require the mission not to have been aborted.
 	var bool MissionNotAborted;
 
 	// X2Condition_BattleState
 	var bool SetCiviliansTargetedByAliens;
+	// Require a mission where aliens target civilians.
 	var bool CiviliansTargetedByAliens;
 
 	// X2Condition_BattleState
 	var bool SetCiviliansNotTargetedByAliens;
+	// Require a mission where aliens do not target civilians.
 	var bool CiviliansNotTargetedByAliens;
 
 	// X2Condition_BattleState
 	var bool SetIncludeTheLostInEngagedCount;
+	// Count the Lost among the engaged enemies.
 	var bool IncludeTheLostInEngagedCount;
 
 	// X2Condition_BattleState
 	var bool SetMinEngagedEnemies;
+	// Fewest engaged enemies required. -1 ignores it.
 	var int MinEngagedEnemies;
 
 	// X2Condition_BattleState
 	var bool SetMaxEngagedEnemies;
+	// Most engaged enemies allowed. -1 ignores it.
 	var int MaxEngagedEnemies;
 
 	// X2Condition_BerserkerDevastatingPunch
 	var bool SetFailOnNonUnitTargets;
+	// Fail with AA_NotAUnit on non-unit targets instead of passing them through.
 	var bool FailOnNonUnitTargets;
 
 	// X2Condition_Bondmate
 	var bool SetMinBondLevel;
+	// Lowest bond level between the two units, inclusive.
 	var int MinBondLevel;
 
 	// X2Condition_Bondmate
 	var bool SetMaxBondLevel;
+	// Highest bond level between the two units, inclusive.
 	var int MaxBondLevel;
 
 	// X2Condition_Bondmate
 	var bool SetRequiresAdjacency;
+	// Whether the bondmates may, must not, or must be adjacent: EAR_AnyAdjacency, EAR_DisallowAdjacency or EAR_RequireAdjacency.
 	var AdjacencyRequirement RequiresAdjacency;
 
 	// X2Condition_Bondmate
 	var bool SetSkipCheckWithSource;
+	// Only check that the source has a bondmate on the mission, not that the target is that bondmate. For self-targeted bondmate abilities.
 	var bool SkipCheckWithSource;
 
 	// X2Condition_HackingTarget
 	var bool SetIntrusionProtocol;
+	// Hack objects at range: needs gameplay visibility of the object instead of an adjacent interaction point.
 	var bool IntrusionProtocol;
 
 	// X2Condition_HackingTarget
 	var bool SetHaywireProtocol;
+	// Target units instead of objects: living, unhacked, robotic enemies the unit sees or has squadsight on.
 	var bool HaywireProtocol;
 
 	// X2Condition_HackingTarget, X2Condition_Interactive
 	var bool SetRequiredAbilityName;
+	// Ability the interactive object must expose. For hacking, empty accepts any object; for a normal interaction it must match exactly.
 	var name RequiredAbilityName;
 
 	// X2Condition_HackingTarget
 	var bool SetMustBeDoor;
+	// Require the object to be a door.
 	var bool MustBeDoor;
 
 	// X2Condition_Lootable
 	var bool SetRestrictRange;
+	// Require the loot to be within LootableRange of the source.
 	var bool RestrictRange;
 
 	// X2Condition_Lootable
 	var bool SetLootableRange;
+	// Maximum distance to the loot, in Unreal units, when RestrictRange is set. A tile is 96.
 	var int LootableRange;
 
 	// X2Condition_OnGroundTile
 	var bool SetNotAFloorTileTag;
+	// Tag of tiles that must not count as ground.
 	var name NotAFloorTileTag;
 
 	// X2Condition_PanicOnPod
 	var bool SetMaxPanicUnitsPerPod;
+	// Most units of an AI pod that may be panicked at once. 0 removes the limit.
 	var int MaxPanicUnitsPerPod;
 
 	// X2Condition_StasisLanceTarget
 	var bool SetHackAbilityName;
+	// Hack ability whose rewards the target must offer, e.g. FinalizeSKULLJACK.
 	var Name HackAbilityName;
 
 	// X2Condition_Stealth
 	var bool SetCheckFlanking;
+	// Fail when any enemy flanks the unit.
 	var bool CheckFlanking;
 
 	// X2Condition_UnblockedNeighborTile
 	var bool SetRequireVisible;
+	// Require a free neighbouring tile the unit could be pulled to, rather than any free neighbouring tile.
 	var bool RequireVisible;
 
 	// X2Condition_MapProperty
 	var ENameArrayEditMode AllowedBiomesMode;
+	// Map biomes the mission must be in, when non-empty.
 	var array<string> AllowedBiomes;
 
 	var array<AECustomProperty> CustomProperties;
