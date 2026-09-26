@@ -1103,72 +1103,94 @@ struct EffectEdit
 
 	// X2Effect_ApplyWeaponDamage
 	var bool SetExplosiveDamage;
+	// Counts the damage as explosive, so explosive-specific rules such as Blast Padding apply.
 	var bool ExplosiveDamage;
 
 	var bool SetIgnoreBaseDamage;
+	// Leave out the weapon's base damage; only the effect's own damage and tagged extra damage apply.
 	var bool IgnoreBaseDamage;
 
 	var bool SetDamageTag;
+	// Tag selecting one of the weapon's ExtraDamage entries and the upgrade bonus damage with the same tag.
 	var name DamageTag;
 
 	var bool SetAlwaysKillsCivilians;
+	// Civilian targets die outright regardless of the damage rolled.
 	var bool AlwaysKillsCivilians;
 
 	var bool SetApplyWorldEffectsForEachTargetLocation;
+	// Apply the ability's world effects at every target location instead of once.
 	var bool ApplyWorldEffectsForEachTargetLocation;
 
 	var bool SetAllowFreeKill;
+	// Let free-kill weapon upgrades, such as the Repeater, trigger on this damage.
 	var bool AllowFreeKill;
 
 	var bool SetAllowWeaponUpgrade;
+	// Let weapon upgrades add their bonus damage.
 	var bool AllowWeaponUpgrade;
 
 	var bool SetBypassShields;
+	// Damage ignores shield HP and goes straight to health.
 	var bool BypassShields;
 
 	var bool SetIgnoreArmor;
+	// Damage ignores armor.
 	var bool IgnoreArmor;
 
 	var bool SetBypassSustainEffects;
+	// Damage ignores sustain effects that would otherwise keep the unit alive.
 	var bool BypassSustainEffects;
 
 	var bool SetEnvironmentalDamageAmount;
+	// Environmental damage dealt to terrain and cover.
 	var int EnvironmentalDamageAmount;
 
+	// Damage the effect adds on its own, on top of the weapon: Damage, Spread, Crit, Pierce, Shred, Rupture, PlusOne, DamageType and Tag.
 	var WeaponDamageValueEdit WeaponDamageValue;
 
 	// X2Effect_PersistentStatChange
 	var EStatChangeMode StatChangeMode;
+	// Stat changes applied while the effect lasts, merged by StatType.
 	var array<StatChangeEdit> StatChange;
 
 	var bool SetCHLForceReapplyOnRefresh;
+	// Re-apply the stat changes when the effect is refreshed. Community Highlander field.
 	var bool CHLForceReapplyOnRefresh;
 
 	// X2AbilityEffectsEditor_DamageImmunity
 	// Maps to X2Effect_DamageImmunity.ImmueTypesAreInclusive (typo is Firaxis's)
 	var bool SetImmuneTypesAreInclusive;
+	// true: immune to the listed damage types only. false: immune to every damage type except the listed ones.
 	var bool ImmuneTypesAreInclusive;
 
 	var bool SetRemoveAfterAttackCount;
+	// Remove the effect after this many attacks against the unit. 0 keeps it.
 	var int RemoveAfterAttackCount;
 
 	var ENameArrayEditMode ImmuneTypesMode;
+	// Damage types the immunity covers, or excludes when ImmuneTypesAreInclusive is false.
 	var array<name> ImmuneTypes;
 
 	// X2Effect_GrantActionPoints
 	var bool SetNumActionPoints;
+	// Action points granted.
 	var int NumActionPoints;
 
 	var bool SetPointType;
+	// Type of action point granted, e.g. standard or move.
 	var name PointType;
 
 	var bool SetApplyOnlyWhenOut;
+	// Grant only when the unit has no standard action points left.
 	var bool ApplyOnlyWhenOut;
 
 	var bool SetSelectUnit;
+	// Select the unit in the tactical UI once the points are granted.
 	var bool SelectUnit;
 
 	var ENameArrayEditMode SkipWithEffectMode;
+	// Effects that, when present on the unit, skip the grant.
 	var array<name> SkipWithEffect;
 
 	// X2Effect_GrantActionPointsWithRecord (merged by UnitValueName)
@@ -1178,128 +1200,166 @@ struct EffectEdit
 
 	// X2Effect_RemoveEffects
 	var ENameArrayEditMode EffectNamesToRemoveMode;
+	// Effect names removed from the target.
 	var array<name> EffectNamesToRemove;
 
 	var bool SetCleanse;
+	// Remove the effects as a cleanse, so whatever they do on wearing off does not trigger.
 	var bool Cleanse;
 
 	var bool SetCheckSource;
+	// Match effects whose source is this effect's target, instead of effects whose target it is.
 	var bool CheckSource;
 
 	var bool SetDoNotVisualize;
+	// Skip the removal visualization, for when another RemoveEffects on the ability already shows it.
 	var bool DoNotVisualize;
 
 	// X2Effect_SetUnitValue
 	var bool SetUnitName;
+	// Unit value written.
 	var name UnitName;
 
 	var bool SetNewValueToSet;
+	// Value written to the unit value.
 	var float NewValueToSet;
 
 	var bool SetCleanupType;
+	// When the unit value is cleared: eCleanup_BeginTurn, eCleanup_BeginTactical, eCleanup_Never or eCleanup_BeginTacticalChain.
 	var EUnitValueCleanup CleanupType;
 
 	// X2Effect_BonusArmor
 	var bool SetArmorMitigationAmount;
+	// Armor points granted while the effect lasts.
 	var int ArmorMitigationAmount;
 
 	// X2Effect_Stunned
 	var bool SetStunLevel;
+	// Action points the stun takes away.
 	var int StunLevel;
 
 	var bool SetSkipAnimation;
+	// Skip the stun animations.
 	var bool SkipAnimation;
 
 	var bool SetStunStartAnimName;
+	// Animation played when the stun starts, if the unit can play it.
 	var name StunStartAnimName;
 
 	var bool SetStunStopAnimName;
+	// Animation played when the stun ends.
 	var name StunStopAnimName;
 
 	var bool SetStunnedTriggerName;
+	// Event fired when the unit is stunned.
 	var name StunnedTriggerName;
 
 	// X2Effect_Sustained
 	var bool SetSustainedAbilityName;
+	// Ability on the source that is fired again once a full turn completes, to keep the effect going.
 	var name SustainedAbilityName;
 
 	var bool SetFragileAmount;
+	// Damage the source may take in a full turn before the effect breaks. 0 never breaks it.
 	var int FragileAmount;
 
 	var ENameArrayEditMode EffectsToRemoveFromSourceMode;
+	// Effects removed from the source when this effect ends.
 	var array<name> EffectsToRemoveFromSource;
 
 	var ENameArrayEditMode EffectsToRemoveFromTargetMode;
+	// Effects removed from the target when this effect ends.
 	var array<name> EffectsToRemoveFromTarget;
 
 	var ENameArrayEditMode RegisterAdditionalEventsLikeImpairMode;
+	// Extra events on the source that end the effect as if the source had become impaired.
 	var array<name> RegisterAdditionalEventsLikeImpair;
 
 	// X2Effect_Vanish
 	var bool SetReasonNotVisible;
+	// Visibility tag given as the reason the vanished unit cannot be seen.
 	var name ReasonNotVisible;
 
 	var bool SetVanishRevealAdditiveAnimName;
+	// Additive animation played on reveal when VanishRevealAnimName is empty.
 	var name VanishRevealAdditiveAnimName;
 
 	var bool SetVanishRevealAnimName;
+	// Animation played when the unit is revealed.
 	var name VanishRevealAnimName;
 
 	var bool SetVanishSyncAnimName;
+	// Additive animation played when the vanished state is visualized from a save.
 	var name VanishSyncAnimName;
 
 	// X2Effect_ReserveActionPoints
 	var bool SetReserveType;
+	// Type of action point reserved.
 	var name ReserveType;
 
 	var bool SetNumPoints;
+	// Number of action points reserved.
 	var int NumPoints;
 
 	// X2Effect_CoveringFire
 	var bool SetAbilityToActivate;
+	// Ability fired when the covering fire check matches.
 	var name AbilityToActivate;
 
 	var bool SetGrantActionPoint;
+	// Reserve action point given to the covering unit when the check matches.
 	var name GrantActionPoint;
 
 	var bool SetMaxPointsPerTurn;
+	// Most times per turn the action point can be granted. 0 or less removes the limit.
 	var int MaxPointsPerTurn;
 
 	var bool SetDirectAttackOnly;
+	// Only match when the unit carrying the effect is attacked directly.
 	var bool DirectAttackOnly;
 
 	var bool SetPreEmptiveFire;
+	// Fire before the attacker's shot resolves instead of after it.
 	var bool PreEmptiveFire;
 
 	var bool SetOnlyDuringEnemyTurn;
+	// Only fire during the enemy turn.
 	var bool OnlyDuringEnemyTurn;
 
 	var bool SetUseMultiTargets;
+	// Fire the ability at the covering unit itself and hit its multi-targets, instead of retaliating at the attacker.
 	var bool UseMultiTargets;
 
 	var bool SetOnlyWhenAttackMisses;
+	// Only fire when the attack missed.
 	var bool OnlyWhenAttackMisses;
 
 	var bool SetSelfTargeting;
+	// The fired ability targets the covering unit itself.
 	var bool SelfTargeting;
 
 	var bool SetActivationPercentChance;
+	// Percent chance the ability fires when the check matches. 0 always fires.
 	var int ActivationPercentChance;
 
 	// X2Effect_PersistentTraversalChange (merged by Traversal)
 	var ENameArrayEditMode TraversalChangesMode;
+	// Traversal types switched on or off while the effect lasts, merged by Traversal.
 	var array<TraversalChange> TraversalChanges;
 
 	// X2Effect_Achilles
 	var bool SetToHitMin;
+	// Lowest hit chance at which the damage multiplier applies.
 	var int ToHitMin;
 
 	// X2Effect_Achilles, X2Effect_AdverseSoldierClasses, X2Effect_Bewildered, X2Effect_Impatient, X2Effect_Nearsighted, X2Effect_Oblivious
 	var bool SetDmgMod;
+	// Multiplier applied to the damage when the effect's condition is met.
 	var float DmgMod;
 
 	// X2Effect_AdverseSoldierClasses
 	var ENameArrayEditMode AdverseClassesMode;
+	// Soldier classes whose attacks trigger the damage multiplier.
 	var array<name> AdverseClasses;
 
 	// X2Effect_AlertTheLost
@@ -1309,10 +1369,12 @@ struct EffectEdit
 
 	// X2Effect_Amplify
 	var bool SetBonusDamageMult;
+	// Fraction of the damage added as bonus.
 	var float BonusDamageMult;
 
 	// X2Effect_Amplify
 	var bool SetMinBonusDamage;
+	// Smallest bonus damage applied, when the fraction comes out lower.
 	var int MinBonusDamage;
 
 	// X2Effect_ApplyAcidToWorld
@@ -1377,70 +1439,87 @@ struct EffectEdit
 
 	// X2Effect_ApplyDirectionalWorldDamage
 	var bool SetDamageTypeTemplateName;
+	// Damage type of the environmental damage.
 	var name DamageTypeTemplateName;
 
 	// X2Effect_ApplyDirectionalWorldDamage
 	var bool SetPlusNumZTiles;
+	// Extra tiles of height hit above the affected tile.
 	var int PlusNumZTiles;
 
 	// X2Effect_ApplyDirectionalWorldDamage
 	var bool SetUseWeaponEnvironmentalDamage;
+	// Use the source weapon's environmental damage instead of EnvironmentalDamageAmount.
 	var bool UseWeaponEnvironmentalDamage;
 
 	// X2Effect_ApplyDirectionalWorldDamage
 	var bool SetUseWeaponDamageType;
+	// Use the source weapon's damage type instead of DamageTypeTemplateName.
 	var bool UseWeaponDamageType;
 
 	// X2Effect_ApplyDirectionalWorldDamage
 	var bool SetHitSourceTile;
+	// Apply the damage at the source's tile.
 	var bool HitSourceTile;
 
 	// X2Effect_ApplyDirectionalWorldDamage
 	var bool SetHitTargetTile;
+	// Apply the damage at the target's tile.
 	var bool HitTargetTile;
 
 	// X2Effect_ApplyDirectionalWorldDamage
 	var bool SetHitAdjacentDestructibles;
+	// Also damage destructibles adjacent to the hit tile along the damage direction.
 	var bool HitAdjacentDestructibles;
 
 	// X2Effect_ApplyDirectionalWorldDamage
 	var bool SetAllowDestructionOfDamageCauseCover;
+	// When a unit caused the damage, allow it to destroy that unit's own cover, which is normally protected.
 	var bool AllowDestructionOfDamageCauseCover;
 
 	// X2Effect_ApplyFireToWorld
 	var bool SetFireChance_Level1;
+	// Weight of a level 1 fire when rolling the intensity of new fires; relative to the other two levels.
 	var float FireChance_Level1;
 
 	// X2Effect_ApplyFireToWorld
 	var bool SetFireChance_Level2;
+	// Weight of a level 2 fire when rolling the intensity of new fires; relative to the other two levels.
 	var float FireChance_Level2;
 
 	// X2Effect_ApplyFireToWorld
 	var bool SetFireChance_Level3;
+	// Weight of a level 3 fire when rolling the intensity of new fires; relative to the other two levels.
 	var float FireChance_Level3;
 
 	// X2Effect_ApplyFireToWorld
 	var bool SetUseFireChanceLevel;
+	// Roll the fire intensity from the three FireChance weights instead of using the default.
 	var bool UseFireChanceLevel;
 
 	// X2Effect_ApplyFireToWorld
 	var bool SetDamageFragileOnly;
+	// Only damage fragile objects.
 	var bool DamageFragileOnly;
 
 	// X2Effect_ApplyFireToWorld
 	var bool SetCheckForLOSFromTargetLocation;
+	// Only set tiles on fire that are visible from the target location.
 	var bool CheckForLOSFromTargetLocation;
 
 	// X2Effect_ApplyMedikitHeal
 	var bool SetPerUseHP;
+	// HP healed per application.
 	var int PerUseHP;
 
 	// X2Effect_ApplyMedikitHeal
 	var bool SetIncreasedHealProject;
+	// Research that, once completed, switches the heal to IncreasedPerUseHP.
 	var name IncreasedHealProject;
 
 	// X2Effect_ApplyMedikitHeal
 	var bool SetIncreasedPerUseHP;
+	// HP healed per application once IncreasedHealProject is researched.
 	var int IncreasedPerUseHP;
 
 	// X2Effect_ApplyPoisonToWorld
@@ -1455,30 +1534,37 @@ struct EffectEdit
 
 	// X2Effect_APRounds
 	var bool SetPierce;
+	// Armor pierced.
 	var int Pierce;
 
 	// X2Effect_APRounds, X2Effect_TalonRounds
 	var bool SetCritChance;
+	// Crit chance added.
 	var int CritChance;
 
 	// X2Effect_APRounds, X2Effect_TalonRounds
 	var bool SetCritDamage;
+	// Crit damage added.
 	var int CritDamage;
 
 	// X2Effect_Aura
 	var ENameArrayEditMode EventsToUpdateMode;
+	// Events that make the aura re-evaluate which units it covers.
 	var array<name> EventsToUpdate;
 
 	// X2Effect_Bewildered
 	var bool SetNumHitsForMod;
+	// Hits taken in the turn before the damage multiplier applies.
 	var int NumHitsForMod;
 
 	// X2Effect_BlastPadding
 	var bool SetExplosiveDamageReduction;
+	// Fraction of explosive damage removed.
 	var float ExplosiveDamageReduction;
 
 	// X2Effect_BloodTrail, X2Effect_HuntersInstinctDamage, X2Effect_VolatileMix
 	var bool SetBonusDamage;
+	// Bonus damage added when the effect's condition is met.
 	var int BonusDamage;
 
 	// X2Effect_BondmateAimAdjust
@@ -1503,10 +1589,12 @@ struct EffectEdit
 
 	// X2Effect_BonusWeaponDamage
 	var bool SetBonusDmg;
+	// Bonus damage added to the weapon's damage.
 	var int BonusDmg;
 
 	// X2Effect_Brutal
 	var bool SetWillMod;
+	// Change applied to the target's current Will; negative lowers it.
 	var int WillMod;
 
 	// X2Effect_CombatStims, X2Effect_Solace
@@ -1516,18 +1604,22 @@ struct EffectEdit
 
 	// X2Effect_ConditionalDamageModifier
 	var bool SetModifyOutgoingDamage;
+	// Apply to damage the unit deals.
 	var bool ModifyOutgoingDamage;
 
 	// X2Effect_ConditionalDamageModifier
 	var bool SetModifyIncomingDamage;
+	// Apply to damage the unit takes.
 	var bool ModifyIncomingDamage;
 
 	// X2Effect_ConditionalDamageModifier
 	var bool SetDamageModifier;
+	// Damage multiplier; 1.0 leaves the damage unchanged.
 	var float DamageModifier;
 
 	// X2Effect_ConditionalDamageModifier
 	var bool SetDamageBonus;
+	// Flat damage added after the multiplier.
 	var int DamageBonus;
 
 	// X2Effect_DeadeyeDamage
@@ -1537,10 +1629,12 @@ struct EffectEdit
 
 	// X2Effect_DelayedAbilityActivation, X2Effect_FaceMultiRoundTarget, X2Effect_TriggerEvent
 	var bool SetTriggerEventName;
+	// Event the effect fires.
 	var name TriggerEventName;
 
 	// X2Effect_EnableGlobalAbility
 	var bool SetGlobalAbility;
+	// Global ability switched on for the rest of the battle.
 	var name GlobalAbility;
 
 	// X2Effect_Fortress
@@ -1550,126 +1644,157 @@ struct EffectEdit
 
 	// X2Effect_GenerateCover
 	var bool SetCoverType;
+	// Cover the unit provides to others: none, low or high (ECoverForceFlag).
 	var ECoverForceFlag CoverType;
 
 	// X2Effect_GenerateCover
 	var bool SetRemoveWhenMoved;
+	// Remove the effect when the unit moves.
 	var bool RemoveWhenMoved;
 
 	// X2Effect_GenerateCover
 	var bool SetRemoveOnOtherActivation;
+	// Remove the effect when the unit activates another ability.
 	var bool RemoveOnOtherActivation;
 
 	// X2Effect_GetOverHere
 	var bool SetOverrideStartAnimName;
+	// Animation played on the pulled unit at the start, when set.
 	var Name OverrideStartAnimName;
 
 	// X2Effect_GetOverHere
 	var bool SetOverrideStopAnimName;
+	// Animation played on the pulled unit at the end, when set.
 	var Name OverrideStopAnimName;
 
 	// X2Effect_GetOverHere
 	var bool SetRequireVisibleTile;
+	// Only pull to a neighbouring tile the target can be bound to; otherwise any free neighbouring tile will do.
 	var bool RequireVisibleTile;
 
 	// X2Effect_Groundling
 	var bool SetHeightBonus;
+	// Extra aim an attacker gets when it has height advantage over the affected unit.
 	var int HeightBonus;
 
 	// X2Effect_Guardian
 	var ENameArrayEditMode AllowedAbilitiesMode;
+	// Abilities that can trigger the extra reaction shot.
 	var array<name> AllowedAbilities;
 
 	// X2Effect_Guardian
 	var bool SetProcChance;
+	// Percent chance of the extra reaction shot.
 	var int ProcChance;
 
 	// X2Effect_HoloTarget, X2Effect_SmokeGrenade
 	var bool SetHitMod;
+	// Hit chance modifier applied.
 	var int HitMod;
 
 	// X2Effect_HolyWarriorDeath
 	var bool SetDelayTimeS;
+	// Seconds before the death is visualized.
 	var float DelayTimeS;
 
 	// X2Effect_HomingMine
 	var bool SetAbilityToTrigger;
+	// Ability fired when the mine goes off.
 	var name AbilityToTrigger;
 
 	// X2Effect_HuntersInstinctDamage
 	var bool SetBonusCritChance;
+	// Crit chance added when the effect's condition is met.
 	var int BonusCritChance;
 
 	// X2Effect_ImmediateAbilityActivation
 	var bool SetAbilityName;
+	// Ability fired by the effect.
 	var name AbilityName;
 
 	// X2Effect_ImmediateAbilityActivation
 	var bool SetActivateAbilityOnTarget;
+	// Find and fire the ability on the target instead of the source.
 	var bool ActivateAbilityOnTarget;
 
 	// X2Effect_ImmediateAbilityActivation
 	var bool SetEffectTargetOnly;
+	// Fire only against the effect's target; false fires against every available target.
 	var bool EffectTargetOnly;
 
 	// X2Effect_Implacable
 	var bool SetImplacableThisTurnValue;
+	// Unit value that records Implacable already triggered this turn.
 	var name ImplacableThisTurnValue;
 
 	// X2Effect_IncreaseBondmateCohesion
 	var bool SetCohesionAmount;
+	// Cohesion added between the unit and its bondmate.
 	var int CohesionAmount;
 
 	// X2Effect_KineticPlating
 	var bool SetShieldPerMiss;
+	// Shield HP gained each time an attack misses the unit.
 	var int ShieldPerMiss;
 
 	// X2Effect_Knockback
 	var bool SetKnockbackDistance;
+	// Distance the unit is knocked back, in meters.
 	var int KnockbackDistance;
 
 	// X2Effect_Knockback
 	var bool SetKnockbackDestroysNonFragile;
+	// Let the knocked-back unit destroy non-fragile objects it hits.
 	var bool KnockbackDestroysNonFragile;
 
 	// X2Effect_Knockback
 	var bool SetOverrideRagdollFinishTimerSec;
+	// Seconds before the ragdoll settles. Negative keeps the default.
 	var float OverrideRagdollFinishTimerSec;
 
 	// X2Effect_Knockback
 	var bool SetOnlyOnDeath;
+	// Only knock back units the attack kills.
 	var bool OnlyOnDeath;
 
 	// X2Effect_LaserSight
 	var bool SetBenefitFromEmpoweredUpgrades;
+	// Increase the crit bonus when XCOM has empowered weapon upgrades. Community Highlander field.
 	var bool BenefitFromEmpoweredUpgrades;
 
 	// X2Effect_LaserSight
 	var bool SetCritBonus;
+	// Crit chance added on top of the distance-based bonus.
 	var int CritBonus;
 
 	// X2Effect_LifeSteal
 	var bool SetLifeAmountMultiplier;
+	// Multiplier on the health stolen. 0 leaves the amount unchanged.
 	var float LifeAmountMultiplier;
 
 	// X2Effect_MarkValidActivationTiles
 	var bool SetAbilityToMark;
+	// Ability whose valid activation tiles are marked.
 	var name AbilityToMark;
 
 	// X2Effect_MarkValidActivationTiles
 	var bool SetOnlyUseTargetLocation;
+	// Mark only the target location, ignoring the ability's multi-target area.
 	var bool OnlyUseTargetLocation;
 
 	// X2Effect_MarkValidActivationTiles
 	var bool SetVisualizeFlagsOnCursor;
+	// Show the marked tiles on the targeting cursor.
 	var bool VisualizeFlagsOnCursor;
 
 	// X2Effect_MeleeDamageAdjust
 	var bool SetDamageMod;
+	// Damage added to attacks of the melee damage type.
 	var int DamageMod;
 
 	// X2Effect_MeleeDamageAdjust
 	var bool SetMeleeDamageTypeName;
+	// Damage type that counts as melee for the adjustment.
 	var name MeleeDamageTypeName;
 
 	// X2Effect_MimicBeacon
@@ -1679,22 +1804,27 @@ struct EffectEdit
 
 	// X2Effect_MindControl
 	var bool SetNumTurnsForAI;
+	// Turns the control lasts when an AI player is the controller. 0 uses the effect's normal duration.
 	var int NumTurnsForAI;
 
 	// X2Effect_ModifyInitiativeOrder
 	var bool SetRemoveGroupFromInitiativeOrder;
+	// Remove the unit's group from the initiative order.
 	var bool RemoveGroupFromInitiativeOrder;
 
 	// X2Effect_ModifyInitiativeOrder
 	var bool SetAddGroupToInitiativeOrder;
+	// Add the unit's group to the initiative order.
 	var bool AddGroupToInitiativeOrder;
 
 	// X2Effect_ModifyReactionFire
 	var bool SetAllowCrit;
+	// Allow reaction fire to crit.
 	var bool AllowCrit;
 
 	// X2Effect_ModifyReactionFire
 	var bool SetReactionModifier;
+	// Aim modifier applied to reaction fire.
 	var int ReactionModifier;
 
 	// X2Effect_ModifyStatCheckSuccesses (merged by AbilityName)
@@ -1704,14 +1834,17 @@ struct EffectEdit
 
 	// X2Effect_ModifyTemplarFocus
 	var bool SetModifyFocus;
+	// Focus points added; negative removes them.
 	var int ModifyFocus;
 
 	// X2Effect_Needle
 	var bool SetArmorPierce;
+	// Armor pierced.
 	var int ArmorPierce;
 
 	// X2Effect_Obsessed
 	var bool SetObsessedTargetValueName;
+	// Unit value holding the object ID of the obsessed-over target.
 	var Name ObsessedTargetValueName;
 
 	// X2Effect_OverrideDeathAction
@@ -1721,14 +1854,17 @@ struct EffectEdit
 
 	// X2Effect_OverrideDeathAnimOnLoad
 	var bool SetOverrideAnimNameOnLoad;
+	// Death animation shown for the unit when a save is loaded.
 	var name OverrideAnimNameOnLoad;
 
 	// X2Effect_PaleHorse
 	var bool SetCritBoostPerKill;
+	// Crit chance gained per kill.
 	var int CritBoostPerKill;
 
 	// X2Effect_PaleHorse
 	var bool SetMaxCritBoost;
+	// Cap on the accumulated crit chance.
 	var int MaxCritBoost;
 
 	// X2Effect_ParthenogenicPoison
@@ -1741,26 +1877,32 @@ struct EffectEdit
 
 	// X2Effect_ParthenogenicPoison, X2Effect_SpawnPsiZombie
 	var bool SetAltUnitToSpawnName;
+	// Character template spawned instead of the usual one, when set.
 	var name AltUnitToSpawnName;
 
 	// X2Effect_PersistentSquadViewer
 	var bool SetUseWeaponRadius;
+	// Use the source weapon's radius as the sight radius. Requires a source weapon.
 	var bool UseWeaponRadius;
 
 	// X2Effect_PersistentSquadViewer
 	var bool SetViewRadius;
+	// Sight radius of the viewer.
 	var float ViewRadius;
 
 	// X2Effect_PersistentSquadViewer
 	var bool SetUseSourceLocation;
+	// Place the viewer at the source's location rather than the target's.
 	var bool UseSourceLocation;
 
 	// X2Effect_PersistentVoidConduit
 	var bool SetInitialDamage;
+	// Damage dealt when the effect is applied.
 	var int InitialDamage;
 
 	// X2Effect_Possessed
 	var bool SetWeaponTemplateName;
+	// Item template equipped on the possessed unit.
 	var name WeaponTemplateName;
 
 	// X2Effect_Reaper
@@ -1773,62 +1915,77 @@ struct EffectEdit
 
 	// X2Effect_ReduceCooldowns
 	var bool SetAmount;
+	// Turns taken off each cooldown.
 	var int Amount;
 
 	// X2Effect_ReduceCooldowns
 	var bool SetReduceAll;
+	// Clear the cooldowns entirely instead of reducing them by Amount.
 	var bool ReduceAll;
 
 	// X2Effect_ReduceCooldowns
 	var ENameArrayEditMode AbilitiesToTickMode;
+	// Abilities whose cooldowns are reduced. Empty means every ability.
 	var array<name> AbilitiesToTick;
 
 	// X2Effect_Regeneration
 	var bool SetHealAmount;
+	// HP healed per tick.
 	var int HealAmount;
 
 	// X2Effect_Regeneration
 	var bool SetMaxHealAmount;
+	// Total HP the effect may heal, tracked in HealthRegeneratedName. 0 removes the cap.
 	var int MaxHealAmount;
 
 	// X2Effect_Regeneration
 	var bool SetHealthRegeneratedName;
+	// Unit value that accumulates the HP healed so far, for the MaxHealAmount cap.
 	var name HealthRegeneratedName;
 
 	// X2Effect_Regeneration
 	var bool SetEventToTriggerOnHeal;
+	// Event fired after each heal.
 	var name EventToTriggerOnHeal;
 
 	// X2Effect_RemoteStart
 	var bool SetUnitDamageMultiplier;
+	// Multiplier on the damage the detonated object deals to units.
 	var float UnitDamageMultiplier;
 
 	// X2Effect_RemoteStart
 	var bool SetDamageRadiusMultiplier;
+	// Multiplier on the detonation's damage radius.
 	var float DamageRadiusMultiplier;
 
 	// X2Effect_RemoveEffectsByDamageType
 	var ENameArrayEditMode DamageTypesToRemoveMode;
+	// Effects carrying any of these damage types are removed.
 	var array<name> DamageTypesToRemove;
 
 	// X2Effect_ReserveOverwatchPoints
 	var ENameArrayEditMode UseAllPointsWithAbilitiesMode;
+	// Abilities that, when the unit has any of them, reserve as many points as were spent instead of NumPoints.
 	var array<name> UseAllPointsWithAbilities;
 
 	// X2Effect_RunBehaviorTree, X2Effect_ChryssalidBurrowedAttack
 	var bool SetNumActions;
+	// Number of behavior tree actions the unit runs.
 	var int NumActions;
 
 	// X2Effect_RunBehaviorTree
 	var bool SetBehaviorTreeName;
+	// Behavior tree run on the unit.
 	var name BehaviorTreeName;
 
 	// X2Effect_RunBehaviorTree
 	var bool SetInitFromPlayer;
+	// Reset the behavior tree variables on each run as if the player turn were starting.
 	var bool InitFromPlayer;
 
 	// X2Effect_RunBehaviorTree
 	var bool SetSetActionPointCount;
+	// Standard action points given to the unit before the tree runs.
 	var int SetActionPointCount;
 
 	// X2Effect_ScanningProtocol
@@ -1837,138 +1994,172 @@ struct EffectEdit
 
 	// X2Effect_Shattered
 	var bool SetShatteredTargetValueName;
+	// Unit value holding the object ID of the unit that shattered the target.
 	var Name ShatteredTargetValueName;
 
 	// X2Effect_SoulSteal
 	var bool SetUnitValueToRead;
+	// Unit value read to find how much health to steal.
 	var name UnitValueToRead;
 
 	// X2Effect_SpawnDestructible
 	var bool SetDestructibleArchetype;
+	// Archetype path of the destructible actor spawned.
 	var string DestructibleArchetype;
 
 	// X2Effect_SpawnDestructible
 	var bool SetDestroyOnRemoval;
+	// Destroy the spawned actor when the effect is removed.
 	var bool DestroyOnRemoval;
 
 	// X2Effect_SpawnDestructible
 	var bool SetTargetableBySpawnedTeamOnly;
+	// Only the team that spawned the actor can target it.
 	var bool TargetableBySpawnedTeamOnly;
 
 	// X2Effect_SpawnPsiZombie
 	var bool SetAnimationName;
+	// Reanimation animation played on the corpse.
 	var name AnimationName;
 
 	// X2Effect_SpawnPsiZombie
 	var bool SetStartAnimationMinDelaySec;
+	// Shortest delay, in seconds, before the reanimation animation starts.
 	var float StartAnimationMinDelaySec;
 
 	// X2Effect_SpawnPsiZombie
 	var bool SetStartAnimationMaxDelaySec;
+	// Longest delay, in seconds, before the reanimation animation starts.
 	var float StartAnimationMaxDelaySec;
 
 	// X2Effect_SpawnShadowbindUnit
 	var bool SetShadowbindUnconciousCheckName;
+	// Unit value checked to tell whether the shadowbound unit was unconscious.
 	var name ShadowbindUnconciousCheckName;
 
 	// X2Effect_SpawnUnit
 	var bool SetUnitToSpawnName;
+	// Character template of the unit spawned.
 	var name UnitToSpawnName;
 
 	// X2Effect_SpawnUnit
 	var bool SetClearTileBlockedByTargetUnitFlag;
+	// Spawn on the target's own tile.
 	var bool ClearTileBlockedByTargetUnitFlag;
 
 	// X2Effect_SpawnUnit
 	var bool SetCopyTargetAppearance;
+	// Give the spawned unit the target's appearance. Takes precedence over CopySourceAppearance.
 	var bool CopyTargetAppearance;
 
 	// X2Effect_SpawnUnit
 	var bool SetCopySourceAppearance;
+	// Give the spawned unit the source's appearance.
 	var bool CopySourceAppearance;
 
 	// X2Effect_SpawnUnit
 	var bool SetKnockbackAffectsSpawnLocation;
+	// Spawn where the target ended up after knockback rather than where it was hit.
 	var bool KnockbackAffectsSpawnLocation;
 
 	// X2Effect_SpawnUnit
 	var bool SetAddToSourceGroup;
+	// Put the spawned unit in the source's AI group.
 	var bool AddToSourceGroup;
 
 	// X2Effect_SpawnUnit
 	var bool SetCopyReanimatedFromUnit;
+	// Copy the reanimated unit's inventory and abilities too, not just its appearance.
 	var bool CopyReanimatedFromUnit;
 
 	// X2Effect_SpawnUnit
 	var bool SetCopyReanimatedStatsFromUnit;
+	// Copy the reanimated unit's stats.
 	var bool CopyReanimatedStatsFromUnit;
 
 	// X2Effect_SpawnUnit
 	var bool SetSetProcessedScamperAs;
+	// Mark the spawned unit's group as having already scampered, so it does not reveal and scamper on sight.
 	var bool SetProcessedScamperAs;
 
 	// X2Effect_Spotted
 	var bool SetBecomeUnspotted;
+	// Mark the unit as unspotted instead of spotted.
 	var bool BecomeUnspotted;
 
 	// X2Effect_Stasis
 	var bool SetStunStartAnim;
+	// Animation played when stasis starts.
 	var name StunStartAnim;
 
 	// X2Effect_Stasis
 	var bool SetStunStopAnim;
+	// Animation played when stasis ends.
 	var name StunStopAnim;
 
 	// X2Effect_Stasis
 	var bool SetSkipFlyover;
+	// Skip the flyover text.
 	var bool SkipFlyover;
 
 	// X2Effect_Stasis
 	var bool SetStartAnimBlendTime;
+	// Blend time, in seconds, into the start animation.
 	var float StartAnimBlendTime;
 
 	// X2Effect_SuperConcealModifier
 	var bool SetConcealAmountScalar;
+	// Multiplier on the base chance of losing super concealment, added to the modifier.
 	var float ConcealAmountScalar;
 
 	// X2Effect_SuperConcealModifier
 	var ENameArrayEditMode AbilitiesAffectedFilterMode;
+	// Abilities the modifier applies to. Empty means every ability.
 	var array<name> AbilitiesAffectedFilter;
 
 	// X2Effect_SuperConcealModifier
 	var ENameArrayEditMode RemoveOnAbilityActivationMode;
+	// Abilities whose activation removes the effect.
 	var array<name> RemoveOnAbilityActivation;
 
 	// X2Effect_SuspendMissionTimer
 	var bool SetResumeMissionTimer;
+	// Resume the mission timer instead of suspending it.
 	var bool ResumeMissionTimer;
 
 	// X2Effect_TalonRounds
 	var bool SetAimMod;
+	// Aim added.
 	var int AimMod;
 
 	// X2Effect_TargetDamageDistanceBonus, X2Effect_TargetDamageTypeBonus
 	var bool SetBonusDmgFloat;
+	// Bonus damage: a flat amount with MODOP_Addition, or a multiplier on the damage with MODOP_Multiplication.
 	var float BonusDmgFloat;
 
 	// X2Effect_TargetDamageDistanceBonus, X2Effect_TargetDamageTypeBonus
 	var bool SetBonusModType;
+	// How BonusDmgFloat is applied: MODOP_Addition or MODOP_Multiplication.
 	var EStatModOp BonusModType;
 
 	// X2Effect_TargetDamageDistanceBonus
 	var bool SetWithinTileDistance;
+	// Farthest distance to the target, in tiles, at which the bonus applies.
 	var int WithinTileDistance;
 
 	// X2Effect_TargetDamageDistanceBonus
 	var bool SetPrimaryTargetOnly;
+	// Only apply to the attack's primary target.
 	var bool PrimaryTargetOnly;
 
 	// X2Effect_TargetDamageTypeBonus
 	var ENameArrayEditMode BonusDamageTypesMode;
+	// Damage types the bonus applies to.
 	var array<name> BonusDamageTypes;
 
 	// X2Effect_ThreatAssessment
 	var bool SetImmediateActionPoint;
+	// Reserve action point given to the target as soon as the effect is applied.
 	var name ImmediateActionPoint;
 
 	// X2Effect_TemplarFocus (merged by position: entry N is focus level N)
@@ -1978,50 +2169,62 @@ struct EffectEdit
 
 	// X2Effect_ToHitModifier
 	var bool SetApplyAsTarget;
+	// Apply the modifiers to attacks against the unit rather than attacks it makes.
 	var bool ApplyAsTarget;
 
 	// X2Effect_TrackingShotMarkTarget
 	var bool SetConeLength;
+	// Length of the marked cone from the source to the target.
 	var float ConeLength;
 
 	// X2Effect_TrackingShotMarkTarget
 	var bool SetConeEndDiameter;
+	// Diameter of the marked cone at its far end.
 	var float ConeEndDiameter;
 
 	// X2Effect_TriggerEvent
 	var bool SetPassTargetAsSource;
+	// Fire the event with the target as its source.
 	var bool PassTargetAsSource;
 
 	// X2Effect_TurnStartActionPoints
 	var bool SetActionPointType;
+	// Type of action point added, or removed, at the start of the turn.
 	var name ActionPointType;
 
 	// X2Effect_TurnStartActionPoints
 	var bool SetActionPointsRemoved;
+	// Remove the action points instead of adding them.
 	var bool ActionPointsRemoved;
 
 	// X2Effect_VanishingWind
 	var bool SetMovingVanishRevealAdditiveAnimName;
+	// Additive animation played on reveal when the unit is revealed while moving.
 	var name MovingVanishRevealAdditiveAnimName;
 
 	// X2Effect_VoidConduit
 	var bool SetDamagePerAction;
+	// Damage dealt for each action point stolen.
 	var int DamagePerAction;
 
 	// X2Effect_VoidConduit
 	var bool SetHealthReturnMod;
+	// Fraction of the damage dealt that is returned to the source as health.
 	var float HealthReturnMod;
 
 	// X2Effect_WallBreaking
 	var bool SetWallBreakingEffectName;
+	// Name of the effect on the unit that grants wall breaking.
 	var name WallBreakingEffectName;
 
 	// X2Effect_World
 	var bool SetCenterTile;
+	// Apply the world effect to the centre tile only.
 	var bool CenterTile;
 
 	// X2Effect_PersistentStatChangeRestoreDefault
 	var ENameArrayEditMode StatTypesToRestoreMode;
+	// Stats reset to their default value while the effect lasts.
 	var array<ECharStatType> StatTypesToRestore;
 
 	// X2Effect_ConditionalDamageModifier
