@@ -24,7 +24,7 @@ sources are stock: deploy the Highlander into the SDK.
 
 A few game fields are `private` or `protected const` and have no setter. Rather than patching the
 SDK by hand before every build, `SdkOverlay/XComGame/Classes/` holds verbatim copies of those
-classes with only the modifier relaxed, and `build.ps1` from `X2ModBuildCommon` registers the folder with IncludeSrc`.
+classes with only the modifier relaxed, and `build.ps1` registers the folder with `X2ModBuildCommon`'s `IncludeSrc`.
 
 To write such a field from a new editor: copy the class from `Development/SrcOrig` into the
 overlay, change only the modifier on the field you write, add a row to `SdkOverlay/README.md`, and

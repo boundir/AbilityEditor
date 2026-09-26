@@ -92,5 +92,5 @@ Its duration and removal rules come from the `X2Effect_Persistent` editor it fal
 Neither has an `IsA` editor, but their own vars are written by `ApplyBaseEdit` in the abstract family editor, reached through the `_Base` catch-all.
 
 **`private`, `protected` and `const` fields.** UnrealScript access modifiers exist only at compile time.
-The build compiles against an [SDK overlay](adding-an-editor.md#sdk-overlay) that relaxes the few this mod writes, so `X2Effect_Solace.DamageTypeImmunities`, `X2Effect_BondmateAimAdjust`'s three bonuses and the like have ordinary editors.
+The build compiles against an [SDK overlay](adding-an-editor.md#relaxing-fields) that relaxes the few this mod writes, so `X2Effect_Solace.DamageTypeImmunities`, `X2Effect_BondmateAimAdjust`'s three bonuses and the like have ordinary editors.
 What the overlay cannot fix is a `default.` read.

@@ -23,15 +23,15 @@ static function ApplyDerivedEdit(
 		return;
 	}
 
-	if (EffectEdit.SetOverrideParticleSystemFill_Name)
+	if (EffectEdit.SetOverrideParticleSystem)
 	{
 		class'X2AbilityEditor_Logger'.static.LogInfo(
 			AbilityName,
 			Slot $ ".OverrideParticleSystemFill_Name",
 			ApplyBlazingPinionsTargetToWorldFX.OverrideParticleSystemFill_Name,
-			EffectEdit.OverrideParticleSystemFill_Name
+			EffectEdit.OverrideParticleSystem
 		);
 
-		ApplyBlazingPinionsTargetToWorldFX.OverrideParticleSystemFill_Name = EffectEdit.OverrideParticleSystemFill_Name;
+		ApplyBlazingPinionsTargetToWorldFX.OverrideParticleSystemFill_Name = EffectEdit.OverrideParticleSystem;
 	}
 }

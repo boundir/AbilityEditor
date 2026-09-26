@@ -1169,6 +1169,11 @@ struct EffectEdit
 	var ENameArrayEditMode AdverseClassesMode;
 	var array<name> AdverseClasses;
 
+	// X2Effect_AlertTheLost
+	var bool SetAlertRangeMeters;
+	// Radius in meters within which Lost are alerted.
+	var int AlertRangeMeters;
+
 	// X2Effect_Amplify
 	var bool SetBonusDamageMult;
 	var float BonusDamageMult;
@@ -1177,9 +1182,65 @@ struct EffectEdit
 	var bool SetMinBonusDamage;
 	var int MinBonusDamage;
 
+	// X2Effect_ApplyAcidToWorld
+	var bool SetAcidParticleSystem1Tile;
+	// Particle system path for an acid pool covering a single tile.
+	var string AcidParticleSystem1Tile;
+
+	// X2Effect_ApplyAcidToWorld
+	var bool SetAcidParticleSystem2Tiles;
+	// Particle system path for an acid pool covering two tiles.
+	var string AcidParticleSystem2Tiles;
+
+	// X2Effect_ApplyAcidToWorld
+	var bool SetAcidParticleSystem3TilesLine;
+	// Particle system path for an acid pool covering three tiles in a line.
+	var string AcidParticleSystem3TilesLine;
+
+	// X2Effect_ApplyAcidToWorld
+	var bool SetAcidParticleSystem3TilesCorner;
+	// Particle system path for an acid pool covering three tiles in a corner.
+	var string AcidParticleSystem3TilesCorner;
+
+	// X2Effect_ApplyAcidToWorld
+	var bool SetAcidParticleSystem4TilesLine;
+	// Particle system path for an acid pool covering four tiles in a line.
+	var string AcidParticleSystem4TilesLine;
+
+	// X2Effect_ApplyAcidToWorld
+	var bool SetAcidParticleSystem4TilesSquare;
+	// Particle system path for an acid pool covering a 2x2 square.
+	var string AcidParticleSystem4TilesSquare;
+
+	// X2Effect_ApplyAcidToWorld
+	var bool SetAcidParticleSystem4TilesL;
+	// Particle system path for an acid pool covering four tiles in an L shape.
+	var string AcidParticleSystem4TilesL;
+
+	// X2Effect_ApplyAcidToWorld
+	var bool SetAcidParticleSystem4TilesReverseL;
+	// Particle system path for an acid pool covering four tiles in a mirrored L shape.
+	var string AcidParticleSystem4TilesReverseL;
+
+	// X2Effect_ApplyAcidToWorld
+	var bool SetAcidParticleSystem4TilesT;
+	// Particle system path for an acid pool covering four tiles in a T shape (the game's 4pc_Middle).
+	var string AcidParticleSystem4TilesT;
+
+	// X2Effect_ApplyAcidToWorld
+	var bool SetAcidParticleSystem4TilesS;
+	// Particle system path for an acid pool covering four tiles in an S shape.
+	var string AcidParticleSystem4TilesS;
+
+	// X2Effect_ApplyAcidToWorld
+	var bool SetAcidParticleSystem4TilesReverseS;
+	// Particle system path for an acid pool covering four tiles in a mirrored S shape.
+	var string AcidParticleSystem4TilesReverseS;
+
 	// X2Effect_ApplyBlazingPinionsTargetToWorld
-	var bool SetOverrideParticleSystemFill_Name;
-	var string OverrideParticleSystemFill_Name;
+	var bool SetOverrideParticleSystem;
+	// Particle system path played on the target instead of the default one. Empty keeps the default.
+	var string OverrideParticleSystem;
 
 	// X2Effect_ApplyDirectionalWorldDamage
 	var bool SetDamageTypeTemplateName;
@@ -1248,6 +1309,16 @@ struct EffectEdit
 	// X2Effect_ApplyMedikitHeal
 	var bool SetIncreasedPerUseHP;
 	var int IncreasedPerUseHP;
+
+	// X2Effect_ApplyPoisonToWorld
+	var bool SetPoisonParticleSystem;
+	// Particle system path for a poison cloud tile.
+	var string PoisonParticleSystem;
+
+	// X2Effect_ApplySmokeToWorld, X2Effect_ApplySmokeGrenadeToWorld
+	var bool SetSmokeParticleSystem;
+	// Particle system path for a smoke tile.
+	var string SmokeParticleSystem;
 
 	// X2Effect_APRounds
 	var bool SetPierce;
@@ -1326,6 +1397,11 @@ struct EffectEdit
 	var bool SetDamageBonus;
 	var int DamageBonus;
 
+	// X2Effect_DeadeyeDamage
+	var bool SetDamageMultiplier;
+	// Extra damage as a fraction of the damage being dealt.
+	var float DamageMultiplier;
+
 	// X2Effect_DelayedAbilityActivation, X2Effect_FaceMultiRoundTarget, X2Effect_TriggerEvent
 	var bool SetTriggerEventName;
 	var name TriggerEventName;
@@ -1333,6 +1409,11 @@ struct EffectEdit
 	// X2Effect_EnableGlobalAbility
 	var bool SetGlobalAbility;
 	var name GlobalAbility;
+
+	// X2Effect_Fortress
+	var ENameArrayEditMode DamageImmunitiesMode;
+	// Damage types the unit is immune to. The game assumes Fire, Acid and Poison are among them.
+	var array<name> DamageImmunities;
 
 	// X2Effect_GenerateCover
 	var bool SetCoverType;

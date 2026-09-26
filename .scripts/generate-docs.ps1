@@ -814,8 +814,8 @@ function Get-SdkClassInfo {
             elseif ($rest -match '^(transient|duplicatetransient)\b')           { $reason = 'transient' }
             elseif ($rest -match 'delegate<')                                   { $reason = 'delegate &mdash; code-only' }
 
-            # strip neutral modifiers to reach the type token
-            $declaration = $rest -replace '^(init|instanced|editinline\w*|noimport|repnotify|const|editconst|native(\(\w+\))?)\s+', ''
+            # strip every leading modifier (the reason is already recorded) to reach the type token
+            $declaration = $rest -replace '^((config|globalconfig|localized|private|privatewrite|protected|protectedwrite|deprecated|transient|duplicatetransient|init|instanced|editinline\w*|noimport|repnotify|const|editconst|native(\(\w+\))?)\s+)+', ''
             if ($declaration -notmatch '^(array<\s*[\w\.]+\s*>|class(<[\w\.]+>)?|[\w\.<>]+)\s+(\w+(?:\s*,\s*\w+)*)\s*[;\[]') { continue }
 
             $typeTok = $Matches[1]
