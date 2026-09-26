@@ -156,7 +156,9 @@ function Get-EditAction {
             $gameField = $null
             for ($j = $i + 1; $j -lt [Math]::Min($i + 20, $BodyLines.Count); $j++) {
                 $inner = $BodyLines[$j]
-                if ($inner -match ('^\s*([\w\.\[\]]+)\s*=\s*' + [regex]::Escape($guardVar) + '\.' + [regex]::Escape($field) + '\s*;')) {
+                # plain assignment, or a class reference loaded from the config string:
+                # Target.Foo = class<X>(DynamicLoadObject(Edit.Foo, class'Class'));
+                if ($inner -match ('^\s*([\w\.\[\]]+)\s*=\s*(?:class<[\w\.]+>\(DynamicLoadObject\()?' + [regex]::Escape($guardVar) + '\.' + [regex]::Escape($field) + '\s*(?:;|,\s*class''Class''\)\);)')) {
                     $gameField = Get-GameFieldFromTarget $Matches[1]
                     break
                 }
@@ -167,8 +169,8 @@ function Get-EditAction {
             continue
         }
 
-        # ApplyNameArrayEdit(..., Template.Foo, Edit.Foo, Edit.FooMode, ...)
-        if ($line -match 'Apply(Name|EffectReason)ArrayEdit\s*\(') {
+        # Apply<Type>ArrayEdit(..., Template.Foo, Edit.Foo, Edit.FooMode, ...) - name, string and keyed-struct arrays alike
+        if ($line -match 'Apply\w+ArrayEdit\s*\(') {
             $callArgs = [System.Collections.Generic.List[string]]::new()
             for ($j = $i + 1; $j -lt [Math]::Min($i + 10, $BodyLines.Count); $j++) {
                 $arg = $BodyLines[$j].Trim().TrimEnd(',')

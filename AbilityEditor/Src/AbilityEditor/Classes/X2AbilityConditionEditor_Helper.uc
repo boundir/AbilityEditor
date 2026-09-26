@@ -1,7 +1,5 @@
 class X2AbilityConditionEditor_Helper extends Object;
 
-// Applies a list of condition edits to a condition array
-// (template-level arrays or an effect's TargetConditions).
 static function ApplyConditionEdits(
 	name AbilityName,
 	string Slot,
@@ -228,6 +226,94 @@ static function ApplyEffectReasonArrayEdit(
 			}
 			break;
 	}
+}
+
+static function ApplyCheckConfigArrayEdit(
+	name AbilityName,
+	string Category,
+	out array<CheckConfig> Target,
+	array<CheckConfig> EditValues,
+	ENameArrayEditMode Mode
+)
+{
+	local int i, Index;
+
+	if (EditValues.Length == 0)
+	{
+		return;
+	}
+
+	switch (Mode)
+	{
+		case eNAEM_Replace:
+			`log(string(AbilityName) @ Category @ "replaced", class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
+			Target = EditValues;
+			break;
+
+		case eNAEM_AddOnly:
+			if (Target.Length == 0)
+			{
+				`log(string(AbilityName) @ Category @ "set", class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
+				Target = EditValues;
+			}
+			break;
+
+		case eNAEM_Merge:
+			for (i = 0; i < EditValues.Length; ++i)
+			{
+				Index = FindCheckConfigIndex(Target, EditValues[i]);
+
+				if (Index == INDEX_NONE)
+				{
+					class'X2AbilityEditor_Logger'.static.LogInfo(
+						AbilityName,
+						Category,
+						"none",
+						DescribeCheckConfig(EditValues[i])
+					);
+					Target.AddItem(EditValues[i]);
+				}
+			}
+			break;
+
+		case eNAEM_Remove:
+			for (i = 0; i < EditValues.Length; ++i)
+			{
+				Index = FindCheckConfigIndex(Target, EditValues[i]);
+
+				if (Index != INDEX_NONE)
+				{
+					class'X2AbilityEditor_Logger'.static.LogInfo(
+						AbilityName,
+						Category,
+						DescribeCheckConfig(EditValues[i]),
+						"none"
+					);
+					Target.Remove(Index, 1);
+				}
+			}
+			break;
+	}
+}
+
+static function int FindCheckConfigIndex(const out array<CheckConfig> Entries, CheckConfig Check)
+{
+	local int i;
+
+	for (i = 0; i < Entries.Length; ++i)
+	{
+		if (Entries[i] == Check)
+		{
+			return i;
+		}
+	}
+
+	return INDEX_NONE;
+}
+
+static function string DescribeCheckConfig(CheckConfig Check)
+{
+	return string(Check.CheckType) $ "(" $ Check.Value $ "," $ Check.ValueMin $ "," $ Check.ValueMax $ ")";
 }
 
 static function int FindEffectReasonIndex(const out array<EffectReason> Entries, name EffectName)

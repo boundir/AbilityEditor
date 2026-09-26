@@ -266,6 +266,11 @@ struct ConditionEdit
 	var bool SetDisallowGameplayTag;
 	var name DisallowGameplayTag;
 
+	// X2Condition_GameTime
+	var ENameArrayEditMode HourChecksMode;
+	// Checks against the current hour of the day; the condition passes when any one of them does. Merge adds checks not already present.
+	var array<CheckConfig> HourChecks;
+
 	// X2Condition_PlayerTurns
 	var bool SetNumTurnsCheck;
 	var CheckConfig NumTurnsCheck;
@@ -1043,6 +1048,11 @@ struct EffectEdit
 	var ENameArrayEditMode SkipWithEffectMode;
 	var array<name> SkipWithEffect;
 
+	// X2Effect_GrantActionPointsWithRecord (merged by UnitValueName)
+	var ENameArrayEditMode RecordUnitValueWithGrantMode;
+	// Unit values that accumulate the action points granted, each with its cleanup rule. Merge updates the entry with the same UnitValueName or adds it.
+	var array<RecordData> RecordUnitValueWithGrant;
+
 	// X2Effect_RemoveEffects
 	var ENameArrayEditMode EffectNamesToRemoveMode;
 	var array<name> EffectNamesToRemove;
@@ -1564,6 +1574,11 @@ struct EffectEdit
 	var bool SetReactionModifier;
 	var int ReactionModifier;
 
+	// X2Effect_ModifyStatCheckSuccesses (merged by AbilityName)
+	var ENameArrayEditMode AdditionalSuccessModifiersMode;
+	// Bonus successes added to a stat check made by the named ability, when the checked unit is the ability's source. Merge updates the entry with the same AbilityName or adds it.
+	var array<AdditionalSuccessModifier> AdditionalSuccessModifiers;
+
 	// X2Effect_ModifyTemplarFocus
 	var bool SetModifyFocus;
 	var int ModifyFocus;
@@ -1575,6 +1590,11 @@ struct EffectEdit
 	// X2Effect_Obsessed
 	var bool SetObsessedTargetValueName;
 	var Name ObsessedTargetValueName;
+
+	// X2Effect_OverrideDeathAction
+	var bool SetDeathActionClass;
+	// Qualified class path of the X2Action that replaces the normal death visualization, e.g. XComGame.X2Action_ExplodingUnitDeathAction. Empty removes the override.
+	var string DeathActionClass;
 
 	// X2Effect_OverrideDeathAnimOnLoad
 	var bool SetOverrideAnimNameOnLoad;
@@ -1827,6 +1847,11 @@ struct EffectEdit
 	// X2Effect_ThreatAssessment
 	var bool SetImmediateActionPoint;
 	var name ImmediateActionPoint;
+
+	// X2Effect_TemplarFocus (merged by position: entry N is focus level N)
+	var ENameArrayEditMode FocusLevelsMode;
+	// One entry per focus level from level 0: the stat changes, armor mitigation and bonus weapon damage granted at that level. Merge overwrites the level at the same position or appends it.
+	var array<FocusLevelModifiers> FocusLevels;
 
 	// X2Effect_ToHitModifier
 	var bool SetApplyAsTarget;
