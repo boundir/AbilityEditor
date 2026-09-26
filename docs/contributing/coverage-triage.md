@@ -51,6 +51,9 @@ Adding it would need a global-scope edit family.
 | `X2Effect_TargetDefinition` | `TargetDefinitionTriggeredEventName` | |
 | `X2Effect_MimicBeacon` | `REMOVE_EFFECT_ANIM_NAME` (`ABILITIES_ALLOWED_TO_HIT` *is* editable) | |
 | `X2Effect_SpectralArmyUnit` | `ADD_EFFECT_ANIM_NAME`, `REMOVE_EFFECT_ANIM_NAME` | |
+| `X2Effect_Reaper` | `ReaperActivatedName`, `ReaperKillName` | |
+| `X2Effect_ScanningProtocol` | `LookAtDuration` | |
+| `X2Effect_ParthenogenicPoison` | `ParthenogenicPoisonType`, `ParthenogenicPoisonCocoonSpawnedName` (`AltUnitToSpawnName` *is* editable) | `X2Effect_ParthenogenicPoison.uc`, `X2Ability_DefaultAbilitySet.uc` |
 
 !!! note "`X2Effect_CombatStims` is worse"
     It overrides `GetArmorMitigation()` to return `default.ARMOR_MITIGATION`. So the `ArmorMitigationAmount` field it *inherits* from the BonusArmor editor is silently ignored too

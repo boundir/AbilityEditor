@@ -1867,14 +1867,6 @@ struct EffectEdit
 	// Cap on the accumulated crit chance.
 	var int MaxCritBoost;
 
-	// X2Effect_ParthenogenicPoison
-	var bool SetParthenogenicPoisonType;
-	var name ParthenogenicPoisonType;
-
-	// X2Effect_ParthenogenicPoison
-	var bool SetParthenogenicPoisonCocoonSpawnedName;
-	var name ParthenogenicPoisonCocoonSpawnedName;
-
 	// X2Effect_ParthenogenicPoison, X2Effect_SpawnPsiZombie
 	var bool SetAltUnitToSpawnName;
 	// Character template spawned instead of the usual one, when set.
@@ -1904,14 +1896,6 @@ struct EffectEdit
 	var bool SetWeaponTemplateName;
 	// Item template equipped on the possessed unit.
 	var name WeaponTemplateName;
-
-	// X2Effect_Reaper
-	var bool SetReaperActivatedName;
-	var name ReaperActivatedName;
-
-	// X2Effect_Reaper
-	var bool SetReaperKillName;
-	var name ReaperKillName;
 
 	// X2Effect_ReduceCooldowns
 	var bool SetAmount;
@@ -1987,10 +1971,6 @@ struct EffectEdit
 	var bool SetSetActionPointCount;
 	// Standard action points given to the unit before the tree runs.
 	var int SetActionPointCount;
-
-	// X2Effect_ScanningProtocol
-	var bool SetLookAtDuration;
-	var float LookAtDuration;
 
 	// X2Effect_Shattered
 	var bool SetShatteredTargetValueName;
