@@ -156,7 +156,9 @@ function Get-EditAction {
             $gameField = $null
             for ($j = $i + 1; $j -lt [Math]::Min($i + 20, $BodyLines.Count); $j++) {
                 $inner = $BodyLines[$j]
-                if ($inner -match ('^\s*([\w\.\[\]]+)\s*=\s*' + [regex]::Escape($guardVar) + '\.' + [regex]::Escape($field) + '\s*;')) {
+                # plain assignment, or a class reference loaded from the config string:
+                # Target.Foo = class<X>(DynamicLoadObject(Edit.Foo, class'Class'));
+                if ($inner -match ('^\s*([\w\.\[\]]+)\s*=\s*(?:class<[\w\.]+>\(DynamicLoadObject\()?' + [regex]::Escape($guardVar) + '\.' + [regex]::Escape($field) + '\s*(?:;|,\s*class''Class''\)\);)')) {
                     $gameField = Get-GameFieldFromTarget $Matches[1]
                     break
                 }
@@ -167,8 +169,8 @@ function Get-EditAction {
             continue
         }
 
-        # ApplyNameArrayEdit(..., Template.Foo, Edit.Foo, Edit.FooMode, ...)
-        if ($line -match 'Apply(Name|EffectReason)ArrayEdit\s*\(') {
+        # Apply<Type>ArrayEdit(..., Template.Foo, Edit.Foo, Edit.FooMode, ...) - name, string and keyed-struct arrays alike
+        if ($line -match 'Apply\w+ArrayEdit\s*\(') {
             $callArgs = [System.Collections.Generic.List[string]]::new()
             for ($j = $i + 1; $j -lt [Math]::Min($i + 10, $BodyLines.Count); $j++) {
                 $arg = $BodyLines[$j].Trim().TrimEnd(',')
@@ -268,6 +270,9 @@ $Curated = @{
         'EffectEdit.Class'                 = 'Effect class to target/instantiate, e.g. `X2Effect_ApplyWeaponDamage`. Bare names are auto-prefixed with `XComGame.`; empty falls back to `X2Effect`.'
         'EffectEdit.Slot'                  = 'Which effect array to edit (`EAbilityEffectSlot`): `eAES_Target`, `eAES_MultiTarget` or `eAES_Shooter`.'
         'EffectEdit.Mode'                  = 'Per-entry edit mode (`EArrayEditMode`). Defaults to the enum''s first value, which clears the existing array.'
+        'EffectEdit.ApplyOnTickClass'      = 'Redirects this entry at an effect nested in the parent''s `ApplyOnTick` list, so every other field below applies to that child instead. Only `X2Effect_Persistent` and its subclasses have one. Use it to reach the damage of a damage-over-time effect: the `X2Effect_Burning` object itself only carries duration, while the per-tick damage lives in an `X2Effect_ApplyWeaponDamage` beneath it. Bare names are auto-prefixed with `XComGame.`.'
+        'EffectEdit.ApplyOnTickIndex'      = 'Which matching child to edit when several in `ApplyOnTick` share the same class. Counts only matches of `ApplyOnTickClass`, so 0 is the first one. Default 0.'
+        'EffectEdit.ApplyOnTickMode'       = 'What to do when `ApplyOnTickClass` is not already in the list (`EArrayEditMode`): `eAEM_Merge`/`eAEM_AddOnly` append one, `eAEM_Remove` removes it, `eAEM_ReplaceAll` clears the list first. Ignored when `ApplyOnTickClass` is empty.'
         'ConditionEdit.Class'              = 'Condition class to target/instantiate, e.g. `X2Condition_UnitProperty`. Bare names are auto-prefixed with `XComGame.`.'
         'ConditionEdit.Mode'               = 'Per-entry edit mode (`EArrayEditMode`). Defaults to the enum''s first value, which clears the existing array.'
         'AdditionalCooldownEdit.AbilityName'   = 'Ability whose cooldown entry is added/updated in `AditionalAbilityCooldowns`.'
@@ -463,14 +468,37 @@ foreach ($structName in $StructOrder) {
 $dlcLines = Read-TextFile $DlcInfoFile
 $dlcText = $dlcLines -join "`n"
 
+$Warnings = [System.Collections.Generic.List[string]]::new()
+
 $Registries = @{}
-foreach ($m in [regex]::Matches($dlcText, "(?m)^\s*(\w+Editors)\((\d+)\)\s*=\s*class'(\w+)'")) {
+$registryPattern = "(?m)^\s*(\w+Editors)(?:\((\d+)\)\s*=|\.Add\()\s*class'(\w+)'"
+
+$ordinal = 0
+foreach ($m in [regex]::Matches($dlcText, $registryPattern)) {
     $reg = $m.Groups[1].Value
     if (-not $Registries.ContainsKey($reg)) { $Registries[$reg] = [System.Collections.Generic.List[object]]::new() }
-    $Registries[$reg].Add(@{ Index = [int]$m.Groups[2].Value; Class = $m.Groups[3].Value })
+
+    $indexed = $m.Groups[2].Success
+    $Registries[$reg].Add(@{
+        Indexed  = $indexed
+        Index    = if ($indexed) { [int]$m.Groups[2].Value } else { $ordinal }
+        Ordinal  = $ordinal
+        Class    = $m.Groups[3].Value
+    })
+    $ordinal++
 }
+
 foreach ($reg in @($Registries.Keys)) {
-    $Registries[$reg] = @($Registries[$reg] | Sort-Object { $_.Index } | ForEach-Object { $_.Class })
+    $entries = $Registries[$reg]
+    $indexedCount = @($entries | Where-Object { $_.Indexed }).Count
+
+    if ($indexedCount -gt 0 -and $indexedCount -lt $entries.Count) {
+        $Warnings.Add("Registry $reg mixes Foo(n) = class'...' with Foo.Add(class'...'). Dispatch order follows the numbered entries first, which is unlikely to be what the file reads as.")
+    }
+
+    # Sorting by Index then Ordinal keeps appends in source order, since every append
+    # shares the running ordinal as its index.
+    $Registries[$reg] = @($entries | Sort-Object { $_.Index }, { $_.Ordinal } | ForEach-Object { $_.Class })
 }
 
 $dlcBlocks = Get-FunctionBlockMap $dlcLines
@@ -591,7 +619,6 @@ function Get-DefinerChain {
     return $result.ToArray()
 }
 
-$Warnings = [System.Collections.Generic.List[string]]::new()
 $FamilyModels = [System.Collections.Generic.List[object]]::new()
 
 foreach ($fam in $Curated.Families) {
@@ -789,8 +816,8 @@ function Get-SdkClassInfo {
             elseif ($rest -match '^(transient|duplicatetransient)\b')           { $reason = 'transient' }
             elseif ($rest -match 'delegate<')                                   { $reason = 'delegate &mdash; code-only' }
 
-            # strip neutral modifiers to reach the type token
-            $declaration = $rest -replace '^(init|instanced|editinline\w*|noimport|repnotify|const|editconst|native(\(\w+\))?)\s+', ''
+            # strip every leading modifier (the reason is already recorded) to reach the type token
+            $declaration = $rest -replace '^((config|globalconfig|localized|private|privatewrite|protected|protectedwrite|deprecated|transient|duplicatetransient|init|instanced|editinline\w*|noimport|repnotify|const|editconst|native(\(\w+\))?)\s+)+', ''
             if ($declaration -notmatch '^(array<\s*[\w\.]+\s*>|class(<[\w\.]+>)?|[\w\.<>]+)\s+(\w+(?:\s*,\s*\w+)*)\s*[;\[]') { continue }
 
             $typeTok = $Matches[1]

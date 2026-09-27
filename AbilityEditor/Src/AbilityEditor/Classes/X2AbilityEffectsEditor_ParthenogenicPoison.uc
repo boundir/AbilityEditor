@@ -23,30 +23,6 @@ static function ApplyDerivedEdit(
 		return;
 	}
 
-	if (EffectEdit.SetParthenogenicPoisonType)
-	{
-		class'X2AbilityEditor_Logger'.static.LogInfo(
-			AbilityName,
-			Slot $ ".ParthenogenicPoisonType",
-			string(ParthenogenicPoisonFX.ParthenogenicPoisonType),
-			string(EffectEdit.ParthenogenicPoisonType)
-		);
-
-		ParthenogenicPoisonFX.ParthenogenicPoisonType = EffectEdit.ParthenogenicPoisonType;
-	}
-
-	if (EffectEdit.SetParthenogenicPoisonCocoonSpawnedName)
-	{
-		class'X2AbilityEditor_Logger'.static.LogInfo(
-			AbilityName,
-			Slot $ ".ParthenogenicPoisonCocoonSpawnedName",
-			string(ParthenogenicPoisonFX.ParthenogenicPoisonCocoonSpawnedName),
-			string(EffectEdit.ParthenogenicPoisonCocoonSpawnedName)
-		);
-
-		ParthenogenicPoisonFX.ParthenogenicPoisonCocoonSpawnedName = EffectEdit.ParthenogenicPoisonCocoonSpawnedName;
-	}
-
 	if (EffectEdit.SetAltUnitToSpawnName)
 	{
 		class'X2AbilityEditor_Logger'.static.LogInfo(

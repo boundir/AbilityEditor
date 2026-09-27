@@ -82,7 +82,8 @@ static function DispatchCooldownEdit(name AbilityName, X2AbilityCooldown Ability
 
 	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.CooldownEditors.Length; ++i)
 	{
-		if (class'X2DLCInfo_AbilityEditor'.default.CooldownEditors[i].static.CanEdit(AbilityCooldown))
+		if (class'X2DLCInfo_AbilityEditor'.default.CooldownEditors[i] != none &&
+			class'X2DLCInfo_AbilityEditor'.default.CooldownEditors[i].static.CanEdit(AbilityCooldown))
 		{
 			class'X2DLCInfo_AbilityEditor'.default.CooldownEditors[i].static.ApplyEdit(AbilityName, AbilityCooldown, CooldownEdit);
 			return;

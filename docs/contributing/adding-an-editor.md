@@ -3,22 +3,35 @@
 This page is for people working on Ability Editor itself. To extend it *from another mod* without
 forking, see [Bridge mods](../guides/bridge-mods.md) instead.
 
-## Build prerequisite: Community Highlander sources
+## Build prerequisites
 
-**Building this mod may require changes to the SDK to unprotect properties. Or simply have `Development/SrcOrig` up to date with Community Highlander-patched.**. It is not a requirement for players.
+UnrealScript access modifiers (`private`, `protected`, `privatewrite`, `const`) exist only at
+compile time. Compiling against relaxed sources runs against the stock game.
+This mod relies on that twice. Neither is a requirement for players.
+
+### Community Highlander sources
 
 `X2AbilityEffectsEditor_Helper.uc` writes `Template.AbilityTargetEffects`,
 `AbilityMultiTargetEffects` and `AbilityShooterEffects`. In stock Firaxis sources those three are
 `protectedwrite`, so the writes will not compile. Community Highlander
 [Issue #68](https://github.com/X2CommunityCore/X2WOTCCommunityHighlander/issues/68) removes that
-modifier.
-
-This is a compile-time dependency only. The issue changes nothing but the accessibility modifier -
-same types, same declaration order, same class layout - and UnrealScript access modifiers do not
-affect the compiled property layout, so the resulting `.u` runs against vanilla `XComGame` too.
+modifier; `Development/SrcOrig` must be the Highlander-patched copy.
 
 If a build fails with `Can't write to protected variable` on `AbilityTargetEffects`, your SDK
-sources are stock; either unprotect the variable or deploy the Highlander into the SDK.
+sources are stock: deploy the Highlander into the SDK.
+
+### Relaxing fields
+
+A few game fields are `private` or `protected const` and have no setter. Rather than patching the
+SDK by hand before every build, `SdkOverlay/XComGame/Classes/` holds verbatim copies of those
+classes with only the modifier relaxed, and `build.ps1` registers the folder with `X2ModBuildCommon`'s `IncludeSrc`.
+
+To write such a field from a new editor: copy the class from `Development/SrcOrig` into the
+overlay, change only the modifier on the field you write, add a row to `SdkOverlay/README.md`, and
+write the editor as usual. If a Highlander release changes one of those classes, refresh the copy.
+
+The overlay cannot help with a field the game reads as `default.X` - see
+[Why isn't this editable?](coverage-triage.md).
 
 ## The four places
 
