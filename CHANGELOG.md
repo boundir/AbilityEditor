@@ -38,6 +38,40 @@ This project follows [Keep a Changelog](https://keepachangelog.com/) and
   built with mkdocs-material and published by GitHub Actions. Game classes haves their own page
   with a guessable URL (`/reference/effects/x2effect_achilles/`), so a link can point at one class instead of one page documentation.
 
+- **A config builder** at [boundir.github.io/AbilityEditor/app](https://boundir.github.io/AbilityEditor/app/).
+  Pick an ability, tick the fields, get the `+AbilityEdits` entry - with the mode-default and missing-`Set` mistakes flagged before the game silently ignores them. Paste an existing entry in to check it.
+
+- **Fifteen more effect editors and one condition editor.** `X2Effect_ApplyAcidToWorld`,
+  `ApplyPoisonToWorld`, `ApplySmokeToWorld`, `ApplySmokeGrenadeToWorld` (particle systems);
+  `Fortress`, `DeadeyeDamage`, `AlertTheLost`; `Solace`, `CombatStims`,
+  `ChryssalidBurrowedAttack`, `BondmateAimAdjust`, `BondmateBleedout`, `MimicBeacon`;
+  `ModifyStatCheckSuccesses`, `TemplarFocus`, `GrantActionPointsWithRecord`,
+  `OverrideDeathAction`; and `X2Condition_GameTime`. Struct-array fields such as
+  `TemplarFocus.FocusLevels` take the game's own structs:
+
+  ```ini
+  ; Templars start at +1 Mobility on focus level 0
+  +AbilityEdits=( \\
+      Ability=TemplarFocus, \\
+      Effects=( \\
+          ( Class="X2Effect_TemplarFocus", Mode=eAEM_Merge, FocusLevelsMode=eNAEM_Merge, \\
+            FocusLevels=( (StatChanges=((StatType=eStat_Mobility, StatAmount=1.0)), ArmorMitigation=0, WeaponDamage=0) ) ) \\
+      ) \\
+  )
+  ```
+
+- **Every config key now has a description** on the reference pages and in `docs/schema.json`.
+
+### Changed
+
+- Fields renaming:
+  `AcidParticleSystem1Tile` … `AcidParticleSystem4TilesReverseS`, `PoisonParticleSystem`, `SmokeParticleSystem`, and `OverrideParticleSystem` in place of `OverrideParticleSystemFill_Name`.
+
+### Removed
+
+- Five effect fields that never did anything, because the game reads them from the class default rather than the ability: `ReaperActivatedName`, `ReaperKillName` (`X2Effect_Reaper`), `LookAtDuration` (`X2Effect_ScanningProtocol`), `ParthenogenicPoisonType` and `ParthenogenicPoisonCocoonSpawnedName`.
+  The Reaper and ScanningProtocol editors went with them; both classes still take the shared persistent-effect fields.
+
 ### Fixed
 
 - **Replace-only array fields no longer advertise a mode field that doesn't exist.** The reference
@@ -57,13 +91,9 @@ This project follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ### Documentation
 
-- Documented that building the mod requires Community Highlander-patched SDK sources
-  ([Issue #68](https://github.com/X2CommunityCore/X2WOTCCommunityHighlander/issues/68) removes
-  `protectedwrite` from the three `X2AbilityTemplate` effect arrays this mod writes). This is a
-  build-time requirement only - the compiled mod runs against vanilla `XComGame`.
-- Corrected the field-documentation convention: a `//` comment must sit directly above the **value**
-  var, not above the `Set`/value pair. A comment above the pair attaches to the guard and is
-  dropped, which is why 219 existing comments act as section headers rather than field docs.
+- Corrected the field-documentation convention: a `//` comment must sit directly above the **value** var, not above the `Set`/value pair.
+  A comment above the pair attaches to the guard and is dropped, which is why 219 existing comments act as section headers rather than field docs.
+- A [Why isn't this editable?](docs/contributing/coverage-triage.md) page records the game fields that do not have an editor and the reason for each - mostly fields the game reads from the class default, which are tunable globally in the game's own ini.
 
 ## [2.0.0] - 2026-07-10
 
