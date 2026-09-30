@@ -205,3 +205,93 @@ describe('unrepresentable values', () => {
     expect(issue?.severity).toBe('error')
   })
 })
+
+describe('creating an ability', () => {
+  const blank = { Ability: 'SnapShot', Create: true }
+
+  it('requires TargetStyle, ToHitCalc and Triggers on a blank ability', () => {
+    const found = titles(docOf(newNode(blank)))
+    expect(found).toContain('TargetStyle is required for a new ability')
+    expect(found).toContain('ToHitCalc is required for a new ability')
+    expect(found).toContain('Triggers are required for a new ability')
+  })
+
+  it('is satisfied once the three are given a Class', () => {
+    const entry = newNode({
+      ...blank,
+      TargetStyle: newNode({ Class: 'X2AbilityTarget_Single' }),
+      ToHitCalc: newNode({ Class: 'X2AbilityToHitCalc_StandardAim' }),
+      Triggers: [newNode({ Class: 'X2AbilityTrigger_PlayerInput', Mode: 'eAEM_Merge' })],
+    })
+    const found = titles(docOf(entry))
+    expect(found).not.toContain('TargetStyle is required for a new ability')
+    expect(found).not.toContain('ToHitCalc is required for a new ability')
+    expect(found).not.toContain('Triggers are required for a new ability')
+  })
+
+  it('does not require them for the passive preset, which installs its own', () => {
+    expect(titles(docOf(newNode({ ...blank, Preset: 'eACP_Passive' })))).toEqual([])
+  })
+
+  it('does not require them for a copy, which has its source\u2019s', () => {
+    expect(titles(docOf(newNode({ ...blank, CloneFrom: 'SwordSlice' })))).toEqual([])
+  })
+
+  it('flags a slot block without a Class as an error on a blank ability', () => {
+    const entry = newNode({ ...blank, TargetStyle: newNode({ OnlyIncludeTargetsInsideWeaponRange: true }) })
+    expect(titles(docOf(entry))).toContain('TargetStyle needs a Class on a new ability')
+  })
+
+  it('drops the destructive-default warnings on a blank ability', () => {
+    const entry = newNode({
+      ...blank,
+      Preset: 'eACP_Passive',
+      Costs: [newNode({ Class: 'X2AbilityCost_ActionPoints', NumPoints: 1 })],
+      AdditionalAbilities: ['Blademaster'],
+    })
+    const found = titles(docOf(entry))
+    expect(found).not.toContain('CostMode is not set, so every existing cost will be deleted')
+    expect(found).not.toContain('Costs entry has no Mode, so the existing list will be cleared')
+    expect(found).not.toContain("AdditionalAbilities will replace the ability's existing list")
+  })
+
+  it('keeps the destructive-default warnings on a copy', () => {
+    const entry = newNode({
+      ...blank,
+      CloneFrom: 'SwordSlice',
+      Costs: [newNode({ Class: 'X2AbilityCost_ActionPoints', NumPoints: 1 })],
+    })
+    expect(titles(docOf(entry))).toContain('CostMode is not set, so every existing cost will be deleted')
+  })
+
+  it('still rejects several mode-less entries on a blank ability', () => {
+    const entry = newNode({
+      ...blank,
+      Preset: 'eACP_Passive',
+      Effects: [
+        newNode({ Class: 'X2Effect_Persistent', Slot: 'eAES_Target' }),
+        newNode({ Class: 'X2Effect_ApplyWeaponDamage', Slot: 'eAES_Target' }),
+      ],
+    })
+    expect(titles(docOf(entry))).toContain('2 of 2 Effects entries have no Mode \u2014 only the last will survive')
+  })
+
+  it('checks CloneFrom is a bare name and not the ability itself', () => {
+    expect(titles(docOf(newNode({ ...blank, CloneFrom: 'Sword Slice' })))).toContain(
+      '"Sword Slice" is not a valid ability name',
+    )
+    expect(titles(docOf(newNode({ ...blank, CloneFrom: 'SnapShot' })))).toContain('CloneFrom names the ability itself')
+  })
+
+  it('warns when CloneFrom or Preset appear without Create, or Preset with CloneFrom', () => {
+    expect(titles(docOf(newNode({ Ability: 'SnapShot', CloneFrom: 'SwordSlice' })))).toContain(
+      'CloneFrom does nothing without Create=true',
+    )
+    expect(titles(docOf(newNode({ Ability: 'SnapShot', Preset: 'eACP_Passive' })))).toContain(
+      'Preset does nothing without Create=true',
+    )
+    expect(titles(docOf(newNode({ ...blank, CloneFrom: 'SwordSlice', Preset: 'eACP_Passive' })))).toContain(
+      'Preset is ignored when CloneFrom is set',
+    )
+  })
+})

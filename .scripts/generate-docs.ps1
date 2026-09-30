@@ -247,7 +247,10 @@ $Curated = @{
     )
 
     StructuralFieldNotes = @{
-        'AbilityEdit.Ability'              = 'Required. Template name of the ability to edit (e.g. `SwordSlice`).'
+        'AbilityEdit.Ability'              = 'Required. Template name of the ability to edit, or - with `Create=true` - to create (e.g. `SwordSlice`).'
+        'AbilityEdit.Create'               = 'Create the ability when no template of that name exists, then apply the rest of the entry to it. If it already exists, a warning is logged and the entry is applied as a normal edit.'
+        'AbilityEdit.CloneFrom'            = 'With `Create=true`: existing ability to deep-copy as the starting point. Its costs, cooldown, charges, effects (including their `ApplyOnTick` and condition lists), conditions, triggers and styles are copied, not shared, so editing the copy never changes the original. Empty = blank template built by `Preset`. If the source does not exist, nothing is created.'
+        'AbilityEdit.Preset'               = 'Blank creation only (`Create=true`, no `CloneFrom`): which standard game-state and visualization functions the new ability runs (`EAbilityCreatePreset`). Ignored when `CloneFrom` is set.'
         'CostEdit.Class'                   = 'Cost class to target/instantiate, e.g. `X2AbilityCost_ActionPoints`. Bare names are auto-prefixed with `XComGame.`; empty falls back to `X2AbilityCost`.'
         'CostEdit.Mode'                    = 'Per-entry edit mode (`EAbilityCostEditMode`). Defaults to the enum''s first value, which clears the existing list.'
         'CooldownEdit.Class'               = 'Optional. Omitted = edit the existing cooldown in place. Set = target/instantiate that class, e.g. `X2AbilityCooldown_PerPlayerType`. Bare names are auto-prefixed with `XComGame.`.'
@@ -293,6 +296,11 @@ $Curated = @{
     }
 
     EnumSemantics = @{
+        'EAbilityCreatePreset' = @{
+            'eACP_Standard' = '`TypicalAbility_BuildGameState`, `TypicalAbility_BuildVisualization` and `TypicalAbility_BuildInterruptGameState`: a normal activated ability such as a shot, a grenade or a protocol. The entry must still provide `TargetStyle`, `ToHitCalc` and `Triggers`. (Default)'
+            'eACP_MoveEnd'  = 'As Standard, but the game state is built by `TypicalMoveEndAbility_BuildGameState`: a move-then-act ability such as Slash. Expects an `X2AbilityTarget_MovingMelee` target style.'
+            'eACP_Passive'  = '`TypicalAbility_BuildGameState` only, no visualization, `bIsPassive=true`, neutral hostility, icon hidden in the HUD. Installs `X2AbilityTarget_Self`, `X2AbilityTrigger_UnitPostBeginPlay` and `X2AbilityToHitCalc_DeadEye`, so the entry only has to add the persistent effect.'
+        }
         'ENameArrayEditMode' = @{
             'eNAEM_Replace' = 'Replace the whole target array with the provided values. (Default)'
             'eNAEM_Merge'   = 'Append each provided value that is not already present.'
@@ -1072,7 +1080,7 @@ $schemaJson = ($schema | ConvertTo-Json -Depth 14) + "`n"
 
 # ---- summary block ----
 $summary = [System.Text.StringBuilder]::new()
-[void]$summary.Append("An ``+AbilityEdits`` entry can change:$nl$nl")
+[void]$summary.Append("An ``+AbilityEdits`` entry edits an existing ability, or creates one when ``Create=true``. It can change:$nl$nl")
 
 $templateList = ($TemplateFields | ForEach-Object { '`' + $_.Config + '`' }) -join ', '
 [void]$summary.Append("- **Ability template fields** &mdash; $templateList$nl")

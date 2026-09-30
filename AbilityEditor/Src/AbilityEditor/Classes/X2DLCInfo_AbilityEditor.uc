@@ -29,8 +29,9 @@ var config(AbilityEditor) array<ExtraEditorRegistration> ExtraTriggerEditors;
 static event OnPostTemplatesCreated()
 {
 	local X2AbilityTemplateManager AbilityManager;
-	local X2AbilityTemplate Template;
+	local X2AbilityTemplate Template, Source;
 	local AbilityEdit AbilityEdit;
+	local array<name> Created;
 	local int i;
 
 	// Keep v1 alive
@@ -39,6 +40,49 @@ static event OnPostTemplatesCreated()
 	ResolveExtraEditors();
 
 	AbilityManager = class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager();
+
+	for (i = 0; i < default.AbilityEdits.Length; ++i)
+	{
+		AbilityEdit = default.AbilityEdits[i];
+
+		if (!AbilityEdit.Create)
+		{
+			continue;
+		}
+
+		if (AbilityManager.FindAbilityTemplate(AbilityEdit.Ability) != none)
+		{
+			`log("AbilityEdit: Create=true but" @ AbilityEdit.Ability @ "already exists, applying the entry as an edit", default.EnableDebug, 'AbilityEditor');
+			continue;
+		}
+
+		if (AbilityEdit.CloneFrom != '')
+		{
+			Source = AbilityManager.FindAbilityTemplate(AbilityEdit.CloneFrom);
+
+			if (Source == none)
+			{
+				`log("AbilityEdit: CloneFrom source not found:" @ AbilityEdit.CloneFrom @ "- not creating" @ AbilityEdit.Ability, default.EnableDebug, 'AbilityEditor');
+				continue;
+			}
+
+			Template = class'X2AbilityTemplateCreator'.static.CreateClone(AbilityEdit.Ability, Source);
+			`log("AbilityEdit: created" @ AbilityEdit.Ability @ "as a copy of" @ AbilityEdit.CloneFrom, default.EnableDebug, 'AbilityEditor');
+		}
+		else
+		{
+			Template = class'X2AbilityTemplateCreator'.static.CreateBlank(AbilityEdit.Ability, AbilityEdit.Preset);
+			`log("AbilityEdit: created blank ability" @ AbilityEdit.Ability @ "with preset" @ string(AbilityEdit.Preset), default.EnableDebug, 'AbilityEditor');
+		}
+
+		if (!AbilityManager.AddAbilityTemplate(Template))
+		{
+			`log("AbilityEdit: could not register" @ AbilityEdit.Ability @ "(AddAbilityTemplate returned false)", default.EnableDebug, 'AbilityEditor');
+			continue;
+		}
+
+		Created.AddItem(AbilityEdit.Ability);
+	}
 
 	for (i = 0; i < default.AbilityEdits.Length; ++i)
 	{
@@ -54,10 +98,16 @@ static event OnPostTemplatesCreated()
 
 		ApplyAbilityEdit(Template, AbilityEdit);
 	}
+
+	// Explain any RedScreen the game's validation is about to raise for a created ability.
+	for (i = 0; i < Created.Length; ++i)
+	{
+		class'X2AbilityTemplateCreator'.static.PreValidate(AbilityManager.FindAbilityTemplate(Created[i]), Created[i]);
+	}
 }
 
-// Sorts the Extra*Editors config registrations (bridge mods) by Priority descending and
-// logs any class that fails to load. Dispatchers resolve the classes on demand.
+// Sorts the Extra*Editors config registrations (bridge mods) by Priority descending and logs any class that fails to load.
+// Dispatchers resolve the classes on demand.
 static function ResolveExtraEditors()
 {
 	default.ExtraEffectsEditors = SortRegistrations(default.ExtraEffectsEditors);

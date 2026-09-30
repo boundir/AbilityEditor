@@ -121,3 +121,20 @@ describe('emitEntry', () => {
     expect(lines.at(-1)).toBe(')')
   })
 })
+
+describe('emitEntry for a created ability', () => {
+  it('writes Create as a bare bool, CloneFrom as a bare name and Preset as a bare enum', () => {
+    const entry = newNode({ Ability: 'SwordSlice_Heavy', Create: true, CloneFrom: 'SwordSlice', Preset: 'eACP_Standard' })
+
+    expect(emitEntry(entry, indices)).toBe(
+      [
+        '+AbilityEdits=( \\\\',
+        '    Ability=SwordSlice_Heavy, \\\\',
+        '    Create=true, \\\\',
+        '    CloneFrom=SwordSlice, \\\\',
+        '    Preset=eACP_Standard \\\\',
+        ')',
+      ].join('\n'),
+    )
+  })
+})

@@ -49,6 +49,13 @@ enum ENameArrayEditMode
 	eNAEM_Remove
 };
 
+enum EAbilityCreatePreset
+{
+	eACP_Standard,
+	eACP_MoveEnd,
+	eACP_Passive
+};
+
 struct AdditionalCooldownEdit
 {
 	var name AbilityName;
@@ -2608,6 +2615,15 @@ struct AbilityEdit
 	// Ability template name
 	var name Ability;
 
+	// When true and no ability named Ability exists, a new template is created and registered before the edit is applied.
+	var bool Create;
+
+	// Existing ability to deep-copy as the starting point. Empty = blank template built by Preset. If it does not exist, nothing is created.
+	var name CloneFrom;
+
+	// Blank creation only: which standard game-state and visualization functions the new ability runs. Ignored when CloneFrom is set.
+	var EAbilityCreatePreset Preset;
+
 	var bool SetHostility;
 	// Whether the ability is offensive, defensive or neutral. Drives AI targeting and the
 	// reticle colour. One of eHostility_Offensive, eHostility_Defensive, eHostility_Neutral.
@@ -2767,6 +2783,60 @@ struct AbilityEdit
 
 	var bool SetCommanderAbility;
 	var bool CommanderAbility;
+
+	// --- Template scalars: text ---
+	var bool SetFriendlyName;
+	// Name shown in the UI. Short text only: the ini cannot carry quotes, commas or parentheses. For prose use a [MyAbility X2AbilityTemplate] section in XComGame.int.
+	var string FriendlyName;
+
+	var bool SetLongDescription;
+	// Description shown in the ability tooltip and on the promotion screen. Same limits as FriendlyName.
+	var string LongDescription;
+
+	var bool SetHelpText;
+	// Short help line shown in the tactical HUD tooltip. Same limits as FriendlyName.
+	var string HelpText;
+
+	var bool SetFlyOverText;
+	// Text of the flyover shown when the ability activates. Same limits as FriendlyName.
+	var string FlyOverText;
+
+	// --- Template scalars: targeting and visualization ---
+	var bool SetTargetingMethod;
+	// Qualified class path of the targeting method, e.g. XComGame.X2TargetingMethod_OverTheShoulder. The class default is X2TargetingMethod_TopDown.
+	var string TargetingMethod;
+
+	var bool SetCinescriptCameraType;
+	// Cinescript camera played when the ability is visualized, e.g. StandardGunFiring (see DefaultCameras.ini).
+	var string CinescriptCameraType;
+
+	var bool SetAbilityConfirmSound;
+	// Sound played when the ability is confirmed in the HUD, e.g. TacticalUI_SwordConfirm.
+	var string AbilityConfirmSound;
+
+	var bool SetActivationSpeech;
+	// Speech line played when the ability activates.
+	var name ActivationSpeech;
+
+	var bool SetCustomFireAnim;
+	// Animation played instead of the weapon's normal fire animation.
+	var name CustomFireAnim;
+
+	var bool SetSkipFireAction;
+	// Do not exit cover, fire and re-enter cover when the ability activates.
+	var bool SkipFireAction;
+
+	var bool SetShowActivation;
+	// Show the ability name over the activating unit when it is used.
+	var bool ShowActivation;
+
+	var bool SetSkipMoveStop;
+	// Move-then-act abilities only: do not play the stop-moving animation before acting.
+	var bool SkipMoveStop;
+
+	var bool SetFrameEvenWhenUnitIsHidden;
+	// Frame the camera on the source unit when the ability is used even if the unit is hidden in the fog.
+	var bool FrameEvenWhenUnitIsHidden;
 
 	// --- Template name arrays ---
 	var ENameArrayEditMode AssociatedPassivesMode;

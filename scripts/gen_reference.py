@@ -247,7 +247,10 @@ def render_edit_modes() -> str:
         "    UnrealScript uses an enum's **first value** when you omit the field, and in every "
         "    enum below that first value is a Replace. Omitting `CostMode` does not add a cost - "
         "    it throws away every cost the ability had and keeps only what you listed. Write the "
-        "    mode explicitly; you almost always want `Merge`.",
+        "    mode explicitly; you almost always want `Merge`. The one exception is an ability you "
+        "    are [creating](../guides/create-an-ability.md) blank: there is nothing to destroy "
+        "    yet. A copy made with `CloneFrom` has everything its source had, so the rule applies "
+        "    to it in full.",
         "",
         "!!! warning \"`AddOnly` does not append\"",
         "    For **name arrays** (`ENameArrayEditMode`), `eNAEM_AddOnly` writes your values only "

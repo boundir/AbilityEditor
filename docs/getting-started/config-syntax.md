@@ -22,7 +22,8 @@ template named by `Ability`, and applies your edits to it.
 ```
 
 `Ability` is the only required key. Everything else is optional, and anything you leave out keeps
-its current value.
+its current value. With `Create=true` the entry makes the ability instead of finding it - see
+[Create an ability](../guides/create-an-ability.md).
 
 ## Line continuation
 

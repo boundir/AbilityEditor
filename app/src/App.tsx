@@ -136,6 +136,7 @@ export function App() {
                   onClick={() => setSelected(index)}
                 >
                   <span>{ability || <em>unnamed</em>}</span>
+                  {item['Create'] === true && <span className="pill pill--new">new</span>}
                   {entryIssues.length > 0 && (
                     <span className={`pill ${hasError ? 'pill--error' : 'pill--warn'}`}>
                       {entryIssues.length}

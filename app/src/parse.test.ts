@@ -153,6 +153,7 @@ describe('linting an existing config', () => {
 describe('round trip', () => {
   const cases: Node[] = [
     newNode({ Ability: 'SwordSlice' }),
+    newNode({ Ability: 'SwordSlice_Heavy', Create: true, CloneFrom: 'SwordSlice', Preset: 'eACP_Standard' }),
     newNode({
       Ability: 'SwordSlice',
       CostMode: 'eACEM_Merge',

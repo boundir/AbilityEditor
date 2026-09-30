@@ -68,6 +68,7 @@ nav:
       - getting-started/edit-modes.md
   - Guides:
       - guides/examples.md
+      - guides/create-an-ability.md
       - guides/troubleshooting.md
       - guides/bridge-mods.md
       - guides/legacy-1x.md

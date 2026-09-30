@@ -268,6 +268,7 @@ input:focus-visible, select:focus-visible, button:focus-visible {
 .pill { border-radius: 10px; padding: 0 6px; font-size: 11px; }
 .pill--error { background: var(--error-soft); color: var(--error); }
 .pill--warn { background: var(--warn-soft); color: var(--warn); }
+.pill--new { background: var(--accent-soft); color: var(--accent); }
 
 .empty { color: var(--muted); font-size: 13px; }
 

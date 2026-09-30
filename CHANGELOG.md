@@ -11,12 +11,28 @@ This project follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ### Added
 
+- **Abilities can be created from config.** `Create=true` on an `+AbilityEdits` entry makes the ability instead of finding it, then applies the rest of the entry to it. Start from a copy of an existing ability with `CloneFrom` - the copy is independent, so editing it never changes the original - or from a blank template shaped by `Preset` (`eACP_Standard`, `eACP_MoveEnd` or `eACP_Passive`).
+  The log explains anything the game's validation would reject.
+
+  ```ini
+  ; Slash, but for two action points and under another name
+  +AbilityEdits=( \\
+      Ability=SwordSlice_Heavy, Create=true, CloneFrom=SwordSlice, \\
+      SetFriendlyName=true, FriendlyName="Heavy Slash", \\
+      CostMode=eACEM_Merge, \\
+      Costs=( ( Class="X2AbilityCost_ActionPoints", Mode=eACEM_Merge, SetNumPoints=true, NumPoints=2 ) ) \\
+  )
+  ```
+
+  Granting it to units is left to mods made for that, such as Repurpose Abilities, Weapon Skin Replacer or Template Master; they only need to run after Ability Editor. See [Create an ability](docs/guides/create-an-ability.md).
+
+- **Thirteen more template fields**: the display text (`FriendlyName`, `LongDescription`, `HelpText`, `FlyOverText`), `TargetingMethod`, `CinescriptCameraType`, `AbilityConfirmSound`, `ActivationSpeech`, `CustomFireAnim`, `SkipFireAction`, `ShowActivation`, `SkipMoveStop` and `FrameEvenWhenUnitIsHidden`.
+  They apply to existing abilities too, so an ability can be renamed from config.
+
 - **Damage-over-time effects can now be retuned.** A persistent effect is only the *state*;
-  what it does each turn lives in a child effect inside its `ApplyOnTick` list. Editing
-  `X2Effect_Burning` reached its duration but never its damage, which sits in a nested
-  `X2Effect_ApplyWeaponDamage`. Three new `EffectEdit` keys — `ApplyOnTickClass`,
-  `ApplyOnTickIndex` and `ApplyOnTickMode` - redirect an entry at that child, so the rest of
-  the entry edits it instead.
+  what it does each turn lives in a child effect inside its `ApplyOnTick` list. 
+  Editing `X2Effect_Burning` reached its duration but never its damage, which sits in a nested `X2Effect_ApplyWeaponDamage`.
+  Three new `EffectEdit` keys — `ApplyOnTickClass`, `ApplyOnTickIndex` and `ApplyOnTickMode` - redirect an entry at that child, so the rest of the entry edits it instead.
 
   ```ini
   ; Molotov burn ticks for 5 (+/-2) instead of its usual damage

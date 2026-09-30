@@ -485,6 +485,172 @@ static function ApplyTemplateEdit(X2AbilityTemplate Template, AbilityEdit Abilit
 		Template.bCommanderAbility = AbilityEdit.CommanderAbility;
 	}
 
+	if (AbilityEdit.SetFriendlyName)
+	{
+		class'X2AbilityEditor_Logger'.static.LogInfo(
+			Template.DataName,
+			"Template.LocFriendlyName",
+			Template.LocFriendlyName,
+			AbilityEdit.FriendlyName
+		);
+
+		Template.LocFriendlyName = AbilityEdit.FriendlyName;
+	}
+
+	if (AbilityEdit.SetLongDescription)
+	{
+		class'X2AbilityEditor_Logger'.static.LogInfo(
+			Template.DataName,
+			"Template.LocLongDescription",
+			Template.LocLongDescription,
+			AbilityEdit.LongDescription
+		);
+
+		Template.LocLongDescription = AbilityEdit.LongDescription;
+	}
+
+	if (AbilityEdit.SetHelpText)
+	{
+		class'X2AbilityEditor_Logger'.static.LogInfo(
+			Template.DataName,
+			"Template.LocHelpText",
+			Template.LocHelpText,
+			AbilityEdit.HelpText
+		);
+
+		Template.LocHelpText = AbilityEdit.HelpText;
+	}
+
+	if (AbilityEdit.SetFlyOverText)
+	{
+		class'X2AbilityEditor_Logger'.static.LogInfo(
+			Template.DataName,
+			"Template.LocFlyOverText",
+			Template.LocFlyOverText,
+			AbilityEdit.FlyOverText
+		);
+
+		Template.LocFlyOverText = AbilityEdit.FlyOverText;
+	}
+
+	if (AbilityEdit.SetTargetingMethod)
+	{
+		class'X2AbilityEditor_Logger'.static.LogInfo(
+			Template.DataName,
+			"Template.TargetingMethod",
+			PathName(Template.TargetingMethod),
+			AbilityEdit.TargetingMethod
+		);
+
+		Template.TargetingMethod = class<X2TargetingMethod>(DynamicLoadObject(AbilityEdit.TargetingMethod, class'Class'));
+
+		if (Template.TargetingMethod == none && AbilityEdit.TargetingMethod != "")
+		{
+			`log(
+				"AbilityEdit:" @ string(Template.DataName) @ "Template.TargetingMethod" @
+				"could not load class" @ AbilityEdit.TargetingMethod,
+				class'X2DLCInfo_AbilityEditor'.default.EnableDebug,
+				'AbilityEditor'
+			);
+		}
+	}
+
+	if (AbilityEdit.SetCinescriptCameraType)
+	{
+		class'X2AbilityEditor_Logger'.static.LogInfo(
+			Template.DataName,
+			"Template.CinescriptCameraType",
+			Template.CinescriptCameraType,
+			AbilityEdit.CinescriptCameraType
+		);
+
+		Template.CinescriptCameraType = AbilityEdit.CinescriptCameraType;
+	}
+
+	if (AbilityEdit.SetAbilityConfirmSound)
+	{
+		class'X2AbilityEditor_Logger'.static.LogInfo(
+			Template.DataName,
+			"Template.AbilityConfirmSound",
+			Template.AbilityConfirmSound,
+			AbilityEdit.AbilityConfirmSound
+		);
+
+		Template.AbilityConfirmSound = AbilityEdit.AbilityConfirmSound;
+	}
+
+	if (AbilityEdit.SetActivationSpeech)
+	{
+		class'X2AbilityEditor_Logger'.static.LogInfo(
+			Template.DataName,
+			"Template.ActivationSpeech",
+			string(Template.ActivationSpeech),
+			string(AbilityEdit.ActivationSpeech)
+		);
+
+		Template.ActivationSpeech = AbilityEdit.ActivationSpeech;
+	}
+
+	if (AbilityEdit.SetCustomFireAnim)
+	{
+		class'X2AbilityEditor_Logger'.static.LogInfo(
+			Template.DataName,
+			"Template.CustomFireAnim",
+			string(Template.CustomFireAnim),
+			string(AbilityEdit.CustomFireAnim)
+		);
+
+		Template.CustomFireAnim = AbilityEdit.CustomFireAnim;
+	}
+
+	if (AbilityEdit.SetSkipFireAction)
+	{
+		class'X2AbilityEditor_Logger'.static.LogInfo(
+			Template.DataName,
+			"Template.bSkipFireAction",
+			string(Template.bSkipFireAction),
+			string(AbilityEdit.SkipFireAction)
+		);
+
+		Template.bSkipFireAction = AbilityEdit.SkipFireAction;
+	}
+
+	if (AbilityEdit.SetShowActivation)
+	{
+		class'X2AbilityEditor_Logger'.static.LogInfo(
+			Template.DataName,
+			"Template.bShowActivation",
+			string(Template.bShowActivation),
+			string(AbilityEdit.ShowActivation)
+		);
+
+		Template.bShowActivation = AbilityEdit.ShowActivation;
+	}
+
+	if (AbilityEdit.SetSkipMoveStop)
+	{
+		class'X2AbilityEditor_Logger'.static.LogInfo(
+			Template.DataName,
+			"Template.bSkipMoveStop",
+			string(Template.bSkipMoveStop),
+			string(AbilityEdit.SkipMoveStop)
+		);
+
+		Template.bSkipMoveStop = AbilityEdit.SkipMoveStop;
+	}
+
+	if (AbilityEdit.SetFrameEvenWhenUnitIsHidden)
+	{
+		class'X2AbilityEditor_Logger'.static.LogInfo(
+			Template.DataName,
+			"Template.bFrameEvenWhenUnitIsHidden",
+			string(Template.bFrameEvenWhenUnitIsHidden),
+			string(AbilityEdit.FrameEvenWhenUnitIsHidden)
+		);
+
+		Template.bFrameEvenWhenUnitIsHidden = AbilityEdit.FrameEvenWhenUnitIsHidden;
+	}
+
 	class'X2AbilityEditor_Helper'.static.ApplyNameArrayEdit(
 		Template.DataName,
 		"Template.AdditionalAbilities",

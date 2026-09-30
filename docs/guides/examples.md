@@ -1,7 +1,8 @@
 # Examples
 
 Worked entries you can paste and adapt. All of them go under
-`[AbilityEditor.X2DLCInfo_AbilityEditor]` in `XComAbilityEditor.ini`.
+`[AbilityEditor.X2DLCInfo_AbilityEditor]` in `XComAbilityEditor.ini`. They all edit abilities
+that already exist; for making new ones, see [Create an ability](create-an-ability.md).
 
 ## Rework Slash
 

@@ -33,7 +33,9 @@ most problems here.
    it. A broken one truncates the entry silently.
 4. **Wrong ability name.** The log says `AbilityEdit: Ability not found: <name>`. Names are
    template names, not display names - the counter-attack from Bladestorm is `BladestormAttack`,
-   not `Bladestorm`, and `Bladestorm` itself is a passive with no costs at all.
+   not `Bladestorm`, and `Bladestorm` itself is a passive with no costs at all. If you meant to
+   [create](create-an-ability.md) that ability, `Create=true` is missing - or its `CloneFrom`
+   source was not found, which the log says just before (`CloneFrom source not found`).
 5. **Single-object slot with no `Class` on an ability that has none.** A `Cooldown` block without
    `Class` edits the existing cooldown; if the ability never had one, the block is a silent no-op.
    Name the `Class` to create one.

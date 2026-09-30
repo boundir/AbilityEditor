@@ -16,6 +16,10 @@ export interface Issue {
   detail: string
 }
 
+interface EntryContext {
+  blank: boolean
+}
+
 /** Array families */
 const ARRAY_FAMILY_KEYS = new Set(['Costs', 'Effects', 'Triggers'])
 
@@ -47,11 +51,18 @@ function familyForKey(indices: Indices, key: string, structName: string): string
   return child ? indices.familyByStruct.get(child)?.name : undefined
 }
 
+function entryContext(entry: Node): EntryContext {
+  const cloneFrom = entry['CloneFrom']
+  const hasClone = typeof cloneFrom === 'string' && cloneFrom.trim() !== ''
+  return { blank: entry['Create'] === true && !hasClone }
+}
+
 export function validate(doc: Doc, indices: Indices): Issue[] {
   const issues: Issue[] = []
 
   doc.entries.forEach((entry, index) => {
-    validateNode(entry, 'AbilityEdit', [index], indices, issues)
+    const context = entryContext(entry)
+    validateNode(entry, 'AbilityEdit', [index], indices, issues, context)
 
     const ability = entry['Ability']
     if (typeof ability !== 'string' || ability.trim() === '') {
@@ -59,7 +70,7 @@ export function validate(doc: Doc, indices: Indices): Issue[] {
         severity: 'error',
         path: [index],
         title: 'Ability is required',
-        detail: 'Every entry needs the template name of the ability it edits, e.g. SwordSlice.',
+        detail: 'Every entry needs the template name of the ability it edits or creates, e.g. SwordSlice.',
       })
     } else if (!isBareName(ability)) {
       issues.push({
@@ -70,9 +81,81 @@ export function validate(doc: Doc, indices: Indices): Issue[] {
           'Ability is a name, so it must be a bare token: letters, digits and underscores, not starting with a digit.',
       })
     }
+
+    checkCreation(entry, index, context, issues)
   })
 
   return issues
+}
+
+function checkCreation(entry: Node, index: number, context: EntryContext, issues: Issue[]): void {
+  const creating = entry['Create'] === true
+  const cloneFrom = entry['CloneFrom']
+  const hasClone = typeof cloneFrom === 'string' && cloneFrom.trim() !== ''
+  const preset = entry['Preset']
+  const hasPreset = typeof preset === 'string' && preset !== ''
+
+  if (hasClone && !isBareName(cloneFrom)) {
+    issues.push({
+      severity: 'error',
+      path: [index, 'CloneFrom'],
+      title: `"${cloneFrom}" is not a valid ability name`,
+      detail: 'CloneFrom is a template name: letters, digits and underscores, not starting with a digit.',
+    })
+  }
+
+  if (hasClone && cloneFrom === entry['Ability']) {
+    issues.push({
+      severity: 'error',
+      path: [index, 'CloneFrom'],
+      title: 'CloneFrom names the ability itself',
+      detail: 'A new ability cannot be a copy of itself. Name the existing ability to copy.',
+    })
+  }
+
+  if (!creating && (hasClone || hasPreset)) {
+    issues.push({
+      severity: 'warning',
+      path: [index, hasClone ? 'CloneFrom' : 'Preset'],
+      title: `${hasClone ? 'CloneFrom' : 'Preset'} does nothing without Create=true`,
+      detail: 'Both only apply when the entry creates the ability. Set Create=true, or remove them.',
+    })
+  }
+
+  if (creating && hasClone && hasPreset) {
+    issues.push({
+      severity: 'warning',
+      path: [index, 'Preset'],
+      title: 'Preset is ignored when CloneFrom is set',
+      detail: 'A copy takes its game-state and visualization functions from the source. Preset only shapes a blank ability.',
+    })
+  }
+
+  if (!context.blank || preset === 'eACP_Passive') return
+
+  for (const key of ['TargetStyle', 'ToHitCalc'] as const) {
+    const slot = entry[key]
+    const cls = slot && typeof slot === 'object' && !Array.isArray(slot) ? (slot as Node)['Class'] : undefined
+    const hasClass = typeof cls === 'string' && cls.trim() !== ''
+    if (!hasClass) {
+      issues.push({
+        severity: 'error',
+        path: slot ? [index, key] : [index],
+        title: `${key} is required for a new ability`,
+        detail: `A blank ability has no ${key}. Add ${key}=(Class="...") - the game refuses to validate an ability without a target style, and one without a to-hit calc fails when activated. The eACP_Passive preset installs both.`,
+      })
+    }
+  }
+
+  const triggers = entry['Triggers']
+  if (!Array.isArray(triggers) || triggers.length === 0) {
+    issues.push({
+      severity: 'error',
+      path: [index],
+      title: 'Triggers are required for a new ability',
+      detail: 'A blank ability has no triggers, and the game refuses to validate one without any. Add Triggers=((Class="X2AbilityTrigger_PlayerInput", Mode=eAEM_Merge)) or another trigger. The eACP_Passive preset installs one.',
+    })
+  }
 }
 
 function validateNode(
@@ -81,6 +164,7 @@ function validateNode(
   path: Path,
   indices: Indices,
   issues: Issue[],
+  context: EntryContext,
 ): void {
   const struct = indices.structByName.get(structName)
   if (!struct) return
@@ -116,12 +200,12 @@ function validateNode(
 
     if (childStruct && Array.isArray(value) && field.type.startsWith('array<')) {
       const children = value as Node[]
-      checkArrayModes(node, key, children, path, indices, issues)
+      checkArrayModes(node, key, children, path, indices, issues, context)
       checkDuplicateClasses(key, children, path, issues)
 
       children.forEach((child, childIndex) => {
         const childPath = [...path, key, childIndex]
-        validateNode(child, childStruct, childPath, indices, issues)
+        validateNode(child, childStruct, childPath, indices, issues, context)
         checkClassResolution(child, key, structName, childPath, indices, issues)
       })
       continue
@@ -131,13 +215,13 @@ function validateNode(
     if (childStruct && value && typeof value === 'object' && !Array.isArray(value)) {
       const child = value as Node
       const childPath = [...path, key]
-      validateNode(child, childStruct, childPath, indices, issues)
+      validateNode(child, childStruct, childPath, indices, issues, context)
 
-      if (SINGLE_OBJECT_KEYS.has(key)) checkSingleObjectSlot(child, key, childPath, issues)
+      if (SINGLE_OBJECT_KEYS.has(key)) checkSingleObjectSlot(child, key, childPath, issues, context)
       continue
     }
 
-    if (Array.isArray(value) && field.modeField && !keys.includes(field.modeField)) {
+    if (Array.isArray(value) && field.modeField && !keys.includes(field.modeField) && !context.blank) {
       issues.push({
         severity: 'warning',
         path: [...path, key],
@@ -167,10 +251,11 @@ function checkArrayModes(
   path: Path,
   indices: Indices,
   issues: Issue[],
+  context: EntryContext,
 ): void {
   const family = familyForKey(indices, key, 'AbilityEdit')
 
-  if (key === 'Costs' && parent['CostMode'] === undefined && children.length > 0) {
+  if (key === 'Costs' && parent['CostMode'] === undefined && children.length > 0 && !context.blank) {
     issues.push({
       severity: 'error',
       path: [...path, key],
@@ -182,6 +267,11 @@ function checkArrayModes(
 
   const missingMode = children.filter((child) => child['Mode'] === undefined)
   if (missingMode.length === 0) {
+    return
+  }
+
+  // On a blank ability a single Replace has nothing to clear; several entries still fight each other.
+  if (children.length === 1 && context.blank) {
     return
   }
 
@@ -267,12 +357,28 @@ function checkClassResolution(
   })
 }
 
-function checkSingleObjectSlot(child: Node, key: string, path: Path, issues: Issue[]): void {
+function checkSingleObjectSlot(
+  child: Node,
+  key: string,
+  path: Path,
+  issues: Issue[],
+  context: EntryContext,
+): void {
   const cls = child['Class']
   const hasClass = typeof cls === 'string' && cls.trim() !== ''
   const otherKeys = configKeys(child).filter((k) => k !== 'Class')
 
   if (!hasClass && otherKeys.length > 0) {
+    if (context.blank) {
+      issues.push({
+        severity: 'error',
+        path,
+        title: `${key} needs a Class on a new ability`,
+        detail: `A blank ability has no ${key} to edit, so without a Class this block does nothing. Name the Class to create one.`,
+      })
+      return
+    }
+
     issues.push({
       severity: 'warning',
       path,
@@ -282,7 +388,7 @@ function checkSingleObjectSlot(child: Node, key: string, path: Path, issues: Iss
     return
   }
 
-  if (hasClass && otherKeys.length > 0) {
+  if (hasClass && otherKeys.length > 0 && !context.blank) {
     issues.push({
       severity: 'warning',
       path,

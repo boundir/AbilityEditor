@@ -1,9 +1,10 @@
 # Ability Editor
 
-An XCOM 2: War of the Chosen mod that changes how existing abilities work **purely from config**.
+An XCOM 2: War of the Chosen mod that changes how abilities work **purely from config**.
 Costs, cooldowns, charges, effects, conditions and template fields of any
 ability (base game, DLC or another mod's) can be edited by adding `+AbilityEdits` entries to an
-`.ini` file.
+`.ini` file - and the same entry can [create a new ability](guides/create-an-ability.md), blank
+or as a copy of an existing one.
 
 Letting a Ranger keep acting after Slash is just:
 
