@@ -12,7 +12,7 @@ static function ApplyChargesEdit(X2AbilityTemplate Template, ChargesEdit Charges
 		return;
 	}
 
-	// No Class: edit the template's existing charges in place (no-op when it has none)
+	// No Class: edit the template's own charges (no-op when it has none)
 	if (ChargesEdit.Class == "")
 	{
 		if (Template.AbilityCharges != none)
@@ -30,7 +30,7 @@ static function ApplyChargesEdit(X2AbilityTemplate Template, ChargesEdit Charges
 		return;
 	}
 
-	// Existing charges already of that exact class: edit in place
+	// Existing charges already of that exact class: edit the template's own copy
 	if (Template.AbilityCharges != none && Template.AbilityCharges.Class == ChargesClass)
 	{
 		DispatchChargesEdit(Template.DataName, Template.AbilityCharges, ChargesEdit);

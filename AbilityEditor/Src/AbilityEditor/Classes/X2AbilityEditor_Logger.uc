@@ -17,6 +17,17 @@ static function LogInfo(
 	);
 }
 
+static function LogDetach(name AbilityName, int ObjectCount)
+{
+	`log(
+		string(AbilityName) @
+		"detached" @ ObjectCount @
+		"objects before editing",
+		class'X2DLCInfo_AbilityEditor'.default.EnableDebug,
+		'AbilityEditor'
+	);
+}
+
 static function string JoinNameArray(array<name> Values, optional string Separator)
 {
 	local string Result;

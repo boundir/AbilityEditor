@@ -30,9 +30,10 @@ static event OnPostTemplatesCreated()
 {
 	local X2AbilityTemplateManager AbilityManager;
 	local X2AbilityTemplate Template, Source;
+	local array<X2DataTemplate> Variants;
 	local AbilityEdit AbilityEdit;
 	local array<name> Created;
-	local int i;
+	local int i, j;
 
 	// Keep v1 alive
 	class'OPTC_Abilities'.static.EditAbilityTemplates();
@@ -88,15 +89,24 @@ static event OnPostTemplatesCreated()
 	{
 		AbilityEdit = default.AbilityEdits[i];
 
-		Template = AbilityManager.FindAbilityTemplate(AbilityEdit.Ability);
+		Variants.Length = 0;
+		AbilityManager.FindDataTemplateAllDifficulties(AbilityEdit.Ability, Variants);
 
-		if (Template == none)
+		if (Variants.Length == 0)
 		{
 			`log("AbilityEdit: Ability not found:" @ AbilityEdit.Ability, default.EnableDebug, 'AbilityEditor');
 			continue;
 		}
 
-		ApplyAbilityEdit(Template, AbilityEdit);
+		for (j = 0; j < Variants.Length; ++j)
+		{
+			Template = X2AbilityTemplate(Variants[j]);
+
+			if (Template != none)
+			{
+				ApplyAbilityEdit(Template, AbilityEdit);
+			}
+		}
 	}
 
 	// Explain any RedScreen the game's validation is about to raise for a created ability.
@@ -184,6 +194,11 @@ static function class<Object> LoadEditorClass(string ClassName)
 static function ApplyAbilityEdit(X2AbilityTemplate Template, AbilityEdit AbilityEdit)
 {
 	local int i;
+
+	class'X2AbilityEditor_Logger'.static.LogDetach(
+		Template.DataName,
+		class'X2AbilityEditor_Cloner'.static.DetachTemplate(Template)
+	);
 
 	class'X2AbilityTemplateEditor'.static.ApplyTemplateEdit(Template, AbilityEdit);
 

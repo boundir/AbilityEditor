@@ -10,8 +10,7 @@ static function ApplyTargetStyleEdit(X2AbilityTemplate Template, TargetStyleEdit
 	);
 }
 
-// Returns the object that should occupy the slot: the existing one (edited in place
-// when Class is empty or matches), or a fresh instance of Class.
+// Returns the object that should occupy the slot.
 static function X2AbilityTargetStyle ApplyToSlot(
 	name AbilityName,
 	string Slot,

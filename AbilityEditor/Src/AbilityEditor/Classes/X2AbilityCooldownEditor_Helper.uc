@@ -5,7 +5,7 @@ static function ApplyCooldownEdit(X2AbilityTemplate Template, CooldownEdit Abili
 	local X2AbilityCooldown AbilityCooldown;
 	local class<X2AbilityCooldown> CooldownClass;
 
-	// No Class: edit the template's existing cooldown in place (no-op when it has none)
+	// No Class: edit the template's own cooldown (no-op when it has none)
 	if (AbilityEdit.Class == "")
 	{
 		if (Template.AbilityCooldown != none)
@@ -23,7 +23,7 @@ static function ApplyCooldownEdit(X2AbilityTemplate Template, CooldownEdit Abili
 		return;
 	}
 
-	// Existing cooldown already of that exact class: edit in place
+	// Existing cooldown already of that exact class: edit the template's own copy
 	if (Template.AbilityCooldown != none && Template.AbilityCooldown.Class == CooldownClass)
 	{
 		DispatchCooldownEdit(Template.DataName, Template.AbilityCooldown, AbilityEdit);
