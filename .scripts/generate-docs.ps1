@@ -21,15 +21,24 @@
     XCOM 2 SDK root, defaulting to the 'xcom.highlander.sdkroot' VS Code setting.
     Without it the abstract / non-editable / dispatch-order enrichment is skipped.
 
+.PARAMETER Bridge
+    Root folder of a bridge mod (containing <Package>\Src\<Package>\Classes, <Package>\Config\XComAbilityEditor.ini
+    and a bridge.json manifest). Writes docs/bridges/<Package>.json for it instead of the schema, and leaves
+    README.md alone. The normal run merges every fragment under docs/bridges into docs/schema.json.
+
 .EXAMPLE
     .\.scripts\generate-docs.ps1 -CheckOnly
+
+.EXAMPLE
+    .\.scripts\generate-docs.ps1 -Bridge ..\AbilityEditorAlienHunters -SdkPath 'T:\Steam\steamApps\common\XCOM 2 War of the Chosen SDK'
 #>
 [CmdletBinding()]
 param(
     [switch] $SchemaOnly,
     [switch] $CheckOnly,
     [switch] $PrintSourceHash,
-    [string] $SdkPath = ''
+    [string] $SdkPath = '',
+    [string] $Bridge = ''
 )
 
 Set-StrictMode -Version Latest
@@ -46,6 +55,30 @@ $SchemaPath = Join-Path $DocsDir 'schema.json'
 
 $DataStructuresFile = Join-Path $ClassesDir 'AE_DataStructures.uc'
 $DlcInfoFile        = Join-Path $ClassesDir 'X2DLCInfo_AbilityEditor.uc'
+$BridgesDir         = Join-Path $DocsDir 'bridges'
+
+# Bridge mode: the bridge's editors are parsed next to the built-ins so inheritance resolves across both.
+$BridgeRoot       = $null
+$BridgePackage    = $null
+$BridgeClassesDir = $null
+$BridgeIniPath    = $null
+$BridgeManifest   = $null
+$FragmentPath     = $null
+if ($Bridge) {
+    $BridgeRoot       = (Resolve-Path -LiteralPath $Bridge).Path
+    $BridgePackage    = Split-Path -Leaf $BridgeRoot
+    $BridgeClassesDir = Join-Path $BridgeRoot "$BridgePackage\Src\$BridgePackage\Classes"
+    $BridgeIniPath    = Join-Path $BridgeRoot "$BridgePackage\Config\XComAbilityEditor.ini"
+    $BridgeManifest   = Join-Path $BridgeRoot 'bridge.json'
+    $FragmentPath     = Join-Path $BridgesDir "$BridgePackage.json"
+
+    if (-not (Test-Path -LiteralPath $BridgeClassesDir)) {
+        throw "Bridge classes folder not found: $BridgeClassesDir (expected <mod>\<Package>\Src\<Package>\Classes, with <Package> the mod folder name)."
+    }
+    if (-not (Test-Path -LiteralPath $BridgeIniPath)) {
+        throw "Bridge registration ini not found: $BridgeIniPath (the +Extra<Family>Editors entries live there)."
+    }
+}
 
 # Line separator used throughout the markdown rendering.
 $nl = "`n"
@@ -73,6 +106,110 @@ function Read-TextFile {
     param([string] $Path)
 
     return [System.IO.File]::ReadAllLines($Path)
+}
+
+# ConvertFrom-Json gives PSCustomObjects; the merge wants dictionaries it can add keys to (PS 5.1 has no -AsHashtable).
+function ConvertTo-OrderedHashtable {
+    param($Value)
+
+    if ($Value -is [System.Management.Automation.PSCustomObject]) {
+        $table = [ordered]@{}
+        foreach ($property in $Value.PSObject.Properties) {
+            $table[$property.Name] = ConvertTo-OrderedHashtable $property.Value
+        }
+        return $table
+    }
+    if ($Value -is [System.Collections.IList]) {
+        $items = [System.Collections.Generic.List[object]]::new()
+        foreach ($item in $Value) { $items.Add((ConvertTo-OrderedHashtable $item)) }
+        return , $items.ToArray()
+    }
+    return $Value
+}
+
+# bridge.json: display name, repo and requirements a bridge publishes with its fragment.
+function Read-BridgeManifest {
+    param(
+        [string] $Path,
+        [string] $Package
+    )
+
+    $manifest = [ordered]@{
+        displayName   = $Package
+        repo          = ''
+        requires      = [ordered]@{ mods = @('AbilityEditor'); dlc = @() }
+        classPackages = [ordered]@{}
+    }
+
+    if (-not (Test-Path -LiteralPath $Path)) {
+        $Warnings.Add("bridge.json not found at $Path - using the package name as display name and no requirements.")
+        return $manifest
+    }
+
+    $raw = ConvertTo-OrderedHashtable (Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json)
+    if ($raw.Contains('displayName') -and $raw.displayName) { $manifest.displayName = [string]$raw.displayName }
+    if ($raw.Contains('repo') -and $raw.repo)               { $manifest.repo = [string]$raw.repo }
+    if ($raw.Contains('requires')) {
+        $mods = @()
+        if ($raw.requires.Contains('mods')) { $mods = @($raw.requires.mods | ForEach-Object { [string]$_ }) }
+        if ($mods -notcontains 'AbilityEditor') { $mods = @('AbilityEditor') + $mods }
+        $manifest.requires.mods = $mods
+        if ($raw.requires.Contains('dlc')) { $manifest.requires.dlc = @($raw.requires.dlc | ForEach-Object { [string]$_ }) }
+    }
+    if ($raw.Contains('classPackages')) { $manifest.classPackages = $raw.classPackages }
+
+    return $manifest
+}
+
+# The +Extra<Family>Editors lines of a bridge's XComAbilityEditor.ini, per registry, in runtime order.
+function Read-BridgeRegistration {
+    param(
+        [string] $IniPath,
+        [string] $ExpectedPackage
+    )
+
+    $registrations = @{}
+    $section = ''
+    $ordinal = 0
+
+    foreach ($raw in (Read-TextFile $IniPath)) {
+        $line = $raw.Trim()
+        if ($line -eq '' -or $line.StartsWith(';')) { continue }
+        if ($line -match '^\[(.+?)\]$') { $section = $Matches[1]; continue }
+        if ($line -notmatch '^[\+\.]?(Extra\w+Editors)\s*=\s*\((.*)\)$') { continue }
+        $registry = $Matches[1]
+        $body = $Matches[2]
+
+        if ($section -ne 'AbilityEditor.X2DLCInfo_AbilityEditor') {
+            $Warnings.Add("Registration '$registry' under [$section] is ignored by the game; it belongs under [AbilityEditor.X2DLCInfo_AbilityEditor].")
+            continue
+        }
+        if ($body -notmatch 'EditorClass\s*=\s*"?(?:(\w+)\.)?(\w+)"?') {
+            $Warnings.Add("Registration '$line' has no EditorClass and was skipped.")
+            continue
+        }
+        $package = $Matches[1]
+        $class = $Matches[2]
+        if (-not $package) {
+            $Warnings.Add("EditorClass '$class' is not package-qualified; DynamicLoadObject will not find it at runtime.")
+        }
+        elseif ($package -ne $ExpectedPackage) {
+            $Warnings.Add("EditorClass '$package.$class' names package '$package', but the bridge package is '$ExpectedPackage'.")
+        }
+
+        $priority = 0
+        if ($body -match 'Priority\s*=\s*(-?\d+)') { $priority = [int]$Matches[1] }
+
+        if (-not $registrations.ContainsKey($registry)) { $registrations[$registry] = [System.Collections.Generic.List[object]]::new() }
+        $registrations[$registry].Add(@{ Class = $class; Package = $package; Priority = $priority; Ordinal = $ordinal })
+        $ordinal++
+    }
+
+    # Same order the game uses: Priority descending, ini order for ties.
+    foreach ($key in @($registrations.Keys)) {
+        $registrations[$key] = @($registrations[$key] | Sort-Object @{ Expression = 'Priority'; Descending = $true }, @{ Expression = 'Ordinal'; Descending = $false })
+    }
+    return $registrations
 }
 
 function ConvertTo-CommentFreeText {
@@ -217,7 +354,9 @@ function Get-EditAction {
 #endregion
 
 if ($PrintSourceHash) {
-    Write-Output (Get-SourceHash $ClassesDir)
+    $hashDir = $ClassesDir
+    if ($BridgeRoot) { $hashDir = $BridgeClassesDir }
+    Write-Output (Get-SourceHash $hashDir)
     exit 0
 }
 
@@ -536,11 +675,18 @@ $applyBodyCode = ($applyBody -split "`n" | Where-Object { $_ -notmatch '^\s*//' 
 
 #region 3. Parse editor classes
 
-$EditorFiles = Get-ChildItem -LiteralPath $ClassesDir -Filter 'X2Ability*Editor*.uc' -File |
-    Where-Object { $_.Name -notmatch '_Helper\.uc$' -and $_.Name -notmatch '^X2AbilityEditor_' }
+$EditorFiles = @(Get-ChildItem -LiteralPath $ClassesDir -Filter 'X2Ability*Editor*.uc' -File |
+    Where-Object { $_.Name -notmatch '_Helper\.uc$' -and $_.Name -notmatch '^X2AbilityEditor_' })
+
+# A bridge's classes are parsed alongside, so their extends chains resolve to the built-in editors.
+if ($BridgeRoot) {
+    $EditorFiles += @(Get-ChildItem -LiteralPath $BridgeClassesDir -Filter '*.uc' -File)
+}
 
 $Editors = @{}   # class name -> record
 foreach ($file in $EditorFiles) {
+    $provider = $null
+    if ($BridgeRoot -and $file.DirectoryName -eq $BridgeClassesDir) { $provider = $BridgePackage }
     $lines = Read-TextFile $file.FullName
     $text = $lines -join "`n"
 
@@ -578,6 +724,7 @@ foreach ($file in $EditorFiles) {
         Functions = $functions
         Text      = $text
         File      = $file.Name
+        Provider  = $provider
     }
 }
 
@@ -629,12 +776,28 @@ function Get-DefinerChain {
 
 $FamilyModels = [System.Collections.Generic.List[object]]::new()
 
+$BridgeRegistrations = @{}
+$BridgeManifestData = $null
+if ($BridgeRoot) {
+    $BridgeRegistrations = Read-BridgeRegistration $BridgeIniPath $BridgePackage
+    $BridgeManifestData = Read-BridgeManifest $BridgeManifest $BridgePackage
+}
+
 foreach ($fam in $Curated.Families) {
     $structName = $fam.Struct
     $structFields = $Structs[$structName]
 
     $registry = @()
-    if ($Registries.ContainsKey($fam.Registry)) {
+    $registryKey = $fam.Registry
+    if ($BridgeRoot) {
+        # A bridge registers through config, and most families will have nothing registered.
+        $registryKey = 'Extra' + $fam.Registry
+        if ($BridgeRegistrations.ContainsKey($registryKey)) {
+            $registry = @($BridgeRegistrations[$registryKey] | ForEach-Object { $_.Class })
+        }
+        if ($registry.Count -eq 0) { continue }
+    }
+    elseif ($Registries.ContainsKey($fam.Registry)) {
         $registry = $Registries[$fam.Registry]
     }
     else {
@@ -647,7 +810,8 @@ foreach ($fam in $Curated.Families) {
     $editorModels = [System.Collections.Generic.List[object]]::new()
     foreach ($cls in $registry) {
         if (-not $Editors.ContainsKey($cls)) {
-            $Warnings.Add("Registered editor $cls has no parsed source file")
+            if ($BridgeRoot) { $Warnings.Add("Registered bridge editor $cls has no source file under $BridgeClassesDir") }
+            else { $Warnings.Add("Registered editor $cls has no parsed source file") }
             continue
         }
         $ed = $Editors[$cls]
@@ -673,6 +837,9 @@ foreach ($fam in $Curated.Families) {
                         $structField.Consumed = $true
                         $type = $structField.Type
                         $desc = $structField.Description
+                    }
+                    elseif ($BridgeRoot -and $definer -eq $cls) {
+                        $Warnings.Add("Bridge editor $cls reads $structName.$($rec.Config), which AbilityEditor does not declare - add the field upstream first.")
                     }
 
                     $entry = [ordered]@{
@@ -735,13 +902,21 @@ foreach ($fam in $Curated.Families) {
             }
         }
 
-        $editorModels.Add([ordered]@{
+        $editorModel = [ordered]@{
             class     = $cls
             extends   = $ed.Extends
             gameClass = $ed.GameClass
             catchAll  = $ed.CatchAll
             fields    = $fields.ToArray()
-        })
+        }
+        if ($BridgeRoot) {
+            $registration = $BridgeRegistrations[$registryKey] | Where-Object { $_.Class -eq $cls } | Select-Object -First 1
+            $editorModel.family       = $fam.Name
+            $editorModel.registration = $registryKey
+            $editorModel.priority     = [int]$registration.Priority
+            $editorModel.package      = $null
+        }
+        $editorModels.Add($editorModel)
     }
 
     $FamilyModels.Add([ordered]@{
@@ -771,26 +946,54 @@ if (-not $SdkPath) {
     }
 }
 
+$SdkSrcDir = $null
 $SdkClassesDir = $null
 if ($SdkPath -and (Test-Path (Join-Path $SdkPath 'Development\Src\XComGame\Classes'))) {
-    $SdkClassesDir = Join-Path $SdkPath 'Development\Src\XComGame\Classes'
+    $SdkSrcDir = Join-Path $SdkPath 'Development\Src'
+    $SdkClassesDir = Join-Path $SdkSrcDir 'XComGame\Classes'
 }
 else {
     Write-Information 'SDK not found - skipping abstract/non-editable/dispatch-order enrichment (pass -SdkPath to enable).'
 }
 
 $SdkCache = @{}
+$SdkFileCache = @{}
 
-# Reads a game class from the SDK: parent, abstract flag, and why each var is not config-editable.
+# Locates a game class in the SDK sources: XComGame first, then the other packages (DLC_2, ...).
+function Find-SdkClassFile {
+    param([string] $GameClass)
+
+    if ($SdkFileCache.ContainsKey($GameClass)) { return $SdkFileCache[$GameClass] }
+
+    $found = $null
+    $direct = Join-Path $SdkClassesDir "$GameClass.uc"
+    if (Test-Path -LiteralPath $direct) {
+        $found = @{ Path = $direct; Package = 'XComGame' }
+    }
+    else {
+        foreach ($dir in (Get-ChildItem -LiteralPath $SdkSrcDir -Directory | Sort-Object Name)) {
+            $candidate = Join-Path $dir.FullName "Classes\$GameClass.uc"
+            if (Test-Path -LiteralPath $candidate) {
+                $found = @{ Path = $candidate; Package = $dir.Name }
+                break
+            }
+        }
+    }
+
+    $SdkFileCache[$GameClass] = $found
+    return $found
+}
+
+# Reads a game class from the SDK: parent, abstract flag, package, and why each var is not config-editable.
 function Get-SdkClassInfo {
     param([string] $GameClass)
 
     if ($SdkCache.ContainsKey($GameClass)) { return $SdkCache[$GameClass] }
 
     $result = $null
-    $file = Join-Path $SdkClassesDir "$GameClass.uc"
-    if (Test-Path $file) {
-        $text = [System.IO.File]::ReadAllText($file)
+    $located = Find-SdkClassFile $GameClass
+    if ($located) {
+        $text = [System.IO.File]::ReadAllText($located.Path)
         $text = [regex]::Replace($text, '/\*.*?\*/', '', 'Singleline')
 
         $extends = $null
@@ -849,7 +1052,7 @@ function Get-SdkClassInfo {
             }
         }
 
-        $result = @{ Extends = $extends; Abstract = $abstract; Vars = $vars.ToArray() }
+        $result = @{ Extends = $extends; Abstract = $abstract; Vars = $vars.ToArray(); Package = $located.Package }
     }
 
     $SdkCache[$GameClass] = $result
@@ -895,6 +1098,7 @@ if ($SdkClassesDir) {
             $info = Get-SdkClassInfo $ed.gameClass
             if ($null -eq $info) { continue }
             $ed.abstract = [bool]$info.Abstract
+            if ($BridgeRoot) { $ed.package = $info.Package }
 
             # covered = first segment of every game field this editor applies
             $covered = @($ed.fields | Where-Object { $_.gameField } | ForEach-Object { ($_.gameField -split '[\.\[]')[0] })
@@ -913,11 +1117,277 @@ if ($SdkClassesDir) {
             $anc = Get-SdkAncestor $concrete[$jj].gameClass
             for ($ii = 0; $ii -lt $jj; $ii++) {
                 if ($concrete[$ii].gameClass -in $anc) {
-                    $Warnings.Add("Dispatch order ($($famModel.name)): $($concrete[$jj].class) is registered after $($concrete[$ii].class), but $($concrete[$jj].gameClass) derives from $($concrete[$ii].gameClass) - it will never be dispatched.")
+                    if ($BridgeRoot) {
+                        $Warnings.Add("Dispatch order ($($famModel.name)): $($concrete[$jj].class) has a lower or equal Priority than $($concrete[$ii].class), but $($concrete[$jj].gameClass) derives from $($concrete[$ii].gameClass) - raise Priority on $($concrete[$jj].class).")
+                    }
+                    else {
+                        $Warnings.Add("Dispatch order ($($famModel.name)): $($concrete[$jj].class) is registered after $($concrete[$ii].class), but $($concrete[$jj].gameClass) derives from $($concrete[$ii].gameClass) - it will never be dispatched.")
+                    }
                 }
             }
         }
     }
+}
+
+# A bridge editor's game class may live outside the SDK (another mod): the manifest or the bridge's own overlay names the package.
+if ($BridgeRoot) {
+    foreach ($famModel in $FamilyModels) {
+        foreach ($ed in $famModel.editors) {
+            if ($ed.package) { continue }
+            if ($BridgeManifestData.classPackages.Contains($ed.gameClass)) {
+                $ed.package = [string]$BridgeManifestData.classPackages[$ed.gameClass]
+                continue
+            }
+            $overlayRoot = Join-Path $BridgeRoot 'CustomSrc'
+            if (Test-Path -LiteralPath $overlayRoot) {
+                $overlay = Get-ChildItem -LiteralPath $overlayRoot -Directory |
+                    Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName "Classes\$($ed.gameClass).uc") } |
+                    Select-Object -First 1
+                if ($overlay) { $ed.package = $overlay.Name; continue }
+            }
+            $Warnings.Add("Bridge editor $($ed.class): the package of $($ed.gameClass) could not be determined - pass -SdkPath, or add it to classPackages in bridge.json.")
+        }
+    }
+}
+
+#endregion
+
+#region 4d. Bridges: write this bridge's fragment, or merge the committed fragments
+
+$sha = Get-SourceHash $ClassesDir
+
+if ($BridgeRoot) {
+    $bridgeEditors = [System.Collections.Generic.List[object]]::new()
+    foreach ($famModel in $FamilyModels) {
+        foreach ($ed in $famModel.editors) {
+            $abstract = $false
+            if ($ed.Contains('abstract')) { $abstract = [bool]$ed.abstract }
+            $notEditable = @()
+            if ($ed.Contains('notEditable')) { $notEditable = @($ed.notEditable) }
+
+            $bridgeEditors.Add([ordered]@{
+                family       = $famModel.name
+                registration = $ed.registration
+                priority     = $ed.priority
+                class        = $ed.class
+                extends      = $ed.extends
+                gameClass    = $ed.gameClass
+                package      = $ed.package
+                catchAll     = $ed.catchAll
+                abstract     = $abstract
+                fields       = $ed.fields
+                notEditable  = $notEditable
+            })
+        }
+    }
+
+    $fragment = [ordered]@{
+        '$comment'    = 'Generated by .scripts/generate-docs.ps1 -Bridge - do not edit by hand.'
+        name          = $BridgePackage
+        displayName   = $BridgeManifestData.displayName
+        repo          = $BridgeManifestData.repo
+        requires      = $BridgeManifestData.requires
+        sourceHash    = Get-SourceHash $BridgeClassesDir
+        generatedFrom = $sha
+        editors       = $bridgeEditors.ToArray()
+        warnings      = $Warnings.ToArray()
+    }
+    $fragmentJson = ($fragment | ConvertTo-Json -Depth 14) + "`n"
+
+    $existingFragment = ''
+    if (Test-Path -LiteralPath $FragmentPath) { $existingFragment = [System.IO.File]::ReadAllText($FragmentPath) }
+    $fragmentStale = ($existingFragment -ne $fragmentJson)
+    if ($fragmentStale -and -not $CheckOnly) {
+        if (-not (Test-Path -LiteralPath $BridgesDir)) { $null = New-Item -ItemType Directory -Path $BridgesDir }
+        [System.IO.File]::WriteAllText($FragmentPath, $fragmentJson)
+        Write-Information "Wrote $FragmentPath"
+    }
+    elseif ($fragmentStale) {
+        Write-Information "STALE: $FragmentPath differs."
+    }
+    else {
+        Write-Information "$FragmentPath is up to date."
+    }
+
+    Write-Information ''
+    Write-Information ("Bridge $BridgePackage`: " + (($FamilyModels | ForEach-Object { "$($_.name)=$(@($_.editors).Count) editors" }) -join '; '))
+    if ($Warnings.Count -gt 0) {
+        Write-Information ''
+        Write-Information "Warnings ($($Warnings.Count)):"
+        foreach ($w in $Warnings) { Write-Information "  - $w" }
+    }
+
+    $missingPackage = @($bridgeEditors | Where-Object { -not $_.package })
+    if ($missingPackage.Count -gt 0) { exit 1 }
+    if ($CheckOnly -and $fragmentStale) { exit 1 }
+    exit 0
+}
+
+$BridgeSummaries = [System.Collections.Generic.List[object]]::new()
+
+# Own fields come from the fragment; inherited ones are recomposed from the current built-in parent,
+# so an AbilityEditor-side change to a parent editor shows on the bridge's page without a regeneration.
+function Get-RecomposedFieldList {
+    param(
+        $FragmentEditor,
+        $OwnFields,
+        $FamilyModel
+    )
+
+    $result = [System.Collections.Generic.List[object]]::new()
+    $seen = @{}
+    foreach ($f in $OwnFields) {
+        $result.Add($f)
+        $seen[[string]$f.config] = $true
+    }
+
+    $parentName = [string]$FragmentEditor.extends
+    $parent = $FamilyModel.editors | Where-Object { $_.class -eq $parentName } | Select-Object -First 1
+    if ($parent) {
+        foreach ($pf in @($parent.fields)) {
+            $key = [string]$pf.config
+            if ($seen.ContainsKey($key)) { continue }
+            $copy = [ordered]@{}
+            foreach ($k in $pf.Keys) { $copy[$k] = $pf[$k] }
+            if (-not $copy.inheritedFrom) { $copy.inheritedFrom = $parent.class }
+            $result.Add($copy)
+            $seen[$key] = $true
+        }
+        return , $result.ToArray()
+    }
+
+    foreach ($f in @($FragmentEditor.fields)) {
+        $key = [string]$f.config
+        if ($seen.ContainsKey($key)) { continue }
+        $result.Add($f)
+        $seen[$key] = $true
+    }
+    return , $result.ToArray()
+}
+
+function Merge-BridgeFragment {
+    param([string] $Path)
+
+    $fileName = Split-Path -Leaf $Path
+    $fragment = $null
+    try {
+        $fragment = ConvertTo-OrderedHashtable (Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json)
+    }
+    catch {
+        $Warnings.Add("Bridge fragment $fileName is not valid JSON and was skipped.")
+        return
+    }
+
+    foreach ($key in @('name', 'sourceHash', 'generatedFrom', 'editors')) {
+        if (-not $fragment.Contains($key)) {
+            $Warnings.Add("Bridge fragment $fileName has no '$key' and was skipped.")
+            return
+        }
+    }
+
+    $name = [string]$fragment.name
+    $generatedFrom = [string]$fragment.generatedFrom
+    $stale = ($generatedFrom -ne $sha)
+    if ($stale) {
+        $Warnings.Add("[bridge $name] fragment was generated against AbilityEditor sources $($generatedFrom.Substring(0, [Math]::Min(8, $generatedFrom.Length))), current is $($sha.Substring(0, 8)); regenerate it with .\.scripts\generate-docs.ps1 -Bridge <path to $name>.")
+    }
+    if ($fragment.Contains('warnings')) {
+        foreach ($w in @($fragment.warnings)) { $Warnings.Add("[bridge $name] $w") }
+    }
+
+    $summaryEditors = [System.Collections.Generic.List[object]]::new()
+    foreach ($fed in @($fragment.editors)) {
+        $complete = $true
+        foreach ($key in @('family', 'class', 'gameClass', 'package', 'fields')) {
+            if (-not $fed.Contains($key)) { $complete = $false }
+        }
+        if (-not $complete) {
+            $Warnings.Add("[bridge $name] an editor entry is missing family/class/gameClass/package/fields and was skipped.")
+            continue
+        }
+
+        $famModel = $FamilyModels | Where-Object { $_.name -eq [string]$fed.family } | Select-Object -First 1
+        if (-not $famModel) {
+            $Warnings.Add("[bridge $name] editor $($fed.class) names unknown family '$($fed.family)' and was skipped.")
+            continue
+        }
+        if (@($famModel.editors | Where-Object { $_.class -eq [string]$fed.class }).Count -gt 0) {
+            $Warnings.Add("[bridge $name] editor $($fed.class) is already present in $($famModel.name) and was skipped.")
+            continue
+        }
+
+        $own = @($fed.fields | Where-Object { -not $_.inheritedFrom })
+        $model = [ordered]@{
+            class     = [string]$fed.class
+            extends   = [string]$fed.extends
+            gameClass = [string]$fed.gameClass
+            catchAll  = [bool]$fed.catchAll
+            fields    = Get-RecomposedFieldList $fed $own $famModel
+            bridge    = $name
+            package   = [string]$fed.package
+            priority  = [int]$fed.priority
+        }
+        if ($fed.Contains('registration')) { $model.registration = [string]$fed.registration }
+        if ($fed.Contains('abstract'))    { $model.abstract = [bool]$fed.abstract }
+        if ($fed.Contains('notEditable')) { $model.notEditable = @($fed.notEditable) }
+
+        $builtIn = $famModel.editors | Where-Object { $_.gameClass -eq $model.gameClass -and -not $_.Contains('bridge') } | Select-Object -First 1
+        if ($builtIn) { $model.overrides = $builtIn.class }
+
+        $famModel.editors = @($famModel.editors) + @($model)
+        $summaryEditors.Add([ordered]@{ family = $famModel.name; class = $model.class; gameClass = $model.gameClass; package = $model.package })
+
+        # The bridge consumes these upstream fields.
+        foreach ($f in $own) {
+            $sf = $Structs[$famModel.editStruct] | Where-Object { $_.Name -eq [string]$f.config }
+            if (-not $sf) { continue }
+            $sf.Consumed = $true
+            if ($sf.ModeField) {
+                $msf = $Structs[$famModel.editStruct] | Where-Object { $_.Name -eq $sf.ModeField }
+                if ($msf) { $msf.Consumed = $true }
+            }
+        }
+    }
+
+    $displayName = $name
+    if ($fragment.Contains('displayName') -and $fragment.displayName) { $displayName = [string]$fragment.displayName }
+    $repo = ''
+    if ($fragment.Contains('repo') -and $fragment.repo) { $repo = [string]$fragment.repo }
+    $requires = [ordered]@{ mods = @('AbilityEditor'); dlc = @() }
+    if ($fragment.Contains('requires')) { $requires = $fragment.requires }
+
+    $BridgeSummaries.Add([ordered]@{
+        name          = $name
+        displayName   = $displayName
+        repo          = $repo
+        requires      = $requires
+        sourceHash    = [string]$fragment.sourceHash
+        generatedFrom = $generatedFrom
+        stale         = $stale
+        editorCount   = $summaryEditors.Count
+        editors       = $summaryEditors.ToArray()
+    })
+}
+
+if (Test-Path -LiteralPath $BridgesDir) {
+    foreach ($fragmentFile in (Get-ChildItem -LiteralPath $BridgesDir -Filter '*.json' -File | Sort-Object Name)) {
+        Merge-BridgeFragment $fragmentFile.FullName
+    }
+}
+
+# Extras run before every built-in, Priority descending; equal priorities across two bridges are load-order dependent.
+foreach ($famModel in $FamilyModels) {
+    $bridgeEds = @($famModel.editors | Where-Object { $_.Contains('bridge') })
+    if ($bridgeEds.Count -eq 0) { continue }
+
+    $sorted = @($bridgeEds | Sort-Object @{ Expression = 'priority'; Descending = $true }, @{ Expression = 'bridge'; Descending = $false })
+    foreach ($group in ($sorted | Group-Object { $_.priority })) {
+        $providers = @($group.Group | ForEach-Object { $_.bridge } | Select-Object -Unique)
+        if ($providers.Count -gt 1) {
+            $Warnings.Add("Bridges $($providers -join ', ') register $($famModel.name) editors with the same Priority ($($group.Name)); their runtime order depends on mod load order.")
+        }
+    }
+    $famModel.dispatchOrder = @($sorted | ForEach-Object { $_.class }) + @($famModel.dispatchOrder)
 }
 
 #endregion
@@ -985,8 +1455,6 @@ foreach ($w in $Curated.KnownIssues) { $Warnings.Add("Known issue: $w") }
 #endregion
 
 #region 5. Build the schema object
-
-$sha = Get-SourceHash $ClassesDir
 
 $schemaEnums = @($Enums | ForEach-Object {
     $sem = $null
@@ -1068,6 +1536,7 @@ $schema = [ordered]@{
     enums      = $schemaEnums
     structs    = $schemaStructs
     template   = [ordered]@{ fields = $schemaTemplate; notEditable = $TemplateNotEditable }
+    bridges    = $BridgeSummaries.ToArray()
     families   = $FamilyModels.ToArray()
     warnings   = $Warnings.ToArray()
 }
@@ -1086,7 +1555,7 @@ $templateList = ($TemplateFields | ForEach-Object { '`' + $_.Config + '`' }) -jo
 [void]$summary.Append("- **Ability template fields** &mdash; $templateList$nl")
 
 foreach ($fam in $FamilyModels) {
-    $classes = @($fam.editors | Where-Object { -not $_.catchAll } | ForEach-Object { '`' + $_.gameClass + '`' })
+    $classes = @($fam.editors | Where-Object { -not $_.catchAll -and -not $_.Contains('bridge') } | ForEach-Object { '`' + $_.gameClass + '`' })
     $classList = $classes -join ', '
     if ($fam.editors | Where-Object { $_.catchAll }) { $classList += ' &mdash; plus shared fields on any other subclass' }
 
@@ -1097,6 +1566,11 @@ foreach ($fam in $FamilyModels) {
     if ($fam.configKey) { $keyLabel = " (``$($fam.configKey)``)" }
 
     [void]$summary.Append("- **$($fam.name)**$keyLabel$status &mdash; $classList$nl")
+}
+
+foreach ($bridgeSummary in $BridgeSummaries) {
+    $classes = ($bridgeSummary.editors | ForEach-Object { '`' + $_.package + '.' + $_.gameClass + '`' }) -join ', '
+    [void]$summary.Append("- **Bridge: $($bridgeSummary.displayName)** &mdash; $classes$nl")
 }
 $summaryMd = $summary.ToString()
 
@@ -1181,6 +1655,13 @@ if (-not $SchemaOnly) {
 
 Write-Information ''
 Write-Information ('Families: ' + (($FamilyModels | ForEach-Object { "$($_.name)=$(@($_.editors).Count) editors (wired: $($_.wired))" }) -join '; '))
+if ($BridgeSummaries.Count -gt 0) {
+    Write-Information ('Bridges: ' + (($BridgeSummaries | ForEach-Object {
+        $line = "$($_.name)=$($_.editorCount) editors"
+        if ($_.stale) { $line += ', STALE' }
+        $line
+    }) -join '; '))
+}
 
 if ($Warnings.Count -gt 0) {
     Write-Information ''

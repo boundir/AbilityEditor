@@ -18,13 +18,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from ae_render import (  # noqa: E402
     anchor,
+    assign_slugs,
+    bridge_slug,
     code,
-    editor_slug,
     escape_cell,
     family_slug,
     field_table,
+    is_bridge,
     load_schema,
     not_editable_block,
+    qualified_class,
+    requirements_text,
     table,
 )
 
@@ -32,6 +36,8 @@ SCHEMA = load_schema()
 SRC = ".scripts/generate-docs.ps1"
 
 SHARED_HEADING = "Shared fields"
+
+BRIDGES: dict[str, dict[str, Any]] = {b["name"]: b for b in SCHEMA.get("bridges", [])}
 
 
 def own_fields(editor: dict[str, Any]) -> list[dict[str, Any]]:
@@ -64,6 +70,25 @@ def inherited_groups(editor: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
     return groups
 
 
+def bridge_of(editor: dict[str, Any]) -> dict[str, Any] | None:
+    name = editor.get("bridge")
+    if not name:
+        return None
+    return BRIDGES.get(name) or {"name": name, "displayName": name, "requires": {}}
+
+
+def bridge_page(bridge: dict[str, Any]) -> str:
+    return f"bridges/{bridge_slug(bridge['name'])}.md"
+
+
+def bridge_link(bridge: dict[str, Any], prefix: str = "") -> str:
+    return f"[{bridge['displayName']}]({prefix}{bridge_page(bridge)})"
+
+
+def sort_key(editor: dict[str, Any]) -> str:
+    return editor.get("gameClass") or editor["class"]
+
+
 def write(path: str, body: str) -> None:
     with mkdocs_gen_files.open(path, "w") as handle:
         handle.write(body)
@@ -77,6 +102,8 @@ def write(path: str, body: str) -> None:
 def render_family_index(family: dict[str, Any]) -> str:
     shared = shared_fields(family)
     concrete = [e for e in family["editors"] if not e.get("catchAll")]
+    slugs = assign_slugs(family)
+    has_bridge = any(is_bridge(e) for e in concrete)
 
     out = [f"# {family['name']}", ""]
 
@@ -89,15 +116,19 @@ def render_family_index(family: dict[str, Any]) -> str:
     else:
         out += [f"Edit struct: `{family['editStruct']}`.", ""]
 
-    # Dispatch order matters: first match wins, so a class is handled by the first
-    # editor in this list that accepts it.
+    # Dispatch order matters: first match wins, so a class is handled by the first editor in this list that accepts it.
     if family.get("dispatchOrder"):
         chain = []
         for cls in family["dispatchOrder"]:
             editor = next((e for e in family["editors"] if e["class"] == cls), None)
             if editor is None:
                 continue
-            chain.append("any other class" if editor.get("catchAll") else f"`{editor['gameClass']}`")
+            if editor.get("catchAll"):
+                chain.append("any other class")
+            elif is_bridge(editor):
+                chain.append(f"`{qualified_class(editor)}`<sup>bridge</sup>")
+            else:
+                chain.append(f"`{editor['gameClass']}`")
         out += [
             "## Dispatch order",
             "",
@@ -107,6 +138,12 @@ def render_family_index(family: dict[str, Any]) -> str:
             " &rarr; ".join(chain),
             "",
         ]
+        if has_bridge:
+            out += [
+                "<sup>bridge</sup> Provided by a [bridge mod](../bridges/index.md) and only present "
+                "when that mod is installed; bridge editors are checked before every built-in one.",
+                "",
+            ]
 
     out += [
         f"## {SHARED_HEADING}",
@@ -119,37 +156,87 @@ def render_family_index(family: dict[str, Any]) -> str:
 
     if concrete:
         rows = []
-        for editor in sorted(concrete, key=lambda e: e.get("gameClass") or e["class"]):
+        for editor in sorted(concrete, key=sort_key):
             own = len(own_fields(editor))
             badge = " *(abstract)*" if editor.get("abstract") else ""
-            rows.append([
-                f"[`{editor['gameClass']}`]({editor_slug(editor)}.md){badge}",
+            row = [
+                f"[`{qualified_class(editor)}`]({slugs[editor['class']]}.md){badge}",
                 str(own) if own else "&mdash;",
                 code(editor.get("extends")),
-            ])
+            ]
+            if has_bridge:
+                bridge = bridge_of(editor)
+                row.append(bridge_link(bridge, "../") if bridge else "built-in")
+            rows.append(row)
+        headers = ["Game class", "Own fields", "Editor extends"]
+        if has_bridge:
+            headers.append("Provided by")
         out += [
             "## Classes",
             "",
             "Class-specific fields are documented on each page below. A class with no dedicated "
             f"editor still accepts every field in [{SHARED_HEADING}](#{anchor(SHARED_HEADING)}).",
             "",
-            table(["Game class", "Own fields", "Editor extends"], rows),
+            table(headers, rows),
             "",
         ]
 
     return "\n".join(out)
 
 
+def render_bridge_notice(editor: dict[str, Any], bridge: dict[str, Any]) -> list[str]:
+    """Admonitions on a bridge editor's page: what to install, how to name the class."""
+    needs = requirements_text(bridge)
+    needs_line = f" It needs {needs}." if needs else ""
+    fallback = editor.get("extends")
+    fallback_line = (
+        f" Without it, an entry naming this class is handled by the built-in `{fallback}` "
+        "and the own fields below are silently skipped."
+        if fallback
+        else " Without it, the own fields below are silently skipped."
+    )
+    out = [
+        '!!! warning "Requires a bridge mod"',
+        f"    This class is edited by the **{bridge_link(bridge, '../')}** bridge mod.{needs_line}"
+        f"{fallback_line} Name the class with its package - a bare name is looked up in "
+        "`XComGame` and never matches:",
+        "",
+        "    ```ini",
+        f'    Class="{qualified_class(editor)}"',
+        "    ```",
+        "",
+    ]
+    if editor.get("overrides"):
+        out += [
+            "!!! note",
+            f"    This bridge editor overrides the built-in `{editor['overrides']}` for the same "
+            "game class. With the bridge installed it wins; without it the built-in applies.",
+            "",
+        ]
+    if bridge.get("stale"):
+        out += [
+            "!!! info",
+            "    The bridge's fragment was generated against an older Ability Editor than this "
+            "site. The inherited fields below are current; the own fields may lag behind the "
+            "bridge's latest release.",
+            "",
+        ]
+    return out
+
+
 def render_editor(editor: dict[str, Any]) -> str:
     own = own_fields(editor)
     groups = inherited_groups(editor)
+    bridge = bridge_of(editor)
 
-    title = editor.get("gameClass") or editor["class"]
+    title = qualified_class(editor)
     out = [f"# {title}", ""]
 
     meta = [f"Editor: `{editor['class']}`"]
     if editor.get("extends"):
         meta.append(f"extends `{editor['extends']}`")
+    if bridge:
+        meta.append(f"provided by {bridge_link(bridge, '../')}")
     out += [" &middot; ".join(meta) + ".", ""]
 
     if editor.get("abstract"):
@@ -159,6 +246,9 @@ def render_editor(editor: dict[str, Any]) -> str:
             "    classes that derive from it; you cannot name it as a `Class` yourself.",
             "",
         ]
+
+    if bridge:
+        out += render_bridge_notice(editor, bridge)
 
     out += ["## Own fields", "", field_table(own), ""]
 
@@ -208,6 +298,8 @@ def render_reference_index() -> str:
         "- [Ability template fields](template-fields.md) - the scalars and arrays you set directly "
         "on an `+AbilityEdits` entry.",
         "- [Nested structs](nested-structs.md) - the shape of every block that nests inside one.",
+        "- [Bridges](bridges/index.md) - classes from DLC packages and other mods, editable through "
+        "a separate bridge mod.",
         "",
         "!!! tip \"Machine-readable\"",
         "    The whole API is published as [`schema.json`](../schema.json) - the same file this "
@@ -215,6 +307,118 @@ def render_reference_index() -> str:
         "    so tooling can detect staleness.",
         "",
     ])
+
+
+def render_bridges_index() -> str:
+    out = [
+        "# Bridges",
+        "",
+        "A bridge is a separate mod that plugs editors for game classes Ability Editor cannot "
+        "compile against - DLC packages, other mods - into its dispatch. Its classes show up on "
+        "the family pages marked <sup>bridge</sup>, and must be named with their package in "
+        "config (`Class=\"DLC_2.X2Effect_DLC_Day60Freeze\"`). See "
+        "[Extending Ability Editor](../../guides/bridge-mods.md) for how bridges work and how to "
+        "publish one here.",
+        "",
+    ]
+    if not BRIDGES:
+        out += [
+            "*No bridge is published yet.* The first one appears here once its fragment is "
+            "merged - see "
+            "[Publishing your bridge on this site](../../guides/bridge-mods.md#publishing-your-bridge-on-this-site).",
+            "",
+        ]
+        return "\n".join(out)
+
+    rows = []
+    for bridge in BRIDGES.values():
+        requires = bridge.get("requires") or {}
+        dlc = ", ".join(requires.get("dlc") or []) or "&mdash;"
+        rows.append([
+            f"[{bridge['displayName']}]({bridge_slug(bridge['name'])}.md)",
+            f"`{bridge['name']}`",
+            dlc,
+            str(bridge.get("editorCount", len(bridge.get("editors", [])))),
+            "needs refresh" if bridge.get("stale") else "current",
+        ])
+    out += [table(["Bridge", "Package", "DLC", "Classes", "Fragment"], rows), ""]
+    return "\n".join(out)
+
+
+def render_bridge(bridge: dict[str, Any]) -> str:
+    out = [f"# {bridge['displayName']}", ""]
+
+    meta = [f"Mod package `{bridge['name']}`"]
+    if bridge.get("repo"):
+        meta.append(f"[source and releases]({bridge['repo']})")
+    out += [" &middot; ".join(meta) + ".", ""]
+
+    needs = requirements_text(bridge)
+    if needs:
+        out += [f"Requires {needs}.", ""]
+
+    if bridge.get("stale"):
+        out += [
+            '!!! info "Needs a refresh"',
+            "    This bridge's fragment was generated against an older Ability Editor than this "
+            "site. Inherited fields are recomposed from the current built-in editors, so they are "
+            "accurate; the bridge's own fields may lag behind its latest release.",
+            "",
+        ]
+
+    # Editors, grouped by family, with links into the family directories.
+    registrations: list[str] = []
+    for family in SCHEMA["families"]:
+        editors = [e for e in family["editors"] if e.get("bridge") == bridge["name"]]
+        if not editors:
+            continue
+        slugs = assign_slugs(family)
+        fslug = family_slug(family)
+        rows = []
+        for editor in sorted(editors, key=sort_key):
+            own = len(own_fields(editor))
+            note = f" overrides `{editor['overrides']}`" if editor.get("overrides") else ""
+            rows.append([
+                f"[`{qualified_class(editor)}`](../{fslug}/{slugs[editor['class']]}.md)",
+                f"`{editor['class']}`{note}",
+                code(editor.get("extends")),
+                str(own) if own else "&mdash;",
+            ])
+            registry = editor.get("registration")
+            if registry:
+                registrations.append(
+                    f'+{registry}=(EditorClass="{bridge["name"]}.{editor["class"]}", '
+                    f'Priority={editor.get("priority", 0)})'
+                )
+        out += [
+            f"## {family['name']}",
+            "",
+            table(["Game class", "Editor", "Extends", "Own fields"], rows),
+            "",
+        ]
+
+    out += [
+        "## Writing the config",
+        "",
+        "These classes live outside `XComGame`, so every entry names them with their package. "
+        "The fields themselves are ordinary Ability Editor fields, listed on each class page.",
+        "",
+    ]
+    if registrations:
+        out += [
+            "## Registration",
+            "",
+            "What the bridge's `Config\\XComAbilityEditor.ini` registers with Ability Editor. "
+            "Extras are checked before every built-in editor, highest `Priority` first; an editor "
+            "for a subclass of one of these classes needs a higher `Priority`.",
+            "",
+            "```ini",
+            "[AbilityEditor.X2DLCInfo_AbilityEditor]",
+            *registrations,
+            "```",
+            "",
+        ]
+    return "\n".join(out)
 
 
 def render_template_fields() -> str:
@@ -309,15 +513,21 @@ write("getting-started/edit-modes.md", render_edit_modes())
 
 for family in SCHEMA["families"]:
     slug = family_slug(family)
+    slugs = assign_slugs(family)
     write(f"reference/{slug}/index.md", render_family_index(family))
     summary.append(f"* [{family['name']}]({slug}/index.md)")
 
     children = [e for e in family["editors"] if not e.get("catchAll")]
-    for editor in sorted(children, key=lambda e: e.get("gameClass") or e["class"]):
-        page = f"reference/{slug}/{editor_slug(editor)}.md"
+    for editor in sorted(children, key=sort_key):
+        page = f"reference/{slug}/{slugs[editor['class']]}.md"
         write(page, render_editor(editor))
-        summary.append(f"    * [{editor.get('gameClass') or editor['class']}]"
-                       f"({slug}/{editor_slug(editor)}.md)")
+        summary.append(f"    * [{qualified_class(editor)}]({slug}/{slugs[editor['class']]}.md)")
+
+write("reference/bridges/index.md", render_bridges_index())
+summary.append("* [Bridges](bridges/index.md)")
+for bridge in BRIDGES.values():
+    write(f"reference/{bridge_page(bridge)}", render_bridge(bridge))
+    summary.append(f"    * [{bridge['displayName']}]({bridge_page(bridge)})")
 
 summary.append("* [Nested structs](nested-structs.md)")
 

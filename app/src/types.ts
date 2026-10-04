@@ -31,6 +31,35 @@ export interface Editor {
   abstract?: boolean
   fields: EditorField[]
   notEditable?: NotEditable[]
+  bridge?: string
+  package?: string
+  priority?: number
+  registration?: string
+  overrides?: string
+}
+
+export interface BridgeRequirements {
+  mods: string[]
+  dlc: string[]
+}
+
+export interface BridgeEditorRef {
+  family: string
+  class: string
+  gameClass: string
+  package: string
+}
+
+export interface Bridge {
+  name: string
+  displayName: string
+  repo: string
+  requires: BridgeRequirements
+  sourceHash: string
+  generatedFrom: string
+  stale: boolean
+  editorCount: number
+  editors: BridgeEditorRef[]
 }
 
 export interface Family {
@@ -89,6 +118,7 @@ export interface Schema {
     fields: TemplateField[]
     notEditable: NotEditable[]
   }
+  bridges?: Bridge[]
   families: Family[]
   warnings: string[]
 }

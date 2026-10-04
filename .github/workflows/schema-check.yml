@@ -6,12 +6,14 @@ on:
     paths:
       - 'AbilityEditor/Src/AbilityEditor/Classes/**'
       - 'docs/schema.json'
+      - 'docs/bridges/**'
       - '.scripts/generate-docs.ps1'
       - '.github/workflows/schema-check.yml'
   pull_request:
     paths:
       - 'AbilityEditor/Src/AbilityEditor/Classes/**'
       - 'docs/schema.json'
+      - 'docs/bridges/**'
       - '.scripts/generate-docs.ps1'
       - '.github/workflows/schema-check.yml'
   workflow_dispatch:
@@ -40,3 +42,39 @@ jobs:
           }
 
           Write-Host "Schema is current."
+
+      # A bridge fragment can only be regenerated from the bridge's own checkout, so an AbilityEditor-side change that makes one stale is a warning; the merge itself must match.
+      - name: Check the bridge fragments against the merged schema
+        shell: pwsh
+        run: |
+          $computed = & .\.scripts\generate-docs.ps1 -PrintSourceHash
+          $schema = Get-Content .\docs\schema.json -Raw | ConvertFrom-Json
+          $merged = @{}
+          foreach ($bridge in @($schema.bridges)) { $merged[$bridge.name] = $bridge }
+
+          $failed = $false
+          $fragments = @(Get-ChildItem .\docs\bridges -Filter *.json -File -ErrorAction SilentlyContinue)
+          foreach ($file in $fragments) {
+              $fragment = Get-Content $file.FullName -Raw | ConvertFrom-Json
+              $name = $fragment.name
+              if (-not $merged.ContainsKey($name)) {
+                  Write-Host "::error file=docs/bridges/$($file.Name)::Fragment '$name' is not merged into docs/schema.json. Run: .\.scripts\generate-docs.ps1 -SdkPath '<path to WOTC SDK>'"
+                  $failed = $true
+                  continue
+              }
+              if ($merged[$name].sourceHash -ne $fragment.sourceHash) {
+                  Write-Host "::error file=docs/bridges/$($file.Name)::docs/schema.json was merged from an older version of fragment '$name'. Run: .\.scripts\generate-docs.ps1 -SdkPath '<path to WOTC SDK>'"
+                  $failed = $true
+              }
+              if ($fragment.generatedFrom -ne $computed) {
+                  Write-Host "::warning file=docs/bridges/$($file.Name)::Fragment '$name' was generated against older AbilityEditor sources. Regenerate it from the bridge checkout: .\.scripts\generate-docs.ps1 -Bridge <path to $name> -SdkPath '<path to WOTC SDK>'"
+              }
+              $merged.Remove($name)
+          }
+          foreach ($orphan in $merged.Keys) {
+              Write-Host "::error file=docs/schema.json::Bridge '$orphan' is in docs/schema.json but docs/bridges/$orphan.json no longer exists. Regenerate the schema."
+              $failed = $true
+          }
+
+          if ($failed) { exit 1 }
+          Write-Host "$($fragments.Count) bridge fragment(s) match the schema."

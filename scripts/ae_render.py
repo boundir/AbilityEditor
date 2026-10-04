@@ -147,3 +147,62 @@ def not_editable_block(entries: Iterable[dict[str, Any]]) -> str:
         lines.append(f"    - `{entry['name']}` &mdash; {escape_cell(entry.get('reason', ''))}")
     lines.append("")
     return "\n".join(lines) + "\n"
+
+
+# --------------------------------------------------------------------------- #
+# Bridges
+# --------------------------------------------------------------------------- #
+
+def is_bridge(editor: dict[str, Any]) -> bool:
+    """True for an editor merged from a bridge fragment (``bridges`` in the schema)."""
+    return bool(editor.get("bridge"))
+
+
+def qualified_class(editor: dict[str, Any]) -> str:
+    """The class name as it must be written in config: package-qualified for a bridge editor."""
+    name = editor.get("gameClass") or editor["class"]
+    package = editor.get("package")
+    if package and editor.get("gameClass"):
+        return f"{package}.{name}"
+    return name
+
+
+def bridge_slug(name: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+
+
+def assign_slugs(family: dict[str, Any]) -> dict[str, str]:
+    """Page name per editor class within a family directory.
+
+    Built-ins claim the game-class slug first. A bridge editor that overrides a built-in for
+    the same game class would collide, so it gets ``<gameclass>-<bridge>`` instead.
+    """
+    slugs: dict[str, str] = {}
+    taken: set[str] = set()
+    for editor in family["editors"]:
+        if editor.get("catchAll") or is_bridge(editor):
+            continue
+        slug = editor_slug(editor)
+        slugs[editor["class"]] = slug
+        taken.add(slug)
+    for editor in family["editors"]:
+        if editor.get("catchAll") or not is_bridge(editor):
+            continue
+        slug = editor_slug(editor)
+        if slug in taken:
+            slug = f"{slug}-{bridge_slug(editor['bridge'])}"
+        slugs[editor["class"]] = slug
+        taken.add(slug)
+    return slugs
+
+
+def requirements_text(bridge: dict[str, Any]) -> str:
+    requires = bridge.get("requires") or {}
+    mods = [m for m in requires.get("mods") or [] if m]
+    dlc = [d for d in requires.get("dlc") or [] if d]
+    parts = []
+    if mods:
+        parts.append("the " + ", ".join(f"`{m}`" for m in mods) + (" mods" if len(mods) > 1 else " mod"))
+    if dlc:
+        parts.append("the " + ", ".join(f"**{d}**" for d in dlc) + " DLC")
+    return " and ".join(parts)

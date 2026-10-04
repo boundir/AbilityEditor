@@ -1,7 +1,6 @@
 # Why isn't this editable?
 
-Some game classes have fields that will never get an editor, because an editor could not
-change anything. This page records which, and why.
+Some game classes have fields that will never get an editor, because an editor could not change anything. This page records which, and why.
 
 ## Read from the class default, not the instance
 
@@ -13,8 +12,7 @@ If the game reads the field as `default.X`, it is reading the class default from
 StatChance = default.STAT_BASE_CHANCE + DeadRank * default.STAT_PER_RANK_CHANCE;
 ```
 
-These fields are not unreachable. They are already tunable, **globally**, in the game's own
-config, and that is the right place to change them:
+These fields are not unreachable. They are already tunable, **globally**, in the game's own config, and that is the right place to change them:
 
 ```ini
 [XComGame.X2Effect_Vengeance]
@@ -51,6 +49,12 @@ Adding it would need a global-scope edit family.
 | `X2Effect_TargetDefinition` | `TargetDefinitionTriggeredEventName` | |
 | `X2Effect_MimicBeacon` | `REMOVE_EFFECT_ANIM_NAME` (`ABILITIES_ALLOWED_TO_HIT` *is* editable) | |
 | `X2Effect_SpectralArmyUnit` | `ADD_EFFECT_ANIM_NAME`, `REMOVE_EFFECT_ANIM_NAME` | |
+| `X2Effect_DLC_Day60Freeze` (Alien Hunters) | `DefenseMod`, `ConfigStatusIcon` - only read by the static factory (the duration and ruler-count fields *are* editable, through the Alien Hunters bridge) | `DLC_2\X2Effect_DLC_Day60Freeze.uc` |
+| `X2Condition_DLC_2_UnitInEscapePortal` (Alien Hunters) | `ALIEN_RULER_ESCAPE_RADIUS_TILES_SQ` | |
+| `X2Effect_DLC_3Overdrive` (Lost Towers) | `OverdriveUnitValue`, `ShotModifier` | `DLC_3\X2Effect_DLC_3Overdrive.uc` |
+| `X2Effect_DLC_3_Nova` (Lost Towers) | `MultiTargetPerTickIncrease`, `SourcePerTickIncrease` | |
+| `X2Effect_DLC_3SacrificeShield` (Lost Towers) | `IgnoreDamageTypes`, `IgnoreAbilities`, `AbilitiesDisabledForAI` | |
+| `X2Effect_DLC_3AbsorptionField` (Lost Towers) | `AbsorbedAbilities` | |
 | `X2Effect_Reaper` | `ReaperActivatedName`, `ReaperKillName` | |
 | `X2Effect_ScanningProtocol` | `LookAtDuration` | |
 | `X2Effect_ParthenogenicPoison` | `ParthenogenicPoisonType`, `ParthenogenicPoisonCocoonSpawnedName` (`AltUnitToSpawnName` *is* editable) | `X2Effect_ParthenogenicPoison.uc`, `X2Ability_DefaultAbilitySet.uc` |
@@ -59,17 +63,21 @@ Adding it would need a global-scope edit family.
     It overrides `GetArmorMitigation()` to return `default.ARMOR_MITIGATION`. So the `ArmorMitigationAmount` field it *inherits* from the BonusArmor editor is silently ignored too
     An entry naming `X2Effect_CombatStims` and setting `ArmorMitigationAmount` applies cleanly and does nothing.
 
+!!! note "`X2Effect_DLC_Day60Freeze` ignores `NumTurns`"
+    It overrides `GetStartingNumTurns()`, so the `NumTurns` it inherits from the Persistent editor is applied, logged and ignored.
+    Its length comes from `NormalUnitFreezeDuration`, `LargeUnitFreezeDuration` and the ruler freeze counts, all provided by the Alien Hunters bridge.
+
 ## Never read at all
 
 | Class | Field | Evidence |
 |---|---|---|
 | `X2AbilityToHitCalc_StasisLance` | `HP_THRESHOLD`, `CLAMPED_MIN`, `CLAMPED_MAX` | only inside commented-out code. `BASE_CHANCE` is live but `default.`-read. |
 | `X2AbilityMultiTarget_Volt` | `DistanceBetweenTargets` | not referenced in the SDK. |
+| `X2Effect_DLC_Day60Freeze` (Alien Hunters) | `bAllowReorder` | declared, never read. |
 
 ## No plain field to write
 
-There is no assignment an editor could make. An editor would have to call the setter, or map a
-config name to a delegate.
+There is no assignment an editor could make. An editor would have to call the setter, or map a config name to a delegate.
 
 | Class | Route |
 |---|---|
@@ -77,6 +85,18 @@ config name to a delegate.
 | `X2AbilityTrigger_OnAbilityActivated` | `SetListenerData(name)` - also overwrites `ListenerData.EventID/EventFn/Deferral/Filter`, so it resets the whole listener |
 | `X2Effect_Unkillable` | `AdditionalEffectsFN` delegate |
 | `X2Effect_WeakPoint` | `GetValueFn` delegate |
+
+## DLC packages
+
+Classes in the DLC script packages cannot get built-in editors - a mod importing `DLC_2` fails to load for players without Alien Hunters - so they go through [bridge mods](../guides/bridge-mods.md).
+What the packages hold, for the nine families:
+
+- **DLC_2 (Alien Hunters)**: three classes with per-ability fields, covered by the `AbilityEditorAlienHunters` bridge:
+  - `X2Effect_DLC_Day60Freeze`, `X2Effect_DLC_Day60TurnStartRemoveActionPoints` and `X2AbilityTrigger_DLC_Day60OnAbilityActivated`.
+  - `X2Effect_DLC_2RulerActionPoint`, `X2Effect_DLC_Day60FreezingLash`, `X2Effect_DLC_Day60Shadowfall` and `X2Effect_DLC_Day60DecrementEffectCounter` declare no fields of their own and are edited through their ancestors' editors without any bridge.
+- **DLC_3 (Lost Towers)**: six effects, none with a per-ability field. Every value is read from the class default (rows above) and tuned globally in `DLC_3\XComGameCore.ini`; `X2Effect_DLC_3Rainmaker` and `X2Effect_DLC_3StrikeDamage` take their numbers from other classes.
+  There is no Lost Towers bridge because it would have nothing to write.
+- **DLC_1 (Anarchy's Children)** and **TLE**: no ability classes at all.
 
 ## Deliberately skipped
 

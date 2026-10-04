@@ -1,4 +1,4 @@
-import type { Editor, EditorField, Family, Schema, SchemaEnum, Struct, TemplateField } from './types'
+import type { Bridge, Editor, EditorField, Family, Schema, SchemaEnum, Struct, TemplateField } from './types'
 
 export type * from './types'
 
@@ -23,6 +23,8 @@ export interface Indices {
   familyByName: Map<string, Family>
   editorsByFamily: Map<string, Editor[]>
   editorByGameClass: Map<string, Editor>
+  editorByQualifiedClass: Map<string, Editor>
+  bridgeByName: Map<string, Bridge>
   fieldsByEditor: Map<string, Map<string, EditorField>>
   catchAllByFamily: Map<string, Editor>
   structByName: Map<string, Struct>
@@ -35,6 +37,7 @@ export function buildIndices(schema: Schema): Indices {
   const familyByName = new Map<string, Family>()
   const editorsByFamily = new Map<string, Editor[]>()
   const editorByGameClass = new Map<string, Editor>()
+  const editorByQualifiedClass = new Map<string, Editor>()
   const fieldsByEditor = new Map<string, Map<string, EditorField>>()
   const catchAllByFamily = new Map<string, Editor>()
   const familyByStruct = new Map<string, Family>()
@@ -49,11 +52,14 @@ export function buildIndices(schema: Schema): Indices {
       .filter((e): e is Editor => e !== undefined)
     editorsByFamily.set(family.name, ordered)
 
-    for (const editor of family.editors) {
+    // Built-ins claim the bare game-class key first, so a bridge that overrides one of them is only reached through its qualified name.
+    const byBridgeLast = [...family.editors].sort((a, b) => Number(!!a.bridge) - Number(!!b.bridge))
+    for (const editor of byBridgeLast) {
       if (editor.catchAll) {
         catchAllByFamily.set(family.name, editor)
       } else if (editor.gameClass) {
-        editorByGameClass.set(editor.gameClass, editor)
+        if (!editorByGameClass.has(editor.gameClass)) editorByGameClass.set(editor.gameClass, editor)
+        if (editor.package) editorByQualifiedClass.set(qualifiedClassName(editor), editor)
       }
       fieldsByEditor.set(editor.class, new Map(editor.fields.map((f) => [f.config, f])))
     }
@@ -64,6 +70,8 @@ export function buildIndices(schema: Schema): Indices {
     familyByName,
     editorsByFamily,
     editorByGameClass,
+    editorByQualifiedClass,
+    bridgeByName: new Map((schema.bridges ?? []).map((b) => [b.name, b])),
     fieldsByEditor,
     catchAllByFamily,
     structByName: new Map(schema.structs.map((s) => [s.name, s])),
@@ -73,21 +81,50 @@ export function buildIndices(schema: Schema): Indices {
   }
 }
 
-export function resolveEditor(
-  indices: Indices,
-  familyName: string,
-  className: string,
-): { editor: Editor | undefined; viaCatchAll: boolean } {
-  const bare = className.includes('.') ? className.slice(className.lastIndexOf('.') + 1) : className
-  const exact = indices.editorByGameClass.get(bare)
+export function qualifiedClassName(editor: Editor): string {
+  return editor.package ? `${editor.package}.${editor.gameClass}` : editor.gameClass
+}
 
-  if (exact) {
-    const family = indices.familyByName.get(familyName)
-    if (family?.editors.some((e) => e.class === exact.class)) {
-      return { editor: exact, viaCatchAll: false }
-    }
+export interface Resolution {
+  editor: Editor | undefined
+  viaCatchAll: boolean
+  qualifiedMismatch: boolean
+}
+
+export function resolveEditor(indices: Indices, familyName: string, className: string): Resolution {
+  const family = indices.familyByName.get(familyName)
+  const inFamily = (editor: Editor | undefined): editor is Editor =>
+    editor !== undefined && (family?.editors.some((e) => e.class === editor.class) ?? false)
+
+  const trimmed = className.trim()
+  const qualified = indices.editorByQualifiedClass.get(trimmed)
+  if (inFamily(qualified)) {
+    return { editor: qualified, viaCatchAll: false, qualifiedMismatch: false }
   }
-  return { editor: indices.catchAllByFamily.get(familyName), viaCatchAll: true }
+
+  const bare = trimmed.includes('.') ? trimmed.slice(trimmed.lastIndexOf('.') + 1) : trimmed
+  const exact = indices.editorByGameClass.get(bare)
+  if (inFamily(exact)) {
+    const expected = qualifiedClassName(exact)
+    return { editor: exact, viaCatchAll: false, qualifiedMismatch: !!exact.package && trimmed !== expected }
+  }
+  return { editor: indices.catchAllByFamily.get(familyName), viaCatchAll: true, qualifiedMismatch: false }
+}
+
+/** The bridge an editor comes from, or undefined for a built-in. */
+export function bridgeOf(indices: Indices, editor: Editor | undefined): Bridge | undefined {
+  if (!editor?.bridge) return undefined
+  return indices.bridgeByName.get(editor.bridge)
+}
+
+/** What a bridge editor needs installed, for prose: 'the X mod and the Y DLC'. */
+export function bridgeRequirements(bridge: Bridge): string {
+  const parts: string[] = [`the ${bridge.displayName} mod`]
+  const mods = bridge.requires?.mods?.filter((m) => m && m !== 'AbilityEditor') ?? []
+  if (mods.length > 0) parts.push(mods.join(', '))
+  const dlc = bridge.requires?.dlc?.filter(Boolean) ?? []
+  if (dlc.length > 0) parts.push(`the ${dlc.join(', ')} DLC`)
+  return parts.join(' and ')
 }
 
 export interface FieldGroup {

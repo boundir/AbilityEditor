@@ -1,42 +1,23 @@
 # Adding an editor
 
-This page is for people working on Ability Editor itself. To extend it *from another mod* without
-forking, see [Bridge mods](../guides/bridge-mods.md) instead.
+This page is for people working on Ability Editor itself. To extend it *from another mod* without forking, see [Bridge mods](../guides/bridge-mods.md) instead.
 
 ## Build prerequisites
 
-UnrealScript access modifiers (`private`, `protected`, `privatewrite`, `const`) exist only at
-compile time. Compiling against relaxed sources runs against the stock game.
+UnrealScript access modifiers (`private`, `protected`, `privatewrite`, `const`) exist only at compile time. Compiling against relaxed sources runs against the stock game.
 This mod relies on that twice. Neither is a requirement for players.
-
-### Community Highlander sources
-
-`X2AbilityEffectsEditor_Helper.uc` writes `Template.AbilityTargetEffects`,
-`AbilityMultiTargetEffects` and `AbilityShooterEffects`. In stock Firaxis sources those three are
-`protectedwrite`, so the writes will not compile. Community Highlander
-[Issue #68](https://github.com/X2CommunityCore/X2WOTCCommunityHighlander/issues/68) removes that
-modifier; `Development/SrcOrig` must be the Highlander-patched copy.
-
-If a build fails with `Can't write to protected variable` on `AbilityTargetEffects`, your SDK
-sources are stock: deploy the Highlander into the SDK.
 
 ### Relaxing fields
 
-A few game fields are `private` or `protected const` and have no setter. Rather than patching the
-SDK by hand before every build, `SdkOverlay/XComGame/Classes/` holds verbatim copies of those
-classes with only the modifier relaxed, and `build.ps1` registers the folder with `X2ModBuildCommon`'s `IncludeSrc`.
+A few game fields are `private` or `protected const` and have no setter. Rather than patching the SDK by hand before every build, `CustomSrc/XComGame/Classes/` holds verbatim copies of those classes with only the modifier relaxed, and `build.ps1` registers the folder with `X2ModBuildCommon`'s `IncludeSrc`.
 
-To write such a field from a new editor: copy the class from `Development/SrcOrig` into the
-overlay, change only the modifier on the field you write, add a row to `SdkOverlay/README.md`, and
-write the editor as usual. If a Highlander release changes one of those classes, refresh the copy.
+To write such a field from a new editor: copy the class from `Development/SrcOrig` into the overlay, change only the modifier on the field you write, add a row to `CustomSrc/README.md`, and write the editor as usual. If a Highlander release changes one of those classes, refresh the copy.
 
-The overlay cannot help with a field the game reads as `default.X` - see
-[Why isn't this editable?](coverage-triage.md).
+The overlay cannot help with a field the game reads as `default.X` - see [Why isn't this editable?](coverage-triage.md).
 
 ## The four places
 
-Adding support for a game class means touching four things. Three of them fail *silently* if
-forgotten - no compile error, just an edit that does nothing or a field missing from these docs.
+Adding support for a game class means touching four things. Three of them fail *silently* if forgotten - no compile error, just an edit that does nothing or a field missing from these docs.
 
 ### 1. The editor class
 
@@ -84,11 +65,8 @@ static function ApplyDerivedEdit(
 
 Four things carry weight:
 
-- **Extend the editor of the game class's nearest ancestor.** The editor hierarchy mirrors the
-  game inheritance.
-- **`CanEdit` names exactly one game class** via `IsA`. The doc generator reads that string; a
-  `CanEdit` that checks two classes, or uses something other than `IsA`, makes the editor invisible
-  to these pages.
+- **Extend the editor of the game class's nearest ancestor.** The editor hierarchy mirrors the game inheritance.
+- **`CanEdit` names exactly one game class** via `IsA`. The doc generator reads that string; a `CanEdit` that checks two classes, or uses something other than `IsA`, makes the editor invisible to these pages.
 - **`super.ApplyDerivedEdit(...)` first**, whenever the parent is not the family root.
 - **One `if (Edit.SetX)` block per field**, logging before assigning.
 
@@ -109,19 +87,15 @@ var int ToHitMin;
 
     Comments above a guard are therefore free to act as section headers (`// X2Condition_UnitValue`).
 
-Because inheritance is flattened in the schema, **one comment can document dozens of rendered
-rows**. See [Documentation coverage](doc-coverage.md) for which keys are worth writing next.
+Because inheritance is flattened in the schema, **one comment can document dozens of rendered rows**. See [Documentation coverage](doc-coverage.md) for which keys are worth writing next.
 
 ### 3. The registry - the step that silently breaks things
 
 Add the class to `defaultproperties` in `X2DLCInfo_AbilityEditor.uc`.
 
-Dispatch is **first match wins**, scanning in index order. Because `CanEdit` uses `IsA` - true for
-subclasses too - an editor registered *after* one of its game-class ancestors never runs. The
-ancestor claims the object first.
+Dispatch is **first match wins**, scanning in index order. Because `CanEdit` uses `IsA` - true for subclasses too - an editor registered *after* one of its game-class ancestors never runs. The ancestor claims the object first.
 
-**Every editor must appear before the editor of any game class it derives from.** The family's
-`_Base` catch-all returns `true` unconditionally and is always last.
+**Every editor must appear before the editor of any game class it derives from.** The family's `_Base` catch-all returns `true` unconditionally and is always last.
 
 Nothing enforces this at compile time. The generator detects it, but only with `-SdkPath`.
 
@@ -133,36 +107,30 @@ Nothing enforces this at compile time. The generator detects it, but only with `
 
 Read the warnings as text, not just the exit code:
 
-- **`Orphan config field: <Struct>.<Field>`** - you added the struct field but the editor doesn't
-  read it, or reads it in a shape the parser can't see. This is the exact symptom of steps 1 and 2
-  being out of sync.
+- **`Orphan config field: <Struct>.<Field>`** - you added the struct field but the editor doesn't read it, or reads it in a shape the parser can't see. This is the exact symptom of steps 1 and 2 being out of sync.
 - **`Dispatch order (<family>): X is registered after Y`** - step 3 is wrong.
 
-Then confirm your field appears in `docs/schema.json`. Review that file rather than the README
-diff.
+Then confirm your field appears in `docs/schema.json`. Review that file rather than the README diff.
 
 ## Check the field is real before promising it
 
-Read the game class in the SDK and confirm the field exists *and* is settable. Four things
-routinely aren't:
+Read the game class in the SDK and confirm the field exists *and* is settable. Four things routinely aren't:
 
-- **The field doesn't exist.** `X2Effect_Burning` sounds like it should have damage-per-tick; it
-  has exactly one var, and that isn't it. Its damage lives in a nested `X2Effect_ApplyWeaponDamage`
-  at `ApplyOnTick[0]`.
-- **The field is read via `default.X`, not the instance.** An editor writes the template's copy,
-  the game reads the class default, and nothing happens.
+- **The field doesn't exist.** `X2Effect_Burning` sounds like it should have damage-per-tick; it has exactly one var, and that isn't it. Its damage lives in a nested `X2Effect_ApplyWeaponDamage` at `ApplyOnTick[0]`.
+- **The field is read via `default.X`, not the instance.** An editor writes the template's copy, the game reads the class default, and nothing happens.
 - **The concept isn't on the template at all** - native code, or `XComGameCore.ini` config.
 
 ## Docs pipeline
 
-`.scripts/generate-docs.ps1` parses the UnrealScript sources into `docs/schema.json`. This site is
-rendered from that file by `scripts/gen_reference.py` at build time; generated pages are never
-committed.
+`.scripts/generate-docs.ps1` parses the UnrealScript sources into `docs/schema.json`. This site is rendered from that file by `scripts/gen_reference.py` at build time; generated pages are never committed.
 
 ```powershell
 .\.scripts\generate-docs.ps1 -CheckOnly        # exits 1 if schema or README are stale
 .\.scripts\generate-docs.ps1 -PrintSourceHash  # hash of the .uc sources; needs no SDK
+.\.scripts\generate-docs.ps1 -Bridge ..\<Mod>  # writes docs/bridges/<Package>.json for a bridge mod
 ```
+
+Bridge mods are documented through fragments: `-Bridge` scans a bridge's editors, its `Config\XComAbilityEditor.ini` registrations and the SDK, and writes `docs/bridges/<Package>.json`; the normal run merges every fragment into `docs/schema.json` under `bridges` and prepends their editors to each family's dispatch order. A fragment records the Ability Editor sources it was generated against; when they differ, `-CheckOnly` warns but does not fail, since an Ability Editor change cannot regenerate a fragment without the bridge checkout. See [Extending Ability Editor](../guides/bridge-mods.md#publishing-your-bridge-on-this-site).
 
 To preview the site:
 

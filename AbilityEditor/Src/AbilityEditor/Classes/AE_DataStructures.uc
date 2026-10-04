@@ -1639,6 +1639,32 @@ struct EffectEdit
 	// Event the effect fires.
 	var name TriggerEventName;
 
+	// X2Effect_DLC_Day60Freeze (Alien Hunters, via the AbilityEditorAlienHunters bridge)
+	var bool SetApplyRulerModifiers;
+	// Subtract the per-ruler freeze modifier from the rolled ruler freeze count.
+	var bool ApplyRulerModifiers;
+
+	var bool SetLargeUnitFreezeDuration;
+	// Turns a large unit, an Avatar or a Chosen stays frozen.
+	var int LargeUnitFreezeDuration;
+
+	var bool SetNormalUnitFreezeDuration;
+	// Turns any other non-ruler unit stays frozen.
+	var int NormalUnitFreezeDuration;
+
+	var bool SetMinRulerFreezeCount;
+	// Lower bound of the XCOM actions a ruler stays frozen for. The roll is Rand(Max - Min) + Min.
+	var int MinRulerFreezeCount;
+
+	var bool SetMaxRulerFreezeCount;
+	// Upper bound of the ruler freeze roll, exclusive: Min equal to Max gives exactly Min actions.
+	var int MaxRulerFreezeCount;
+
+	// X2Effect_DLC_Day60TurnStartRemoveActionPoints (Alien Hunters, via the AbilityEditorAlienHunters bridge)
+	var bool SetApplyToRevealedAIOnly;
+	// Only revealed AI units lose their action points; unrevealed ones are left alone.
+	var bool ApplyToRevealedAIOnly;
+
 	// X2Effect_EnableGlobalAbility
 	var bool SetGlobalAbility;
 	// Global ability switched on for the rest of the battle.
@@ -2586,6 +2612,15 @@ struct TriggerEdit
 	var bool SetEventObserverClass;
 	// Class that observes the event. Loaded by name at runtime.
 	var string EventObserverClass;
+
+	// X2AbilityTrigger_DLC_Day60OnAbilityActivated (Alien Hunters, via the AbilityEditorAlienHunters bridge)
+	var ENameArrayEditMode RulerActionExclusions_XComEffectsMode;
+	// Effects on the acting XCOM unit that stop the ruler from reacting.
+	var array<name> RulerActionExclusions_XComEffects;
+
+	var ENameArrayEditMode RulerActionExclusions_AbilityNamesMode;
+	// Abilities whose activation never triggers a ruler reaction.
+	var array<name> RulerActionExclusions_AbilityNames;
 
 	var array<AECustomProperty> CustomProperties;
 };

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 
 import { nestedStructName } from '../emit'
 import type { Editor, Indices, StructField } from '../schema'
-import { groupFields, resolveEditor } from '../schema'
+import { bridgeOf, bridgeRequirements, groupFields, qualifiedClassName, resolveEditor } from '../schema'
 import { newNode, type Node, type Path, type Value } from '../state'
 
 import { Field, type EditorField } from './Field'
@@ -79,6 +79,7 @@ export function NodeEditor({ node, structName, path, indices, onChange, filter }
           value={className}
           resolved={resolved?.editor}
           viaCatchAll={resolved?.viaCatchAll ?? false}
+          qualifiedMismatch={resolved?.qualifiedMismatch ?? false}
           onChange={(next) => onChange([...path, 'Class'], next || undefined)}
         />
       )}
@@ -444,17 +445,39 @@ interface ClassPickerProps {
   value: string
   resolved: Editor | undefined
   viaCatchAll: boolean
+  qualifiedMismatch: boolean
   onChange: (value: string) => void
 }
 
-function ClassPicker({ family, indices, value, resolved, viaCatchAll, onChange }: ClassPickerProps) {
+function optionLabel(indices: Indices, editor: Editor): string | undefined {
+  if (editor.abstract) return 'abstract — cannot be named'
+  const bridge = bridgeOf(indices, editor)
+  if (!bridge) return undefined
+  const dlc = bridge.requires?.dlc?.filter(Boolean) ?? []
+  return dlc.length > 0
+    ? `bridge: ${bridge.displayName} — needs ${dlc.join(', ')}`
+    : `bridge: ${bridge.displayName}`
+}
+
+function ClassPicker({
+  family,
+  indices,
+  value,
+  resolved,
+  viaCatchAll,
+  qualifiedMismatch,
+  onChange,
+}: ClassPickerProps) {
   const editors = indices.editorsByFamily.get(family) ?? []
+  const named = editors.filter((e) => !e.catchAll && e.gameClass)
   const options = [
-    ...editors.filter((e) => !e.catchAll && e.gameClass && !e.abstract),
-    ...editors.filter((e) => !e.catchAll && e.gameClass && e.abstract),
+    ...named.filter((e) => !e.abstract && !e.bridge),
+    ...named.filter((e) => !e.abstract && e.bridge),
+    ...named.filter((e) => e.abstract),
   ]
   const listId = `classes-${family}`
   const isAbstract = resolved?.abstract === true && !viaCatchAll
+  const bridge = !viaCatchAll ? bridgeOf(indices, resolved) : undefined
 
   return (
     <div className="classpicker">
@@ -471,8 +494,8 @@ function ClassPicker({ family, indices, value, resolved, viaCatchAll, onChange }
         {options.map((editor) => (
           <option
             key={editor.class}
-            value={editor.gameClass}
-            label={editor.abstract ? 'abstract — cannot be named' : undefined}
+            value={qualifiedClassName(editor)}
+            label={optionLabel(indices, editor)}
           />
         ))}
       </datalist>
@@ -488,6 +511,27 @@ function ClassPicker({ family, indices, value, resolved, viaCatchAll, onChange }
         <p className="classpicker__note">
           No dedicated editor — only the {resolved?.fields.length ?? 0} shared {family} fields
           apply.
+        </p>
+      )}
+
+      {resolved && qualifiedMismatch && (
+        <p className="classpicker__note">
+          <strong>{value}</strong> must be written with its package: a bare name is looked up in
+          XComGame and never matches.{' '}
+          <button
+            type="button"
+            className="classpicker__fix"
+            onClick={() => onChange(qualifiedClassName(resolved))}
+          >
+            Use {qualifiedClassName(resolved)}
+          </button>
+        </p>
+      )}
+
+      {resolved && bridge && !qualifiedMismatch && (
+        <p className="classpicker__note classpicker__note--bridge">
+          Needs {bridgeRequirements(bridge)}. Without them the {resolved.gameClass}-specific fields
+          are skipped{resolved.extends ? ` and the entry falls back to ${resolved.extends}` : ''}.
         </p>
       )}
     </div>

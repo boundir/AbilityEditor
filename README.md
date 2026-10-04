@@ -51,6 +51,7 @@ An `+AbilityEdits` entry edits an existing ability, or creates one when `Create=
 - **TargetStyle** (`TargetStyle`) &mdash; `X2AbilityTarget_MovingMelee`, `X2AbilityTarget_Single`, `X2AbilityTarget_Cursor` &mdash; plus shared fields on any other subclass
 - **MultiTargetStyle** (`MultiTargetStyle`) &mdash; `X2AbilityMultiTarget_Cone`, `X2AbilityMultiTarget_Cylinder`, `X2AbilityMultiTarget_AllUnits`, `X2AbilityMultiTarget_ClaymoreRadius`, `X2AbilityMultiTarget_Radius`, `X2AbilityMultiTarget_Line`, `X2AbilityMultiTarget_BurstFire` &mdash; plus shared fields on any other subclass
 - **Triggers** (`Triggers`) &mdash; `X2AbilityTrigger_UnitPostBeginPlay`, `X2AbilityTrigger_EventListener`, `X2AbilityTrigger_Event` &mdash; plus shared fields on any other subclass
+- **Bridge: Ability Editor: Alien Hunters** &mdash; `DLC_2.X2Effect_DLC_Day60Freeze`, `DLC_2.X2Effect_DLC_Day60TurnStartRemoveActionPoints`, `DLC_2.X2AbilityTrigger_DLC_Day60OnAbilityActivated`
 <!-- END:GENERATED summary -->
 
 ## Troubleshooting

@@ -1,6 +1,6 @@
 import { hasUnrepresentableChars, isBareName, nestedStructName } from './emit'
 import type { Indices } from './schema'
-import { resolveEditor } from './schema'
+import { bridgeOf, bridgeRequirements, qualifiedClassName, resolveEditor } from './schema'
 import { configKeys, type Doc, type Node, type Path } from './state'
 
 /**
@@ -340,7 +340,30 @@ function checkClassResolution(
   }
 
   if (!family) return
-  const { viaCatchAll } = resolveEditor(indices, family, cls)
+  const { editor, viaCatchAll, qualifiedMismatch } = resolveEditor(indices, family, cls)
+
+  if (editor && qualifiedMismatch) {
+    issues.push({
+      severity: 'error',
+      path: [...path, 'Class'],
+      title: `${cls} must be package-qualified`,
+      detail: `${editor.gameClass} lives in the ${editor.package} package. A bare name is looked up in XComGame and never matches, so this entry would add a useless object. Write Class="${qualifiedClassName(editor)}".`,
+    })
+    return
+  }
+
+  const bridge = bridgeOf(indices, editor)
+  if (bridge && !viaCatchAll) {
+    const fallback = editor?.extends ? ` and the entry falls back to ${editor.extends}` : ''
+    issues.push({
+      severity: 'warning',
+      path: [...path, 'Class'],
+      title: `${cls} needs the ${bridge.displayName} bridge mod`,
+      detail: `This class is only editable with ${bridgeRequirements(bridge)} installed. Without them the ${editor?.gameClass}-specific fields are skipped${fallback}.`,
+    })
+    return
+  }
+
   if (!viaCatchAll) return
 
   const catchAll = indices.catchAllByFamily.get(family)
