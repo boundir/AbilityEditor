@@ -14,6 +14,9 @@ $builder = [BuildProject]::new("AbilityEditor", $srcDirectory, $sdkPath, $gamePa
 
 $builder.IncludeSrc((Join-Path $srcDirectory "CustomSrc"))
 
+$builder.AddToClean("AbilityEditorHighlander")
+$builder.AddToClean("AbilityEditorAlienHunters")
+
 $overlayRoot = Join-Path $srcDirectory "CustomSrc"
 $overlayStampPath = Join-Path $srcDirectory "BuildCache\CustomSrcPackages.json"
 $sdkScriptDir = Join-Path $sdkPath "XComGame\Script"

@@ -63,8 +63,9 @@ static function ApplyDerivedEdit(
 }
 ```
 
-Four things carry weight:
+Five things carry weight:
 
+- **Only fields the game class declares in a vanilla SDK.** Ability Editor builds against an unmodified `Development\SrcOrig`, so a Community Highlander field cannot even compile here; the doc generator reports the same thing as an error, in words. Such a field goes in the [Highlander bridge](../guides/bridge-mods.md), which carries the Highlander classes it needs in its own overlay.
 - **Extend the editor of the game class's nearest ancestor that has one.** The editor hierarchy mirrors the game inheritance, and the doc generator checks it: an editor whose parent is not the editor of that ancestor (or the family root when no ancestor has one) is an error, because the ancestor's fields would silently never apply.
 - **`CanEdit` names exactly one game class** via `IsA`. The doc generator reads the first `IsA` string; a `CanEdit` that checks two classes is documented under the first one only, and one that uses something other than `IsA` is invisible to these pages.
 - **`super.ApplyDerivedEdit(...)` first**, whenever the parent is not the family root.

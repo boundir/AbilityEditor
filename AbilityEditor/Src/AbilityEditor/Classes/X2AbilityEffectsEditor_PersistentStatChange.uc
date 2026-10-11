@@ -22,18 +22,6 @@ static function ApplyDerivedEdit(
 
 	StatChangeEffect = X2Effect_PersistentStatChange(Effect);
 
-	if (EffectEdit.SetCHLForceReapplyOnRefresh)
-	{
-		class'X2AbilityEditor_Logger'.static.LogInfo(
-			AbilityName,
-			Slot $ ".bForceReapplyOnRefresh",
-			string(StatChangeEffect.bForceReapplyOnRefresh),
-			string(EffectEdit.CHLForceReapplyOnRefresh)
-		);
-
-		StatChangeEffect.bForceReapplyOnRefresh = EffectEdit.CHLForceReapplyOnRefresh;
-	}
-
 	// Length guard: an empty edit must not clear existing stat changes
 	if (EffectEdit.StatChange.Length == 0)
 	{

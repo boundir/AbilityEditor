@@ -23,18 +23,6 @@ static function ApplyDerivedEdit(
 		return;
 	}
 
-	if (EffectEdit.SetBenefitFromEmpoweredUpgrades)
-	{
-		class'X2AbilityEditor_Logger'.static.LogInfo(
-			AbilityName,
-			Slot $ ".bBenefitFromEmpoweredUpgrades",
-			string(LaserSightFX.bBenefitFromEmpoweredUpgrades),
-			string(EffectEdit.BenefitFromEmpoweredUpgrades)
-		);
-
-		LaserSightFX.bBenefitFromEmpoweredUpgrades = EffectEdit.BenefitFromEmpoweredUpgrades;
-	}
-
 	if (EffectEdit.SetCritBonus)
 	{
 		class'X2AbilityEditor_Logger'.static.LogInfo(

@@ -52,6 +52,7 @@ An `+AbilityEdits` entry edits an existing ability, or creates one when `Create=
 - **MultiTargetStyle** (`MultiTargetStyle`) &mdash; `X2AbilityMultiTarget_Cone`, `X2AbilityMultiTarget_Cylinder`, `X2AbilityMultiTarget_AllUnits`, `X2AbilityMultiTarget_ClaymoreRadius`, `X2AbilityMultiTarget_Radius`, `X2AbilityMultiTarget_Line`, `X2AbilityMultiTarget_BurstFire` &mdash; plus shared fields on any other subclass
 - **Triggers** (`Triggers`) &mdash; `X2AbilityTrigger_UnitPostBeginPlay`, `X2AbilityTrigger_EventListener`, `X2AbilityTrigger_Event` &mdash; plus shared fields on any other subclass
 - **Bridge: Ability Editor: Alien Hunters** &mdash; `DLC_2.X2Effect_DLC_Day60Freeze`, `DLC_2.X2Effect_DLC_Day60TurnStartRemoveActionPoints`, `DLC_2.X2AbilityTrigger_DLC_Day60OnAbilityActivated`
+- **Bridge: Ability Editor: Highlander** &mdash; `XComGame.X2Effect_VanishingWind`, `XComGame.X2Effect_Vanish`, `XComGame.X2Effect_Obsessed`, `XComGame.X2Effect_Shattered`, `XComGame.X2Effect_KineticPlating`, `XComGame.X2Effect_PersistentStatChange`, `XComGame.X2Effect_LaserSight`
 <!-- END:GENERATED summary -->
 
 ## Troubleshooting

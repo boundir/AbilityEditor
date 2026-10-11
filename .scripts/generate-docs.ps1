@@ -19,7 +19,7 @@
 
 .PARAMETER SdkPath
     XCOM 2 SDK root, defaulting to the 'xcom.highlander.sdkroot' VS Code setting.
-    Without it the abstract / non-editable / dispatch-order enrichment is skipped.
+    Without it the abstract / non-editable / dispatch-order enrichment, the game-type export and the vanilla guard are skipped.
 
 .PARAMETER Bridge
     Root folder of a bridge mod (containing <Package>\Src\<Package>\Classes, <Package>\Config\XComAbilityEditor.ini
@@ -954,8 +954,8 @@ if (-not $SdkPath) {
 
 $SdkSrcDir = $null
 $SdkClassesDir = $null
-if ($SdkPath -and (Test-Path (Join-Path $SdkPath 'Development\Src\XComGame\Classes'))) {
-    $SdkSrcDir = Join-Path $SdkPath 'Development\Src'
+if ($SdkPath -and (Test-Path (Join-Path $SdkPath 'Development\SrcOrig\XComGame\Classes'))) {
+    $SdkSrcDir = Join-Path $SdkPath 'Development\SrcOrig'
     $SdkClassesDir = Join-Path $SdkSrcDir 'XComGame\Classes'
 }
 else {
@@ -1146,21 +1146,24 @@ if ($SdkClassesDir) {
             foreach ($ed in $concrete) {
                 if ($null -eq (Get-SdkClassInfo $ed.gameClass)) { continue }
 
-                $expectedParent = $null
+                # Compared by game class: a bridge editor that extends the built-in editor of its own class
+                # (an override adding fields) is fine, and two editors may share a game class.
+                $actualParentGameClass = $null
+                if ($Editors.ContainsKey($ed.extends)) { $actualParentGameClass = $Editors[$ed.extends].GameClass }
+                if ($actualParentGameClass -eq $ed.gameClass) { continue }
+
+                $expectedGameClass = $null
                 foreach ($ancestor in @(Get-SdkAncestor $ed.gameClass)) {
-                    if ($editorByGameClass.ContainsKey($ancestor)) { $expectedParent = $editorByGameClass[$ancestor]; break }
+                    if ($editorByGameClass.ContainsKey($ancestor)) { $expectedGameClass = $ancestor; break }
                 }
 
-                $actualParent = $null
-                if ($Editors.ContainsKey($ed.extends) -and $Editors[$ed.extends].GameClass) { $actualParent = $ed.extends }
+                if ($expectedGameClass -eq $actualParentGameClass) { continue }
 
-                if ($expectedParent -eq $actualParent) { continue }
-
-                if ($expectedParent) {
-                    $Errors.Add("Editor parent ($($famModel.name)): $($ed.class) extends $($ed.extends), but the nearest ancestor of $($ed.gameClass) with an editor is $($Editors[$expectedParent].GameClass) - extend $expectedParent.")
+                if ($expectedGameClass) {
+                    $Errors.Add("Editor parent ($($famModel.name)): $($ed.class) extends $($ed.extends), but the nearest ancestor of $($ed.gameClass) with an editor is $expectedGameClass - extend $($editorByGameClass[$expectedGameClass]).")
                 }
                 else {
-                    $Errors.Add("Editor parent ($($famModel.name)): $($ed.class) extends $($ed.extends), which edits $($Editors[$actualParent].GameClass), not an ancestor of $($ed.gameClass) - extend the family root or its catch-all editor.")
+                    $Errors.Add("Editor parent ($($famModel.name)): $($ed.class) extends $($ed.extends), which edits $actualParentGameClass, not an ancestor of $($ed.gameClass) - extend the family root or its catch-all editor.")
                 }
             }
         }
@@ -1489,6 +1492,77 @@ foreach ($structName in $StructOrder) {
 }
 
 foreach ($w in $Curated.KnownIssues) { $Warnings.Add("Known issue: $w") }
+
+#endregion
+
+#region 4c2. Vanilla guard: a built-in editor only writes fields its game class declares in SrcOrig
+
+# Development\SrcOrig is what every build compiles against. Kept vanilla, it cannot declare a Highlander-only
+# field, so a built-in editor that writes one fails here, in words, before it fails players without the
+# Highlander. A bridge brings the sources it needs as its own overlay, so bridge editors are not checked.
+$FamilyGameRoots = @{
+    Costs            = 'X2AbilityCost'
+    Cooldown         = 'X2AbilityCooldown'
+    Charges          = 'X2AbilityCharges'
+    Effects          = 'X2Effect'
+    Conditions       = 'X2Condition'
+    ToHitCalc        = 'X2AbilityToHitCalc'
+    TargetStyle      = 'X2AbilityTargetStyle'
+    MultiTargetStyle = 'X2AbilityMultiTargetStyle'
+    Triggers         = 'X2AbilityTrigger'
+}
+
+$SdkDeclaredCache = @{}
+
+# Every identifier on a var line of the class and its ancestors. Loose on purpose: a name absent from all of them is certainly not declared.
+function Get-SdkDeclaredIdentifiers {
+    param([string] $GameClass)
+
+    if ($SdkDeclaredCache.ContainsKey($GameClass)) { return $SdkDeclaredCache[$GameClass] }
+
+    $identifiers = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    foreach ($cls in (@($GameClass) + @(Get-SdkAncestor $GameClass))) {
+        $located = Find-SdkClassFile $cls
+        if ($null -eq $located) { continue }
+        foreach ($line in [System.IO.File]::ReadLines($located.Path)) {
+            if ($line -notmatch '^\s*var\b') { continue }
+            foreach ($m in [regex]::Matches($line, '\b\w+\b')) { [void]$identifiers.Add($m.Value) }
+        }
+    }
+
+    $SdkDeclaredCache[$GameClass] = $identifiers
+    return $identifiers
+}
+
+if ($SdkClassesDir -and -not $BridgeRoot) {
+    foreach ($famModel in $FamilyModels) {
+        foreach ($ed in $famModel.editors) {
+            if ($ed.Contains('bridge')) { continue }
+
+            $gameClass = $ed.gameClass
+            if (-not $gameClass) { $gameClass = $FamilyGameRoots[$famModel.name] }
+            if (-not $gameClass -or $null -eq (Get-SdkClassInfo $gameClass)) { continue }
+
+            $declared = Get-SdkDeclaredIdentifiers $gameClass
+            foreach ($f in $ed.fields) {
+                if (-not $f.gameField -or $f.inheritedFrom) { continue }
+                $segment = ($f.gameField -split '[\.\[]')[0]
+                if (-not $declared.Contains($segment)) {
+                    $Errors.Add("Vanilla guard ($($famModel.name)): $($ed.class) writes $($f.gameField), which $gameClass does not declare in Development\SrcOrig. A Highlander-only field belongs in the AbilityEditorHighlander bridge.")
+                }
+            }
+        }
+    }
+
+    $templateDeclared = Get-SdkDeclaredIdentifiers 'X2AbilityTemplate'
+    foreach ($rec in $TemplateFields) {
+        if (-not $rec.GameField) { continue }
+        $segment = ($rec.GameField -split '[\.\[]')[0]
+        if (-not $templateDeclared.Contains($segment)) {
+            $Errors.Add("Vanilla guard (Template): $($rec.Config) writes $($rec.GameField), which X2AbilityTemplate does not declare in Development\SrcOrig.")
+        }
+    }
+}
 
 #endregion
 

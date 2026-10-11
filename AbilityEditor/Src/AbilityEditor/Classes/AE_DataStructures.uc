@@ -1169,8 +1169,9 @@ struct EffectEdit
 	// Stat changes applied while the effect lasts, merged by StatType.
 	var array<StatChangeEdit> StatChange;
 
+	// X2Effect_PersistentStatChange (Community Highlander, via the AbilityEditorHighlander bridge)
 	var bool SetCHLForceReapplyOnRefresh;
-	// Re-apply the stat changes when the effect is refreshed. Community Highlander field.
+	// Re-apply the stat changes when the effect is refreshed. Needs the Community Highlander.
 	var bool CHLForceReapplyOnRefresh;
 
 	// X2AbilityEffectsEditor_DamageImmunity
@@ -1798,9 +1799,9 @@ struct EffectEdit
 	// Only knock back units the attack kills.
 	var bool OnlyOnDeath;
 
-	// X2Effect_LaserSight
+	// X2Effect_LaserSight (Community Highlander, via the AbilityEditorHighlander bridge)
 	var bool SetBenefitFromEmpoweredUpgrades;
-	// Increase the crit bonus when XCOM has empowered weapon upgrades. Community Highlander field.
+	// Increase the crit bonus when XCOM has empowered weapon upgrades. Needs the Community Highlander.
 	var bool BenefitFromEmpoweredUpgrades;
 
 	// X2Effect_LaserSight

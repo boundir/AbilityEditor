@@ -11,13 +11,9 @@ runs against the stock game. Players do not need anything from here.
 
 Rules for adding a file:
 
-- Copy it verbatim from `Development\SrcOrig\<Package>\Classes` (the Community Highlander-patched
-  copy), keeping line endings, into `CustomSrc\<Package>\Classes`.
-- Change only the modifier on the fields an editor writes. Leave everything else alone, including
-  other non-public fields in the same class.
+- Copy it verbatim from the SDK's `Development\SrcOrig\<Package>\Classes`, keeping line endings, into `CustomSrc\<Package>\Classes`. `SrcOrig` must be the unmodified game sources: Ability Editor builds against a vanilla SDK, which is what keeps it free of the Community Highlander. A Highlander field belongs in the `AbilityEditorHighlander` bridge, which carries the Highlander classes it needs in its own overlay.
+- Change only the modifier on the fields an editor writes. Leave everything else alone, including other non-public fields in the same class.
 - Add it to the table below.
-- If a Highlander release changes one of these classes, refresh the copy from `SrcOrig` and reapply
-  the change, or the build compiles against stale source.
 
 | File | Field(s) | Was | Now | Copied from SrcOrig |
 |---|---|---|---|---|
@@ -27,3 +23,4 @@ Rules for adding a file:
 | `XComGame\Classes\X2Effect_BondmateAimAdjust.uc` | `ThreatenedBondmateAimBonus`, `BondmateTargetAimBonus`, `BondmateTargetCritBonus` | `protected const config` | `config` | 2026-09-26 |
 | `XComGame\Classes\X2Effect_BondmateBleedout.uc` | `BleedoutDurationAdjustment` | `protected const config` | `config` | 2026-09-26 |
 | `XComGame\Classes\X2Effect_MimicBeacon.uc` | `ABILITIES_ALLOWED_TO_HIT` | `private config` | `config` | 2026-09-26 |
+| `XComGame\Classes\X2AbilityTemplate.uc` | `AbilityTargetEffects`, `AbilityMultiTargetEffects`, `AbilityShooterEffects` | `editinlineuse protectedwrite` | `editinlineuse` | 2026-10-12 |

@@ -2,7 +2,7 @@
 
 Other mods can plug their own editor classes into Ability Editor's dispatch. This is the intended way to support game classes from a DLC package or from another mod, without Ability Editor itself depending on them: a mod whose script package imports `DLC_2` fails to load for players who do not own Alien Hunters, so those editors have to live in a mod that only they install.
 
-The first bridge is [Ability Editor: Alien Hunters](../reference/bridges/abilityeditoralienhunters.md) (`AbilityEditorAlienHunters`). It is the worked example on this page.
+The first bridge is [Ability Editor: Alien Hunters](../reference/bridges/abilityeditoralienhunters.md) (`AbilityEditorAlienHunters`). It is the worked example on this page. The same mechanism keeps Ability Editor free of the Community Highlander: the fields the Highlander adds to game classes are written by [Ability Editor: WOTC Community Highlander](../reference/bridges/abilityeditorhighlander.md), and the doc generator refuses a built-in editor that writes a field stock XComGame does not declare.
 
 ## Three steps
 
@@ -30,6 +30,14 @@ $builder.IncludeSrc("$srcDirectory\..\AbilityEditor\AbilityEditor\Src")
 ```
 
 No `CHDLCRunOrder` entry is needed: registrations are config, read by Ability Editor itself.
+
+!!! warning "That `ModEditPackages` line reaches other builds"
+    The script compiler reads the config of every mod built into the SDK's `XComGame\Mods`. While your
+    bridge sits there, Ability Editor's own build sees `+ModEditPackages=AbilityEditor` as well as the
+    package it is compiling, compiles it twice and fails to reload it. Ability Editor's `build.ps1`
+    therefore lists every known bridge in `AddToClean`, which removes it from that folder before
+    compiling. Add your bridge to that list when you propose it upstream; until then, delete its folder
+    from `SDK\XComGame\Mods` before building Ability Editor.
 
 **2. Subclass the right family editor** - the built-in editor of your game class's **nearest ancestor** - and declare which class you handle:
 
@@ -79,6 +87,8 @@ An `Extra<Family>Editors` array exists for all nine families - `ExtraCostEditors
 Registered extras are dispatched **before** every built-in editor, sorted by `Priority` (highest first). Because the whole extras list is checked before any built-in, the built-in catch-all cannot steal your class - `Priority` only orders extras against each other.
 
 Rule of thumb: the more derived your target class, the higher the `Priority`, so an editor for a child class always wins over one for its parent. Targeting a class Ability Editor already handles deliberately **overrides** the built-in editor.
+
+Because `CanEdit` uses `IsA`, an extra for a base class also claims every class derived from it, including ones Ability Editor has its own editor for. A bridge that adds a field to a base class therefore registers one editor per derived class too, each extending the built-in editor of that class and calling it before writing the new field; the Highlander bridge does this for the five subclasses of `X2Effect_PersistentStatChange`.
 
 Classes are resolved with `DynamicLoadObject` at `OnPostTemplatesCreated` time. A class that fails to load is logged and skipped, not fatal. When the bridge is not installed its registrations are not there either, so the game class simply falls back to the built-in editor of its ancestor.
 
