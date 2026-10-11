@@ -1,15 +1,23 @@
 class X2AbilityCostEditor_Helper extends Object;
 
-static function int FindCostIndex(array<X2AbilityCost> AbilityCosts, class<X2AbilityCost> AbilityCostClass)
+// The Nth cost of the class.
+static function int FindCostIndex(array<X2AbilityCost> AbilityCosts, class<X2AbilityCost> AbilityCostClass, optional int MatchIndex)
 {
-	local int i;
+	local int i, Matches;
 
 	for (i = 0; i < AbilityCosts.Length; ++i)
 	{
-		if (AbilityCosts[i].Class == AbilityCostClass)
+		if (AbilityCosts[i].Class != AbilityCostClass)
+		{
+			continue;
+		}
+
+		if (Matches == MatchIndex)
 		{
 			return i;
 		}
+
+		Matches++;
 	}
 
 	return INDEX_NONE;
@@ -58,7 +66,12 @@ static function ApplyCostEdit(X2AbilityTemplate Template, AbilityEdit AbilityEdi
 			continue;
 		}
 
-		Index = FindCostIndex(Template.AbilityCosts, CostClass);
+		Index = FindCostIndex(Template.AbilityCosts, CostClass, CostEdit.Index);
+
+		if (Index == INDEX_NONE && CostEdit.Index > 0)
+		{
+			`log(string(Template.DataName) @ "Template.AbilityCosts has no" @ string(CostClass.Name) @ "matching Index" @ CostEdit.Index, class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
+		}
 
 		if (CostEdit.Mode == eACEM_Remove)
 		{

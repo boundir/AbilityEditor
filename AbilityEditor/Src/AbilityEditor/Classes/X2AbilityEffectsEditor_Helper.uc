@@ -41,23 +41,32 @@ static function ApplyToEffectArray(
 
 	if (EffectClass == none)
 	{
+		`log("AbilityEdit: Invalid effect class:" @ ClassName, class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
 		return;
 	}
 
-	Index = FindEffectIndex(Effects, EffectClass);
+	Index = FindEffectIndex(Effects, EffectClass, EffectEdit.Index, EffectEdit.MatchEffectName);
 
-	if (EffectEdit.Mode == eACEM_Remove)
+	if (Index == INDEX_NONE && (EffectEdit.Index > 0 || EffectEdit.MatchEffectName != ''))
+	{
+		`log(string(AbilityName) @ Slot @ "has no" @ string(EffectClass.Name) @ "matching Index" @ EffectEdit.Index @ "MatchEffectName" @ string(EffectEdit.MatchEffectName), class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
+	}
+
+	if (EffectEdit.Mode == eAEM_Remove)
 	{
 		if (Index != INDEX_NONE)
 		{
+			`log(string(AbilityName) @ Slot @ "effect removed:" @ string(EffectClass.Name), class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
 			Effects.Remove(Index, 1);
 		}
 		return;
 	}
 
-	if (EffectEdit.Mode == eACEM_ReplaceAll)
+	if (EffectEdit.Mode == eAEM_ReplaceAll)
 	{
+		`log(string(AbilityName) @ Slot @ "effects cleared", class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
 		Effects.Length = 0;
+		Index = INDEX_NONE;
 	}
 
 	if (Index == INDEX_NONE)
@@ -190,19 +199,42 @@ static function class<X2Effect> LoadEffectClass(string ClassName)
 	);
 }
 
+// The Nth effect of the class, or the one whose EffectName matches when a name is given.
 static function int FindEffectIndex(
 	array<X2Effect> Effects,
-	class<X2Effect> EffectClass
+	class<X2Effect> EffectClass,
+	optional int MatchIndex,
+	optional name MatchEffectName
 )
 {
-	local int i;
+	local X2Effect_Persistent Persistent;
+	local int i, Matches;
 
 	for (i = 0; i < Effects.Length; ++i)
 	{
-		if (Effects[i].Class == EffectClass)
+		if (Effects[i].Class != EffectClass)
+		{
+			continue;
+		}
+
+		if (MatchEffectName != '')
+		{
+			Persistent = X2Effect_Persistent(Effects[i]);
+
+			if (Persistent != none && Persistent.EffectName == MatchEffectName)
+			{
+				return i;
+			}
+
+			continue;
+		}
+
+		if (Matches == MatchIndex)
 		{
 			return i;
 		}
+
+		Matches++;
 	}
 
 	return INDEX_NONE;

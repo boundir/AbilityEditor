@@ -397,17 +397,11 @@ $Curated = @{
         'ChargesEdit.RemoveCharges'        = 'Set to true to remove the ability''s charges object entirely. No `Class` needed; the other fields of the block are ignored.'
         'ToHitCalcEdit.Class'              = 'Optional. Omitted = edit the existing calc in place. Set = target/instantiate that class, e.g. `X2AbilityToHitCalc_StandardAim`. Bare names are auto-prefixed with `XComGame.`.'
         'ToHitCalcEdit.HitModifiers'       = '**Replace-only**: when non-empty, replaces the calc''s always-on `HitModifiers` array entirely (`ShotModifierInfo`: `ModType`, `Value`, `Reason`).'
-        'ToHitCalcEdit.CustomProperties'   = 'Free-form key/value pairs for bridge-mod editors; ignored by the built-in editors.'
-        'TargetStyleEdit.Class'            = 'Optional. Omitted = edit the existing style in place. Set = target/instantiate that class, e.g. `X2AbilityTarget_Cursor`. Bare names are auto-prefixed with `XComGame.`.'
-        'TargetStyleEdit.CustomProperties' = 'Free-form key/value pairs for bridge-mod editors; ignored by the built-in editors.'
+        'TargetStyleEdit.Class'          = 'Optional. Omitted = edit the existing style in place. Set = target/instantiate that class, e.g. `X2AbilityTarget_Cursor`. Bare names are auto-prefixed with `XComGame.`.'
         'MultiTargetStyleEdit.Class'       = 'Optional. Omitted = edit the existing style in place. Set = target/instantiate that class, e.g. `X2AbilityMultiTarget_Radius`. Bare names are auto-prefixed with `XComGame.`.'
-        'MultiTargetStyleEdit.CustomProperties' = 'Free-form key/value pairs for bridge-mod editors; ignored by the built-in editors.'
         'TriggerEdit.Class'                = 'Trigger class to target/instantiate, e.g. `X2AbilityTrigger_UnitPostBeginPlay`. Bare names are auto-prefixed with `XComGame.`.'
         'TriggerEdit.Mode'                 = 'Per-entry edit mode (`EArrayEditMode`). Defaults to the enum''s first value, which clears the existing array.'
-        'TriggerEdit.CustomProperties'     = 'Free-form key/value pairs for bridge-mod editors; ignored by the built-in editors.'
         'EffectEdit.EffectHitModifiers'    = '**Replace-only**: when non-empty, replaces `X2Effect_ToHitModifier.Modifiers` entirely (`EffectHitModifier` entries, incl. `MatchToHit` class ref via qualified name).'
-        'EffectEdit.CustomProperties'      = 'Free-form key/value pairs for bridge-mod editors; ignored by the built-in editors.'
-        'ConditionEdit.CustomProperties'   = 'Free-form key/value pairs for bridge-mod editors; ignored by the built-in editors.'
         'AbilityEventListenerEdit.EventID' = 'Matches the existing `Template.AbilityEventListeners` entry to edit. Entries cannot be added (their `EventFn` delegate is code-only).'
         'EffectEdit.Class'                 = 'Effect class to target/instantiate, e.g. `X2Effect_ApplyWeaponDamage`. Bare names are auto-prefixed with `XComGame.`; empty falls back to `X2Effect`.'
         'EffectEdit.Slot'                  = 'Which effect array to edit (`EAbilityEffectSlot`): `eAES_Target`, `eAES_MultiTarget` or `eAES_Shooter`.'
@@ -616,6 +610,9 @@ $dlcLines = Read-TextFile $DlcInfoFile
 $dlcText = $dlcLines -join "`n"
 
 $Warnings = [System.Collections.Generic.List[string]]::new()
+
+# Errors stop the run before anything is written: each one is a bug in the sources, not a doc gap.
+$Errors = [System.Collections.Generic.List[string]]::new()
 
 $Registries = @{}
 $registryPattern = "(?m)^\s*(\w+Editors)(?:\((\d+)\)\s*=|\.Add\()\s*class'(\w+)'"
@@ -1126,6 +1123,38 @@ if ($SdkClassesDir) {
                 }
             }
         }
+
+        # editor-parent validation: an editor extends the editor of its game class's nearest ancestor that has one,
+        # or the family root / catch-all when no ancestor has one. Anything else silently drops that ancestor's fields.
+        if ($concrete.Count -gt 0) {
+            $familyRoot = @(Get-ExtendsChain $concrete[0].class)[-1]
+            $editorByGameClass = @{}
+            foreach ($cls in $Editors.Keys) {
+                $candidate = $Editors[$cls]
+                if ($candidate.GameClass -and @(Get-ExtendsChain $cls)[-1] -eq $familyRoot) { $editorByGameClass[$candidate.GameClass] = $cls }
+            }
+
+            foreach ($ed in $concrete) {
+                if ($null -eq (Get-SdkClassInfo $ed.gameClass)) { continue }
+
+                $expectedParent = $null
+                foreach ($ancestor in @(Get-SdkAncestor $ed.gameClass)) {
+                    if ($editorByGameClass.ContainsKey($ancestor)) { $expectedParent = $editorByGameClass[$ancestor]; break }
+                }
+
+                $actualParent = $null
+                if ($Editors.ContainsKey($ed.extends) -and $Editors[$ed.extends].GameClass) { $actualParent = $ed.extends }
+
+                if ($expectedParent -eq $actualParent) { continue }
+
+                if ($expectedParent) {
+                    $Errors.Add("Editor parent ($($famModel.name)): $($ed.class) extends $($ed.extends), but the nearest ancestor of $($ed.gameClass) with an editor is $($Editors[$expectedParent].GameClass) - extend $expectedParent.")
+                }
+                else {
+                    $Errors.Add("Editor parent ($($famModel.name)): $($ed.class) extends $($ed.extends), which edits $($Editors[$actualParent].GameClass), not an ancestor of $($ed.gameClass) - extend the family root or its catch-all editor.")
+                }
+            }
+        }
     }
 }
 
@@ -1437,12 +1466,12 @@ foreach ($structName in $StructOrder) {
     }
 }
 
-# Fields intentionally consumed by no built-in editor (bridge-mod surface).
-$IntentionallyUnconsumed = @('CustomProperties', 'Key', 'Value', 'EditorClass', 'Priority')
+# Fields intentionally consumed by no built-in editor (bridge-mod registration).
+$IntentionallyUnconsumed = @('EditorClass', 'Priority')
 foreach ($structName in $StructOrder) {
     foreach ($f in $Structs[$structName]) {
         if ($f.Kind -eq 'guard') { continue }
-        if ($structName -in @('AECustomProperty', 'ExtraEditorRegistration')) { continue }
+        if ($structName -eq 'ExtraEditorRegistration') { continue }
         if ($f.Name -in $IntentionallyUnconsumed) { continue }
         if (-not $f.Consumed) {
             $Warnings.Add("Orphan config field: $structName.$($f.Name) is declared but not consumed by any editor (not yet implemented?).")
@@ -1453,6 +1482,178 @@ foreach ($structName in $StructOrder) {
 foreach ($w in $Curated.KnownIssues) { $Warnings.Add("Known issue: $w") }
 
 #endregion
+
+#region 4d. Game enums and structs the edit structs reference
+
+$PrimitiveTypes = @('bool', 'int', 'float', 'name', 'string', 'byte')
+
+# The bare type a field refers to: array<X> and Package.X collapse to X; class references and delegates give nothing.
+function Get-ReferencedTypeName {
+    param([string] $Type)
+
+    $bare = $Type.Trim()
+    if ($bare -match '^array<\s*([\w\.]+)\s*>$') { $bare = $Matches[1] }
+    if ($bare -match '^(class|delegate)\b') { return $null }
+    return ($bare -replace '^.*\.', '')
+}
+
+function ConvertTo-NormalizedType {
+    param([string] $Type)
+
+    $bare = $Type.Trim()
+    if ($bare -match '^array<\s*([\w\.]+)\s*>$') { return 'array<' + ($Matches[1] -replace '^.*\.', '') + '>' }
+    if ($bare -match '^class<\s*([\w\.]+)\s*>$') { return 'class<' + ($Matches[1] -replace '^.*\.', '') + '>' }
+    return ($bare -replace '^.*\.', '')
+}
+
+$SdkTypeIndex = $null
+
+# Every enum and struct declared anywhere under the SDK's Development\Src, by name, with the file that declares it.
+function Get-SdkTypeIndex {
+    if ($null -ne $script:SdkTypeIndex) { return $script:SdkTypeIndex }
+
+    $index = @{}
+    $declaration = [regex]'(?m)^[ \t]*(enum|struct)\s+(?:(?:native|export|transient|immutable|atomic|strictconfig|immutablewhencooked)\s+)*(\w+)'
+
+    # XComGame first: a name declared there wins over an Engine class that happens to reuse it (ECoverType).
+    $files = @(Get-ChildItem -LiteralPath $SdkClassesDir -Filter '*.uc' -File) +
+        @(Get-ChildItem -LiteralPath $SdkSrcDir -Filter '*.uc' -File -Recurse | Where-Object { $_.DirectoryName -ne $SdkClassesDir })
+    foreach ($file in $files) {
+        $text = [System.IO.File]::ReadAllText($file.FullName)
+        foreach ($m in $declaration.Matches($text)) {
+            $typeName = $m.Groups[2].Value
+            if (-not $index.ContainsKey($typeName)) {
+                $index[$typeName] = @{ Kind = $m.Groups[1].Value; File = $file.FullName; Class = $file.BaseName }
+            }
+        }
+    }
+
+    $script:SdkTypeIndex = $index
+    return $index
+}
+
+# Parses one enum or struct declaration out of its SDK file
+function Read-SdkTypeDefinition {
+    param([string] $TypeName)
+
+    $index = Get-SdkTypeIndex
+    if (-not $index.ContainsKey($TypeName)) { return $null }
+    $entry = $index[$TypeName]
+
+    $text = [System.IO.File]::ReadAllText($entry.File)
+    $text = [regex]::Replace($text, '/\*.*?\*/', '', 'Singleline')
+    $lines = $text -split "`r?`n"
+
+    $header = '^\s*' + $entry.Kind + '\s+(?:(?:native|export|transient|immutable|atomic|strictconfig|immutablewhencooked)\s+)*' + [regex]::Escape($TypeName) + '\b'
+    $start = -1
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ($lines[$i] -match $header) { $start = $i; break }
+    }
+    if ($start -lt 0) { return $null }
+
+    $members = [System.Collections.Generic.List[object]]::new()
+    if ($entry.Kind -eq 'struct' -and $lines[$start] -match '\bextends\s+([\w\.]+)') {
+        $parent = Read-SdkTypeDefinition ($Matches[1] -replace '^.*\.', '')
+        if ($parent) { foreach ($m in $parent.Members) { $members.Add($m) } }
+    }
+
+    $depth = 0
+    $opened = $false
+    $pending = [System.Collections.Generic.List[string]]::new()
+    for ($i = $start; $i -lt $lines.Count; $i++) {
+        $raw = $lines[$i]
+        $trailing = ''
+        if ($raw -match '//\s*(.*)$') { $trailing = $Matches[1].Trim() }
+        $code = ($raw -replace '//.*$', '').Trim()
+
+        if ($code -eq '') {
+            if ($trailing -ne '' -and $depth -eq 1) { $pending.Add($trailing) } else { $pending.Clear() }
+            continue
+        }
+
+        $opens  = ([regex]::Matches($code, '\{')).Count
+        $closes = ([regex]::Matches($code, '\}')).Count
+
+        if ($depth -eq 1 -and $opens -eq 0 -and $closes -eq 0) {
+            $description = $trailing
+            if ($description -eq '') { $description = $pending -join ' ' }
+            $pending.Clear()
+
+            if ($entry.Kind -eq 'enum') {
+                if ($code -match '^(\w+)\s*(<[^>]*>)?\s*,?$') {
+                    $members.Add([ordered]@{ name = $Matches[1]; description = $description })
+                }
+            }
+            elseif ($code -match '^var(\([^)]*\))?\s+(.*);') {
+                $rest = $Matches[2].Trim()
+                $declaration = $rest -replace '^((config|globalconfig|localized|private|privatewrite|protected|protectedwrite|deprecated|transient|duplicatetransient|init|instanced|editinline\w*|noimport|noexport|repnotify|const|editconst|export|native(\(\w+\))?)\s+)+', ''
+                if ($declaration -match '^(array<\s*[\w\.]+\s*>|class(<\s*[\w\.]+\s*>)?|delegate<[\w\.]+>|[\w\.<>]+)\s+(\w+(?:\s*,\s*\w+)*)\s*(\[[^\]]*\])?\s*$') {
+                    $fieldType = ConvertTo-NormalizedType $Matches[1]
+                    foreach ($fieldName in ($Matches[3] -split '\s*,\s*')) {
+                        $members.Add([ordered]@{ name = $fieldName; type = $fieldType; kind = 'plain'; description = $description })
+                    }
+                }
+            }
+        }
+
+        if ($opens -gt 0) { $opened = $true }
+        $depth += $opens - $closes
+        if ($opened -and $depth -le 0) { break }
+    }
+
+    return @{ Kind = $entry.Kind; Class = $entry.Class; Members = $members.ToArray() }
+}
+
+$GameEnums   = [System.Collections.Generic.List[object]]::new()
+$GameStructs = [System.Collections.Generic.List[object]]::new()
+
+if ($SdkClassesDir) {
+    $localTypeNames = @($StructNames) + @($Enums | ForEach-Object { $_.Name })
+    $queue = [System.Collections.Generic.Queue[string]]::new()
+    $seenTypes = @{}
+
+    foreach ($structName in $StructOrder) {
+        foreach ($f in $Structs[$structName]) {
+            $referenced = Get-ReferencedTypeName $f.Type
+            if ($referenced -and $referenced -notin $PrimitiveTypes -and $referenced -notin $localTypeNames -and -not $seenTypes.ContainsKey($referenced)) {
+                $seenTypes[$referenced] = $true
+                $queue.Enqueue($referenced)
+            }
+        }
+    }
+
+    while ($queue.Count -gt 0) {
+        $typeName = $queue.Dequeue()
+        $definition = Read-SdkTypeDefinition $typeName
+        if ($null -eq $definition) {
+            $Warnings.Add("Game type $typeName is referenced by an edit struct but was not found under the SDK sources; tooling will treat it as free text.")
+            continue
+        }
+
+        if ($definition.Kind -eq 'enum') {
+            $GameEnums.Add([ordered]@{ name = $typeName; values = $definition.Members; source = 'game'; definedIn = $definition.Class })
+            continue
+        }
+
+        $GameStructs.Add([ordered]@{ name = $typeName; fields = $definition.Members; source = 'game'; definedIn = $definition.Class })
+        foreach ($member in $definition.Members) {
+            $referenced = Get-ReferencedTypeName $member.type
+            if ($referenced -and $referenced -notin $PrimitiveTypes -and $referenced -notin $localTypeNames -and -not $seenTypes.ContainsKey($referenced)) {
+                $seenTypes[$referenced] = $true
+                $queue.Enqueue($referenced)
+            }
+        }
+    }
+}
+
+#endregion
+
+if ($Errors.Count -gt 0) {
+    Write-Information ''
+    Write-Information "Errors ($($Errors.Count)) - nothing written:"
+    foreach ($e in $Errors) { Write-Information "  - $e" }
+    exit 1
+}
 
 #region 5. Build the schema object
 
@@ -1533,8 +1734,8 @@ $schemaTemplate = @($TemplateFields | ForEach-Object {
 $schema = [ordered]@{
     '$comment' = 'Generated by .scripts/generate-docs.ps1 - do not edit by hand.'
     sourceHash = $sha
-    enums      = $schemaEnums
-    structs    = $schemaStructs
+    enums      = @($schemaEnums) + @($GameEnums.ToArray())
+    structs    = @($schemaStructs) + @($GameStructs.ToArray())
     template   = [ordered]@{ fields = $schemaTemplate; notEditable = $TemplateNotEditable }
     bridges    = $BridgeSummaries.ToArray()
     families   = $FamilyModels.ToArray()

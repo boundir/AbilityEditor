@@ -74,6 +74,7 @@ export function App() {
   const entry = doc.entries[selected]
   const errors = issues.filter((i) => i.severity === 'error')
   const warnings = issues.filter((i) => i.severity === 'warning')
+  const infos = issues.filter((i) => i.severity === 'info')
 
   const copy = async () => {
     try {
@@ -126,7 +127,7 @@ export function App() {
         <ul>
           {doc.entries.map((item, index) => {
             const ability = typeof item['Ability'] === 'string' ? item['Ability'] : ''
-            const entryIssues = issues.filter((i) => i.path[0] === index)
+            const entryIssues = issues.filter((i) => i.path[0] === index && i.severity !== 'info')
             const hasError = entryIssues.some((i) => i.severity === 'error')
             return (
               <li key={item._id}>
@@ -196,7 +197,7 @@ export function App() {
         </div>
         <pre>{output}</pre>
 
-        <IssueList errors={errors} warnings={warnings} onSelect={(path) => {
+        <IssueList errors={errors} warnings={warnings} infos={infos} onSelect={(path) => {
           const index = path[0]
           if (typeof index === 'number') setSelected(index)
         }} />
@@ -208,19 +209,21 @@ export function App() {
 function IssueList({
   errors,
   warnings,
+  infos,
   onSelect,
 }: {
   errors: Issue[]
   warnings: Issue[]
+  infos: Issue[]
   onSelect: (path: Path) => void
 }) {
-  if (errors.length === 0 && warnings.length === 0) {
+  if (errors.length === 0 && warnings.length === 0 && infos.length === 0) {
     return <p className="issues issues--ok">No problems found.</p>
   }
 
   return (
     <div className="issues">
-      {[...errors, ...warnings].map((issue, index) => (
+      {[...errors, ...warnings, ...infos].map((issue, index) => (
         <button
           type="button"
           key={`${issue.title}-${index}`}

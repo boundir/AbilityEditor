@@ -2,5 +2,5 @@ class X2AbilityCooldownEditor_AidProtocol extends X2AbilityCooldownEditor;
 
 static function bool CanEdit(X2AbilityCooldown AbilityCooldown)
 {
-    return AbilityCooldown.IsA('X2AbilityCooldown_AidProtocol');
+	return AbilityCooldown.IsA('X2AbilityCooldown_AidProtocol');
 }

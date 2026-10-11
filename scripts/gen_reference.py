@@ -298,6 +298,7 @@ def render_reference_index() -> str:
         "- [Ability template fields](template-fields.md) - the scalars and arrays you set directly "
         "on an `+AbilityEdits` entry.",
         "- [Nested structs](nested-structs.md) - the shape of every block that nests inside one.",
+        "- [Game types](game-types.md) - the game's own enums and structs some fields take verbatim.",
         "- [Bridges](bridges/index.md) - classes from DLC packages and other mods, editable through "
         "a separate bridge mod.",
         "",
@@ -465,9 +466,51 @@ def render_edit_modes() -> str:
         "",
     ]
     for enum in SCHEMA["enums"]:
+        if enum.get("source") == "game":
+            continue  # the game's own enums are listed with the nested structs
         rows = [[code(v["name"]), escape_cell(v.get("description") or "")] for v in enum["values"]]
         out += [f"## `{enum['name']}`", "", table(["Value", "Meaning"], rows), ""]
     return "\n".join(out)
+
+
+def render_game_types() -> list[str]:
+    """The game's enums and structs the config uses verbatim, exported from the SDK by the generator."""
+    structs = [s for s in SCHEMA["structs"] if s.get("source") == "game"]
+    enums = [e for e in SCHEMA["enums"] if e.get("source") == "game"]
+    if not structs and not enums:
+        return []
+
+    out = [
+        "# Game types",
+        "",
+        "Some fields take one of the game's own types, written exactly as the game declares it. "
+        "These have no `Set` guards and no `Mode`: a struct is typed as a parenthesised list of "
+        "its fields, and an enum as one of its values. Each heading names the game class that "
+        "declares the type.",
+        "",
+    ]
+    for struct in structs:
+        rows = [[code(f["name"]), code(f.get("type")), escape_cell(f.get("description") or "") or "&mdash;"]
+                for f in struct["fields"]]
+        out += [
+            f"## `{struct['name']}`",
+            "",
+            f"Declared in `{struct['definedIn']}`.",
+            "",
+            table(["Field", "Type", "Description"], rows) if rows else "*No fields.*\n",
+            "",
+        ]
+    for enum in enums:
+        rows = [[code(v["name"]), escape_cell(v.get("description") or "") or "&mdash;"] for v in enum["values"]]
+        out += [
+            f"## `{enum['name']}`",
+            "",
+            f"Declared in `{enum['definedIn']}`.",
+            "",
+            table(["Value", "Meaning"], rows),
+            "",
+        ]
+    return out
 
 
 def render_nested_structs() -> str:
@@ -480,6 +523,8 @@ def render_nested_structs() -> str:
         "",
     ]
     for struct in SCHEMA["structs"]:
+        if struct.get("source") == "game":
+            continue  # see game-types.md
         rows = []
         for field in struct["fields"]:
             if field.get("kind") == "guard":
@@ -509,6 +554,9 @@ summary: list[str] = ["* [Overview](index.md)",
 write("reference/index.md", render_reference_index())
 write("reference/template-fields.md", render_template_fields())
 write("reference/nested-structs.md", render_nested_structs())
+game_types = render_game_types()
+if game_types:
+    write("reference/game-types.md", "\n".join(game_types))
 write("getting-started/edit-modes.md", render_edit_modes())
 
 for family in SCHEMA["families"]:
@@ -530,6 +578,8 @@ for bridge in BRIDGES.values():
     summary.append(f"    * [{bridge['displayName']}]({bridge_page(bridge)})")
 
 summary.append("* [Nested structs](nested-structs.md)")
+if game_types:
+    summary.append("* [Game types](game-types.md)")
 
 with mkdocs_gen_files.open("reference/SUMMARY.md", "w") as handle:
     handle.write("\n".join(summary) + "\n")

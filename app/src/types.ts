@@ -85,6 +85,8 @@ export interface StructField {
 export interface Struct {
   name: string
   fields: StructField[]
+  source?: 'game'
+  definedIn?: string
 }
 
 export interface EnumValue {
@@ -95,6 +97,8 @@ export interface EnumValue {
 export interface SchemaEnum {
   name: string
   values: EnumValue[]
+  source?: 'game'
+  definedIn?: string
 }
 
 export interface TemplateField {

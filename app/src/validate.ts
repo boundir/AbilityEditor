@@ -1,13 +1,22 @@
-import { hasUnrepresentableChars, isBareName, nestedStructName } from './emit'
-import type { Indices } from './schema'
-import { bridgeOf, bridgeRequirements, qualifiedClassName, resolveEditor } from './schema'
+import { hasUnrepresentableChars, isBareName } from './emit'
+import type { Indices, StructField } from './schema'
+import {
+  bridgeOf,
+  bridgeRequirements,
+  elementType,
+  enumOf,
+  isArrayType,
+  qualifiedClassName,
+  resolveEditor,
+  structOf,
+} from './schema'
 import { configKeys, type Doc, type Node, type Path } from './state'
 
 /**
  * Config validation.
  */
 
-export type Severity = 'error' | 'warning'
+export type Severity = 'error' | 'warning' | 'info'
 
 export interface Issue {
   severity: Severity
@@ -42,13 +51,20 @@ const SINGLE_OBJECT_KEYS = new Set([
   'MultiTargetStyle',
 ])
 
+/** Selector fields that pick which object of a class an array entry edits. */
+const MATCH_KEYS = ['MatchEffectName', 'MatchEventID'] as const
+
 function familyForKey(indices: Indices, key: string, structName: string): string | undefined {
-  if (CONDITION_KEYS.has(key)) return 'Conditions'
+  if (CONDITION_KEYS.has(key)) {
+    return 'Conditions'
+  }
   const struct = indices.structByName.get(structName)
   const field = struct?.fields.find((f) => f.name === key)
-  if (!field) return undefined
-  const child = nestedStructName(field.type)
-  return child ? indices.familyByStruct.get(child)?.name : undefined
+  if (!field) {
+    return undefined
+  }
+  const child = structOf(indices, field.type)
+  return child ? indices.familyByStruct.get(child.name)?.name : undefined
 }
 
 function entryContext(entry: Node): EntryContext {
@@ -131,7 +147,9 @@ function checkCreation(entry: Node, index: number, context: EntryContext, issues
     })
   }
 
-  if (!context.blank || preset === 'eACP_Passive') return
+  if (!context.blank || preset === 'eACP_Passive') {
+    return
+  }
 
   for (const key of ['TargetStyle', 'ToHitCalc'] as const) {
     const slot = entry[key]
@@ -167,95 +185,169 @@ function validateNode(
   context: EntryContext,
 ): void {
   const struct = indices.structByName.get(structName)
-  if (!struct) return
+  if (!struct) {
+    return
+  }
 
   const keys = configKeys(node)
 
   for (const key of keys) {
     const field = struct.fields.find((f) => f.name === key)
-    if (!field) continue
+    if (!field) {
+      continue
+    }
     const value = node[key]
-    if (value === undefined) continue
-
-    if (typeof value === 'string' && field.type === 'string' && hasUnrepresentableChars(value)) {
-      issues.push({
-        severity: 'error',
-        path: [...path, key],
-        title: `${key} contains a character this format cannot represent`,
-        detail:
-          'The .ini dialect has no escaping, so a value containing " ( ) , or a newline cannot be written.',
-      })
+    if (value === undefined) {
+      continue
     }
 
-    if (typeof value === 'string' && field.type === 'name' && value !== '' && !isBareName(value)) {
-      issues.push({
-        severity: 'error',
-        path: [...path, key],
-        title: `${key} must be a bare name`,
-        detail: 'Letters, digits and underscores only, not starting with a digit.',
-      })
-    }
+    const fieldPath = [...path, key]
+    const child = structOf(indices, field.type)
+    const isArray = isArrayType(field.type)
 
-    const childStruct = nestedStructName(field.type)
-
-    if (childStruct && Array.isArray(value) && field.type.startsWith('array<')) {
+    if (child && isArray && Array.isArray(value)) {
       const children = value as Node[]
-      checkArrayModes(node, key, children, path, indices, issues, context)
-      checkDuplicateClasses(key, children, path, issues)
+      checkArrayModes(node, key, field, child.name, children, path, indices, issues, context)
+      checkDuplicateClasses(key, children, path, indices, issues)
 
-      children.forEach((child, childIndex) => {
-        const childPath = [...path, key, childIndex]
-        validateNode(child, childStruct, childPath, indices, issues, context)
-        checkClassResolution(child, key, structName, childPath, indices, issues)
+      children.forEach((item, childIndex) => {
+        const childPath = [...fieldPath, childIndex]
+        validateNode(item, child.name, childPath, indices, issues, context)
+        checkClassResolution(item, key, structName, childPath, indices, issues)
+        checkSelectors(item, child.name, childPath, indices, issues)
       })
       continue
     }
 
     // A single nested struct.
-    if (childStruct && value && typeof value === 'object' && !Array.isArray(value)) {
-      const child = value as Node
-      const childPath = [...path, key]
-      validateNode(child, childStruct, childPath, indices, issues, context)
+    if (child && value && typeof value === 'object' && !Array.isArray(value)) {
+      validateNode(value as Node, child.name, fieldPath, indices, issues, context)
 
-      if (SINGLE_OBJECT_KEYS.has(key)) checkSingleObjectSlot(child, key, childPath, issues, context)
+      if (SINGLE_OBJECT_KEYS.has(key)) {
+        checkSingleObjectSlot(value as Node, key, fieldPath, issues, context)
+      }
       continue
     }
 
-    if (Array.isArray(value) && field.modeField && !keys.includes(field.modeField) && !context.blank) {
-      issues.push({
-        severity: 'warning',
-        path: [...path, key],
-        title: `${key} will replace the ability's existing list`,
-        detail: `${field.modeField} defaults to the first enum value, which is a Replace. Set it to Merge to add to the existing values instead.`,
-      })
+    if (Array.isArray(value)) {
+      checkArrayItems(key, field, value as string[], fieldPath, issues)
+
+      if (field.modeField && !keys.includes(field.modeField) && !context.blank) {
+        issues.push({
+          severity: 'warning',
+          path: fieldPath,
+          title: `${key} will replace the ability's existing list`,
+          detail: `${field.modeField} defaults to the first enum value, which is a Replace. Set it to Merge to add to the existing values instead.`,
+        })
+      }
+      continue
     }
 
-    if (value === 'eNAEM_AddOnly') {
-      issues.push({
-        severity: 'warning',
-        path: [...path, key],
-        title: `${key}=eNAEM_AddOnly does not append`,
-        detail:
-          'For name arrays, AddOnly writes your values only when the target array is currently empty. To add without removing, use eNAEM_Merge.',
-      })
-    }
+    checkScalar(key, field, value, fieldPath, indices, issues)
   }
 
   checkRemoveCharges(node, structName, path, keys, issues)
 }
 
+function checkScalar(
+  key: string,
+  field: StructField,
+  value: Node | string | number | boolean,
+  path: Path,
+  indices: Indices,
+  issues: Issue[],
+): void {
+  if (typeof value === 'string' && field.type === 'string' && hasUnrepresentableChars(value)) {
+    issues.push({
+      severity: 'error',
+      path,
+      title: `${key} contains a character this format cannot represent`,
+      detail:
+        'The .ini dialect has no escaping, so a value containing " ( ) , or a newline cannot be written.',
+    })
+  }
+
+  if (typeof value === 'string' && field.type === 'name' && value !== '' && !isBareName(value)) {
+    issues.push({
+      severity: 'error',
+      path,
+      title: `${key} must be a bare name`,
+      detail: 'Letters, digits and underscores only, not starting with a digit.',
+    })
+  }
+
+  const enumDef = enumOf(indices, field.type)
+  if (enumDef && typeof value === 'string' && !enumDef.values.some((v) => v.name === value)) {
+    const origin = enumDef.source === 'game' ? `the game's ${enumDef.name}` : enumDef.name
+    issues.push({
+      severity: 'error',
+      path,
+      title: `${value || '(empty)'} is not a value of ${enumDef.name}`,
+      detail: `${key} must be one of ${origin}: ${enumDef.values.map((v) => v.name).join(', ')}. The game reads an unknown enum name as the first value.`,
+    })
+  }
+
+  if (value === 'eNAEM_AddOnly') {
+    issues.push({
+      severity: 'warning',
+      path,
+      title: `${key}=eNAEM_AddOnly does not append`,
+      detail:
+        'For name arrays, AddOnly writes your values only when the target array is currently empty. To add without removing, use eNAEM_Merge.',
+    })
+  }
+}
+
+function checkArrayItems(key: string, field: StructField, items: string[], path: Path, issues: Issue[]): void {
+  const element = elementType(field.type)
+
+  items.forEach((item, index) => {
+    const itemPath = [...path, index]
+    if (item === '') {
+      issues.push({
+        severity: 'error',
+        path: itemPath,
+        title: `${key} has an empty item`,
+        detail: `Item ${index + 1} is blank. It would be written as an empty element, which the game reads as None. Fill it in or remove it.`,
+      })
+      return
+    }
+    if (element === 'name' && !isBareName(item)) {
+      issues.push({
+        severity: 'error',
+        path: itemPath,
+        title: `${key} item "${item}" is not a bare name`,
+        detail: 'Letters, digits and underscores only, not starting with a digit.',
+      })
+    }
+    if (element === 'string' && hasUnrepresentableChars(item)) {
+      issues.push({
+        severity: 'error',
+        path: itemPath,
+        title: `${key} item contains a character this format cannot represent`,
+        detail: 'The .ini dialect has no escaping, so an item containing " ( ) , or a newline cannot be written.',
+      })
+    }
+  })
+}
+
 function checkArrayModes(
   parent: Node,
   key: string,
+  field: StructField,
+  childStruct: string,
   children: Node[],
   path: Path,
   indices: Indices,
   issues: Issue[],
   context: EntryContext,
 ): void {
+  if (children.length === 0) {
+    return
+  }
   const family = familyForKey(indices, key, 'AbilityEdit')
 
-  if (key === 'Costs' && parent['CostMode'] === undefined && children.length > 0 && !context.blank) {
+  if (key === 'Costs' && parent['CostMode'] === undefined && !context.blank) {
     issues.push({
       severity: 'error',
       path: [...path, key],
@@ -263,7 +355,21 @@ function checkArrayModes(
       detail:
         'Omitting CostMode defaults it to eACEM_ReplaceAll, which clears the ability’s entire cost list and keeps only what is listed here. Set CostMode=eACEM_Merge unless that is genuinely what you want.',
     })
+  } else if (field.modeField && parent[field.modeField] === undefined && !context.blank) {
+    // Arrays governed by a mode on the parent (AdditionalCooldowns, BonusCharges, StatChange...).
+    const modeEnum = field.modeEnum ? indices.enumByName.get(field.modeEnum) : undefined
+    const first = modeEnum?.values[0]?.name ?? 'the first enum value'
+    issues.push({
+      severity: 'warning',
+      path: [...path, key],
+      title: `${key} will replace the existing list`,
+      detail: `${field.modeField} is not set, so it defaults to ${first}, which clears the existing ${key} before applying yours. Set it to Merge to update entries in place.`,
+    })
   }
+
+  // Only entries that carry their own Mode can default to a Replace.
+  const childHasMode = indices.structByName.get(childStruct)?.fields.some((f) => f.name === 'Mode') ?? false
+  if (!childHasMode) return
 
   const missingMode = children.filter((child) => child['Mode'] === undefined)
   if (missingMode.length === 0) {
@@ -290,15 +396,21 @@ function checkArrayModes(
   })
 }
 
-function checkDuplicateClasses(key: string, children: Node[], path: Path, issues: Issue[]): void {
+function checkDuplicateClasses(key: string, children: Node[], path: Path, indices: Indices, issues: Issue[]): void {
   const seen = new Map<string, number>()
+  // An effect entry without a Slot edits the default slot, so it collides with one that names it.
+  const defaultSlot = indices.enumByName.get('EAbilityEffectSlot')?.values[0]?.name ?? ''
 
   children.forEach((child, index) => {
     const cls = child['Class']
-    if (typeof cls !== 'string' || cls === '') return
-    // Effects are additionally keyed by slot.
-    const slot = typeof child['Slot'] === 'string' ? child['Slot'] : ''
-    const composite = `${cls}\u0000${slot}`
+    if (typeof cls !== 'string' || cls === '') {
+      return
+    }
+    // Effects are additionally keyed by slot, and every array by its selector.
+    const slot = typeof child['Slot'] === 'string' ? child['Slot'] : defaultSlot
+    const match = MATCH_KEYS.map((k) => child[k]).find((v) => typeof v === 'string' && v !== '')
+    const selector = match !== undefined ? `name:${String(match)}` : `index:${String(child['Index'] ?? 0)}`
+    const composite = `${cls}\u0000${slot}\u0000${selector}`
 
     const first = seen.get(composite)
     if (first !== undefined) {
@@ -313,6 +425,48 @@ function checkDuplicateClasses(key: string, children: Node[], path: Path, issues
       seen.set(composite, index)
     }
   })
+}
+
+/**
+ * Index / Match* pick which object of the class an entry edits.
+ */
+function checkSelectors(child: Node, structName: string, path: Path, indices: Indices, issues: Issue[]): void {
+  const struct = indices.structByName.get(structName)
+  const modeField = struct?.fields.find((f) => f.name === 'Mode')
+  if (!struct || !modeField) {
+    return
+  }
+
+  const index = child['Index']
+  const hasIndex = typeof index === 'number'
+  const matchKey = MATCH_KEYS.find((k) => typeof child[k] === 'string' && child[k] !== '')
+  if (!hasIndex && !matchKey) {
+    return
+  }
+
+  const modeEnum = indices.enumByName.get(modeField.type)
+  const mode = typeof child['Mode'] === 'string' ? child['Mode'] : modeEnum?.values[0]?.name ?? ''
+  const selectors = [hasIndex ? `Index=${index}` : null, matchKey ? `${matchKey}=${String(child[matchKey])}` : null]
+    .filter((s): s is string => s !== null)
+    .join(' and ')
+
+  if (/ReplaceAll$/.test(mode)) {
+    issues.push({
+      severity: 'warning',
+      path,
+      title: `${selectors} ${hasIndex && matchKey ? 'are' : 'is'} ignored under ${mode}`,
+      detail: `${child['Mode'] === undefined ? `Mode is not set, so it defaults to ${mode}. ` : ''}A ReplaceAll clears the whole array and adds this entry, so there is nothing to select. Use Merge or Remove to target one object.`,
+    })
+  }
+
+  if (hasIndex && matchKey) {
+    issues.push({
+      severity: 'info',
+      path,
+      title: `${matchKey} takes precedence over Index`,
+      detail: `When ${matchKey} is non-empty the entry is selected by that name and Index=${index} is ignored.`,
+    })
+  }
 }
 
 function checkClassResolution(
@@ -364,7 +518,9 @@ function checkClassResolution(
     return
   }
 
-  if (!viaCatchAll) return
+  if (!viaCatchAll) {
+    return
+  }
 
   const catchAll = indices.catchAllByFamily.get(family)
   const sharedCount = catchAll?.fields.length ?? 0
@@ -428,11 +584,17 @@ function checkRemoveCharges(
   keys: string[],
   issues: Issue[],
 ): void {
-  if (structName !== 'ChargesEdit') return
-  if (node['RemoveCharges'] !== true) return
+  if (structName !== 'ChargesEdit') {
+    return
+  }
+  if (node['RemoveCharges'] !== true) {
+    return
+  }
 
   const others = keys.filter((k) => k !== 'RemoveCharges')
-  if (others.length === 0) return
+  if (others.length === 0) {
+    return
+  }
 
   issues.push({
     severity: 'warning',

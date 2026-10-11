@@ -102,7 +102,7 @@ SetNormalUnitFreezeDuration=true, NormalUnitFreezeDuration=3
 
 Propose the fields in a pull request together with your bridge's fragment (next section). They appear on the reference pages, marked as provided by your bridge.
 
-For a class nobody wants upstream, the six `Slot`-taking structs (`EffectEdit`, `ConditionEdit`, `ToHitCalcEdit`, `TargetStyleEdit`, `MultiTargetStyleEdit`, `TriggerEdit`) carry a `CustomProperties` array of `(Key=..., Value="...")` pairs that built-in editors ignore and yours can interpret. Those keys are not documented here - document them in your own README. `CostEdit`, `CooldownEdit` and `ChargesEdit` have no `CustomProperties`; a bridge cost editor either gets its fields upstream or reads its own `config` array keyed on the `AbilityName` it receives.
+For a class nobody wants upstream, a bridge editor can read its own `config` array keyed on the `AbilityName` it receives, and document those keys in its own README. The edit structs carry no untyped escape hatch: every key a user writes is a declared field, so the reference pages and the config builder can describe it.
 
 ## Publishing your bridge on this site
 

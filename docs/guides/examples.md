@@ -9,20 +9,28 @@ that already exist; for making new ones, see [Create an ability](create-an-abili
 Slash no longer ends the turn for soldiers with Blademaster, gains 5 charges, and takes a 5-turn
 cooldown that also puts Blademaster on a 3-turn cooldown.
 
+`CostMode=eACEM_Merge` keeps Slash's existing cost list; the action-point entry edits the cost
+that is already there and the charge entry is added beside it. Leaving `CostMode` out would wipe
+the list first, which is the intended outcome only when every cost is restated.
+
 ```ini
 +AbilityEdits=( \\
     Ability=SwordSlice, \\
+    CostMode=eACEM_Merge, \\
     Costs=( \\
         ( \\
             Class="X2AbilityCost_ActionPoints", \\
+            Mode=eACEM_Merge, \\
             SetNumPoints=true, \\
             NumPoints=1, \\
             SetConsumeAllPoints=true, \\
             ConsumeAllPoints=true, \\
+            DoNotConsumeAllSoldierAbilitiesMode=eNAEM_Merge, \\
             DoNotConsumeAllSoldierAbilities=(Blademaster) \\
         ), \\
         ( \\
             Class="X2AbilityCost_Charges", \\
+            Mode=eACEM_Merge, \\
             SetNumCharges=true, \\
             NumCharges=1 \\
         ) \\

@@ -28,7 +28,12 @@ static function ApplyTriggerEditToArray(
 		return;
 	}
 
-	Index = FindTriggerIndex(Triggers, TriggerClass);
+	Index = FindTriggerIndex(Triggers, TriggerClass, TriggerEdit.Index, TriggerEdit.MatchEventID);
+
+	if (Index == INDEX_NONE && (TriggerEdit.Index > 0 || TriggerEdit.MatchEventID != ''))
+	{
+		`log(string(AbilityName) @ "Template.AbilityTriggers has no" @ string(TriggerClass.Name) @ "matching Index" @ TriggerEdit.Index @ "MatchEventID" @ string(TriggerEdit.MatchEventID), class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
+	}
 
 	if (TriggerEdit.Mode == eAEM_Remove)
 	{
@@ -89,19 +94,42 @@ static function class<X2AbilityTrigger> LoadTriggerClass(string ClassName)
 	return TriggerClass;
 }
 
+// The Nth trigger of the class, or the event listener whose EventID matches when one is given.
 static function int FindTriggerIndex(
 	array<X2AbilityTrigger> Triggers,
-	class<X2AbilityTrigger> TriggerClass
+	class<X2AbilityTrigger> TriggerClass,
+	optional int MatchIndex,
+	optional name MatchEventID
 )
 {
-	local int i;
+	local X2AbilityTrigger_EventListener Listener;
+	local int i, Matches;
 
 	for (i = 0; i < Triggers.Length; ++i)
 	{
-		if (Triggers[i].Class == TriggerClass)
+		if (Triggers[i].Class != TriggerClass)
+		{
+			continue;
+		}
+
+		if (MatchEventID != '')
+		{
+			Listener = X2AbilityTrigger_EventListener(Triggers[i]);
+
+			if (Listener != none && Listener.ListenerData.EventID == MatchEventID)
+			{
+				return i;
+			}
+
+			continue;
+		}
+
+		if (Matches == MatchIndex)
 		{
 			return i;
 		}
+
+		Matches++;
 	}
 
 	return INDEX_NONE;

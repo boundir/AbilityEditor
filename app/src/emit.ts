@@ -1,4 +1,4 @@
-import type { Indices, StructField } from './schema'
+import { elementType, isArrayType, isEditStruct, structOf, type Indices, type StructField } from './schema'
 import { configKeys, type Doc, type Node, type Value } from './state'
 
 /**
@@ -35,14 +35,37 @@ function formatScalar(value: Value, type: string): string {
   return type === 'string' ? `"${text}"` : text
 }
 
+function formatScalarList(items: string[], type: string): string {
+  return `(${items.map((item) => formatScalar(item, elementType(type))).join(', ')})`
+}
+
 function emittableFields(indices: Indices, structName: string): StructField[] {
   return indices.structByName.get(structName)?.fields.filter((f) => f.kind !== 'guard') ?? []
 }
 
-export function nestedStructName(type: string): string | null {
-  const match = /^array<(\w+)>$/.exec(type)
-  if (match?.[1]) return /Edit$/.test(match[1]) ? match[1] : null
-  return /Edit$/.test(type) ? type : null
+/**
+ * A game struct as a one-line literal: `(CheckType=eCheck_Exact, Value=1)`.
+ * Game structs have no guards and no modes, so nothing needs its own line.
+ */
+export function formatStructLiteral(node: Node, structName: string, indices: Indices): string {
+  const parts: string[] = []
+  for (const field of emittableFields(indices, structName)) {
+    const value = node[field.name]
+    if (value === undefined) continue
+
+    const child = structOf(indices, field.type)
+    if (child && isArrayType(field.type) && Array.isArray(value)) {
+      const children = value as Node[]
+      parts.push(`${field.name}=(${children.map((c) => formatStructLiteral(c, child.name, indices)).join(', ')})`)
+    } else if (child && !Array.isArray(value) && value && typeof value === 'object') {
+      parts.push(`${field.name}=${formatStructLiteral(value as Node, child.name, indices)}`)
+    } else if (Array.isArray(value)) {
+      parts.push(`${field.name}=${formatScalarList(value as string[], field.type)}`)
+    } else {
+      parts.push(`${field.name}=${formatScalar(value, field.type)}`)
+    }
+  }
+  return `(${parts.join(', ')})`
 }
 
 function emitGroups(node: Node, structName: string, indices: Indices, depth: number): string[][] {
@@ -55,16 +78,30 @@ function emitGroups(node: Node, structName: string, indices: Indices, depth: num
     const value = node[field.name]
     if (value === undefined) continue
 
-    const childStruct = nestedStructName(field.type)
-    const isArrayType = field.type.startsWith('array<')
+    const child = structOf(indices, field.type)
+    const isArray = isArrayType(field.type)
 
-    if (childStruct && isArrayType && Array.isArray(value)) {
+    // Game structs are compact literals; edit structs get a line per key.
+    if (child && !isEditStruct(child)) {
+      if (isArray && Array.isArray(value)) {
+        const children = value as Node[]
+        if (children.length === 0) continue
+        const literal = children.map((c) => formatStructLiteral(c, child.name, indices)).join(', ')
+        groups.push([`${pad}${field.name}=(${literal})`])
+      } else if (value && typeof value === 'object' && !Array.isArray(value)) {
+        if (field.guard) groups.push([`${pad}${field.guard}=true`])
+        groups.push([`${pad}${field.name}=${formatStructLiteral(value as Node, child.name, indices)}`])
+      }
+      continue
+    }
+
+    if (child && isArray && Array.isArray(value)) {
       const children = value as Node[]
       if (children.length === 0) continue
 
       const lines: string[] = [`${pad}${field.name}=(`]
-      children.forEach((child, index) => {
-        const body = flatten(emitGroups(child, childStruct, indices, depth + 2))
+      children.forEach((item, index) => {
+        const body = flatten(emitGroups(item, child.name, indices, depth + 2))
         lines.push(`${pad}${INDENT}(`)
         lines.push(...body)
         lines.push(`${pad}${INDENT})${index < children.length - 1 ? ',' : ''}`)
@@ -74,9 +111,9 @@ function emitGroups(node: Node, structName: string, indices: Indices, depth: num
       continue
     }
 
-    // A single nested struct.
-    if (childStruct && !isArrayType && value && typeof value === 'object' && !Array.isArray(value)) {
-      const body = flatten(emitGroups(value as Node, childStruct, indices, depth + 1))
+    // A single nested edit struct.
+    if (child && !isArray && value && typeof value === 'object' && !Array.isArray(value)) {
+      const body = flatten(emitGroups(value as Node, child.name, indices, depth + 1))
       if (body.length === 0) continue
       groups.push([`${pad}${field.name}=(`, ...body, `${pad})`])
       continue
@@ -86,7 +123,7 @@ function emitGroups(node: Node, structName: string, indices: Indices, depth: num
     if (Array.isArray(value)) {
       const items = value as string[]
       if (items.length === 0) continue
-      groups.push([`${pad}${field.name}=(${items.join(', ')})`])
+      groups.push([`${pad}${field.name}=${formatScalarList(items, field.type)}`])
       continue
     }
 

@@ -4,8 +4,8 @@ static function bool CanEdit(X2AbilityCost AbilityCost);
 
 static function ApplyEdit(name AbilityName, X2AbilityCost AbilityCost, CostEdit CostEdit)
 {
-    ApplyBaseEdit(AbilityName, AbilityCost, CostEdit);
-    ApplyDerivedEdit(AbilityName, AbilityCost, CostEdit);
+	ApplyBaseEdit(AbilityName, AbilityCost, CostEdit);
+	ApplyDerivedEdit(AbilityName, AbilityCost, CostEdit);
 }
 
 static function ApplyBaseEdit(name AbilityName, X2AbilityCost AbilityCost, CostEdit CostEdit)

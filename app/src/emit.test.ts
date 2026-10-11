@@ -122,6 +122,77 @@ describe('emitEntry', () => {
   })
 })
 
+describe('game structs', () => {
+  it('writes a guarded game struct as a one-line literal', () => {
+    const entry = newNode({
+      Ability: 'X',
+      TargetConditions: [
+        newNode({
+          Class: 'X2Condition_UnitProperty',
+          Mode: 'eAEM_Merge',
+          CheckAmmoData: newNode({ CheckType: 'eCheck_Exact', Value: 1 }),
+        }),
+      ],
+    })
+
+    const out = emitEntry(entry, indices)
+    expect(out).toContain('SetCheckAmmoData=true, \\\\')
+    expect(out).toContain('CheckAmmoData=(CheckType=eCheck_Exact, Value=1) \\\\')
+  })
+
+  it('writes an array of game structs as a list of literals', () => {
+    const entry = newNode({
+      Ability: 'X',
+      TargetConditions: [
+        newNode({
+          Class: 'X2Condition_UnitProperty',
+          Mode: 'eAEM_Merge',
+          HourChecksMode: 'eNAEM_Merge',
+          HourChecks: [newNode({ CheckType: 'eCheck_Exact', Value: 2 }), newNode({ CheckType: 'eCheck_LessThan', Value: 5 })],
+        }),
+      ],
+    })
+
+    expect(emitEntry(entry, indices)).toContain(
+      'HourChecks=((CheckType=eCheck_Exact, Value=2), (CheckType=eCheck_LessThan, Value=5))',
+    )
+  })
+
+  it('nests game structs and quotes their strings and name arrays', () => {
+    const entry = newNode({
+      Ability: 'X',
+      Effects: [
+        newNode({
+          Class: 'X2Effect_ToHitModifier',
+          Mode: 'eAEM_Merge',
+          EffectHitModifiers: [
+            newNode({
+              MatchToHit: 'X2AbilityToHitCalc_StandardAim',
+              Modifier: newNode({ ModType: 'eHit_Success', Value: 10, Reason: 'Tuned' }),
+              bApplyToMelee: true,
+              AbilitiesAppliedTo: ['SwordSlice', 'Rend'],
+            }),
+          ],
+        }),
+      ],
+    })
+
+    expect(emitEntry(entry, indices)).toContain(
+      'EffectHitModifiers=((MatchToHit=X2AbilityToHitCalc_StandardAim, Modifier=(ModType=eHit_Success, Value=10, Reason="Tuned"), bApplyToMelee=true, AbilitiesAppliedTo=(SwordSlice, Rend)))',
+    )
+  })
+
+  it('quotes the items of a string array', () => {
+    const entry = newNode({
+      Ability: 'X',
+      TargetConditions: [
+        newNode({ Class: 'X2Condition_Biome', Mode: 'eAEM_Merge', AllowedBiomesMode: 'eNAEM_Merge', AllowedBiomes: ['Arid', 'Temperate'] }),
+      ],
+    })
+    expect(emitEntry(entry, indices)).toContain('AllowedBiomes=("Arid", "Temperate")')
+  })
+})
+
 describe('emitEntry for a created ability', () => {
   it('writes Create as a bare bool, CloneFrom as a bare name and Preset as a bare enum', () => {
     const entry = newNode({ Ability: 'SwordSlice_Heavy', Create: true, CloneFrom: 'SwordSlice', Preset: 'eACP_Standard' })

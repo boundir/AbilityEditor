@@ -9,6 +9,19 @@ This project follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ### Added
 
+- **Selectors pick which object of a class an entry targets.** `Index` on a cost, effect, condition or trigger entry counts matches of the class from 0, so the second `X2Effect_ApplyWeaponDamage` is `Index=1`. `MatchEffectName` on an effect entry selects a persistent effect by its `EffectName`; `MatchEventID` on a trigger entry selects an event listener by the event it waits for. A key wins over `Index`; a selector that matches nothing counts as "not present", so `Merge` adds and `Remove` does nothing. Before, only the first object of a class could be edited or removed.
+
+  ```ini
+  ; Bladestorm has three event listeners; this edits only the one that reacts to attacks
+  +AbilityEdits=( \\
+      Ability=BladestormAttack, \\
+      Triggers=( ( Class="X2AbilityTrigger_EventListener", Mode=eAEM_Merge, MatchEventID=AbilityActivated, \\
+                   SetListenerPriority=true, ListenerPriority=40 ) ) \\
+  )
+  ```
+
+- **Every edited ability is checked before the game validates it**, not only created ones. An entry that strips the last trigger or the target style from an existing ability now gets the same plain-words log line as a blank ability would.
+
 - **Alien Hunters support, through a bridge mod.**
   `AbilityEditorAlienHunters` adds editors for `X2Effect_DLC_Day60Freeze` (the freeze durations and the ruler freeze counts), `X2Effect_DLC_Day60TurnStartRemoveActionPoints` and the ruler `OnAbilityActivated` trigger's exclusion lists.
   Their config fields are ordinary `EffectEdit`/`TriggerEdit` fields; DLC classes are named with their package, `Class="DLC_2.X2Effect_DLC_Day60Freeze"`.
@@ -91,6 +104,12 @@ This project follows [Keep a Changelog](https://keepachangelog.com/) and
   The Reaper and ScanningProtocol editors went with them; both classes still take the shared persistent-effect fields.
 
 ### Fixed
+
+- **An `Effects` entry whose `Mode` was left at its default wiped the list and added nothing** when the ability already had an effect of that class. The entry then silently did nothing else either. The conditions and triggers helpers were not affected.
+- `X2Effect_KillUnit` now takes `DeathActionClass`. Its editor extended the persistent-effect editor instead of the death-action one, so the field was ignored.
+- A `TargetingMethod` that fails to load now keeps the ability's existing targeting method and logs the failure. Before, the template was left with no targeting method and the ability could not be used.
+- The effects helper compared its mode against the cost enum's tags; it now uses its own. Removing an effect, clearing an effect list, and an unresolvable effect class are logged like the other families.
+- The log line for `ApplyCooldownType` named the wrong field. `AbilityEventListenerEdits` changes are now logged.
 
 - **Replace-only array fields no longer advertise a mode field that doesn't exist.** The reference tables listed `HitModifiersMode` and `EffectHitModifiersMode` in the "Requires" column for `ToHitCalcEdit.HitModifiers` and `EffectEdit.EffectHitModifiers`. Neither field exists - both arrays are replace-only - so anyone who wrote them was silently ignored. They now render as "non-empty *(replace-only)*". This affected 11 entries in `docs/schema.json` too, so any tooling consuming the schema inherited the same wrong information.
 

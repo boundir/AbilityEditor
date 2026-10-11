@@ -85,6 +85,10 @@ struct CostEdit
 
 	var EAbilityCostEditMode Mode;
 
+	// Which cost of that class the entry targets when the ability has several: 0 is the first.
+	// An index past the last match counts as no match, so Merge adds a new cost and Remove does nothing.
+	var int Index;
+
 	var bool SetFreeCost;
 	// Makes the ability cost nothing. The ability must satisfy the requirement to be usable, but using it doesn't consume action point.
 	var bool FreeCost;
@@ -216,12 +220,6 @@ struct ChargesEdit
 	var bool Stabilize;
 };
 
-struct AECustomProperty
-{
-	var name Key;
-	var string Value;
-};
-
 struct ConditionEdit
 {
 	// Class name of the condition to target/instantiate
@@ -229,6 +227,10 @@ struct ConditionEdit
 
 	// How this entry combines with the existing conditions of the array
 	var EArrayEditMode Mode;
+
+	// Which condition of that class the entry targets when the list has several: 0 is the first.
+	// An index past the last match counts as no match, so Merge adds a new condition and Remove does nothing.
+	var int Index;
 
 	// X2Condition_AbilityProperty
 	var ENameArrayEditMode OwnerHasSoldierAbilitiesMode;
@@ -766,8 +768,6 @@ struct ConditionEdit
 	var ENameArrayEditMode AllowedBiomesMode;
 	// Map biomes the mission must be in, when non-empty.
 	var array<string> AllowedBiomes;
-
-	var array<AECustomProperty> CustomProperties;
 };
 
 struct StatChangeEdit
@@ -821,6 +821,14 @@ struct EffectEdit
 
 	var EAbilityEffectSlot Slot;
 	var EArrayEditMode Mode;
+
+	// Which effect of that class the entry targets when the list has several: 0 is the first.
+	// An index past the last match counts as no match, so Merge adds a new effect and Remove does nothing.
+	var int Index;
+
+	// Targets the persistent effect of that class whose EffectName is this value, ignoring Index.
+	// Empty leaves the selection to Index.
+	var name MatchEffectName;
 
 	// Nested tick effects (X2Effect_Persistent.ApplyOnTick)
 	//
@@ -2251,8 +2259,6 @@ struct EffectEdit
 
 	// X2Effect_ToHitModifier: replace-only - when non-empty, replaces Modifiers entirely
 	var array<EffectHitModifier> EffectHitModifiers;
-
-	var array<AECustomProperty> CustomProperties;
 };
 
 struct ToHitCalcEdit
@@ -2359,8 +2365,6 @@ struct ToHitCalcEdit
 	var bool SetDefenderStat;
 	// Defender's stat in a unit-versus-unit contest.
 	var ECharStatType DefenderStat;
-
-	var array<AECustomProperty> CustomProperties;
 };
 
 struct TargetStyleEdit
@@ -2411,8 +2415,6 @@ struct TargetStyleEdit
 	var bool SetMovementRangeAdjustment;
 	// Tiles added to or removed from how far the unit may move to reach a melee target.
 	var int MovementRangeAdjustment;
-
-	var array<AECustomProperty> CustomProperties;
 };
 
 struct MultiTargetStyleEdit
@@ -2568,8 +2570,6 @@ struct MultiTargetStyleEdit
 	var bool SetClaymoreEnvironmentalDamage;
 	// Environmental damage the claymore blast does to scenery.
 	var int ClaymoreEnvironmentalDamage;
-
-	var array<AECustomProperty> CustomProperties;
 };
 
 struct TriggerEdit
@@ -2579,6 +2579,14 @@ struct TriggerEdit
 
 	// How this entry combines with the existing triggers of the array
 	var EArrayEditMode Mode;
+
+	// Which trigger of that class the entry targets when the ability has several: 0 is the first.
+	// An index past the last match counts as no match, so Merge adds a new trigger and Remove does nothing.
+	var int Index;
+
+	// Targets the event listener trigger whose ListenerData.EventID is this value, ignoring Index.
+	// Empty leaves the selection to Index.
+	var name MatchEventID;
 
 	// X2AbilityTrigger_UnitPostBeginPlay
 	var bool SetPriority;
@@ -2621,8 +2629,6 @@ struct TriggerEdit
 	var ENameArrayEditMode RulerActionExclusions_AbilityNamesMode;
 	// Abilities whose activation never triggers a ruler reaction.
 	var array<name> RulerActionExclusions_AbilityNames;
-
-	var array<AECustomProperty> CustomProperties;
 };
 
 struct AbilityEventListenerEdit

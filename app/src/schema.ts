@@ -58,8 +58,12 @@ export function buildIndices(schema: Schema): Indices {
       if (editor.catchAll) {
         catchAllByFamily.set(family.name, editor)
       } else if (editor.gameClass) {
-        if (!editorByGameClass.has(editor.gameClass)) editorByGameClass.set(editor.gameClass, editor)
-        if (editor.package) editorByQualifiedClass.set(qualifiedClassName(editor), editor)
+        if (!editorByGameClass.has(editor.gameClass)) {
+          editorByGameClass.set(editor.gameClass, editor)
+        }
+        if (editor.package) {
+          editorByQualifiedClass.set(qualifiedClassName(editor), editor)
+        }
       }
       fieldsByEditor.set(editor.class, new Map(editor.fields.map((f) => [f.config, f])))
     }
@@ -79,6 +83,63 @@ export function buildIndices(schema: Schema): Indices {
     templateByConfig: new Map(schema.template.fields.map((f) => [f.config, f])),
     familyByStruct,
   }
+}
+
+// --------------------------------------------------------------------------- //
+// Field types
+// --------------------------------------------------------------------------- //
+
+export function isArrayType(type: string): boolean {
+  return type.startsWith('array<')
+}
+
+/** `array<X>`: `X`; anything else unchanged. */
+export function elementType(type: string): string {
+  const match = /^array<(.+)>$/.exec(type)
+  return match?.[1] ?? type
+}
+
+/** The struct a field holds (directly or as array elements), or undefined for a scalar. */
+export function structOf(indices: Indices, type: string): Struct | undefined {
+  return indices.structByName.get(elementType(type))
+}
+
+/**
+ * The name of the struct a field nests, decided by the schema: an explicit `nested`
+ * kind, or a type that names a known struct. Null for scalars and scalar arrays.
+ */
+export function nestedStructName(indices: Indices, field: { type: string; kind?: string }): string | null {
+  const struct = structOf(indices, field.type)
+  if (struct) {
+    return struct.name
+  }
+  return field.kind === 'nested' ? elementType(field.type) : null
+}
+
+/** A mod-defined edit struct: has Class/Mode/guard semantics and its own editor UI. */
+export function isEditStruct(struct: Struct | undefined): boolean {
+  return struct !== undefined && struct.source !== 'game'
+}
+
+export function enumOf(indices: Indices, type: string): SchemaEnum | undefined {
+  return indices.enumByName.get(elementType(type))
+}
+
+const PRIMITIVES = new Set(['int', 'float', 'bool', 'name', 'Name', 'string'])
+
+/** `class<X>` and other reference types the schema does not describe: passed through as bare text. */
+export function isOpaqueType(type: string): boolean {
+  return /^class</.test(elementType(type))
+}
+
+export function isKnownType(indices: Indices, type: string): boolean {
+  const element = elementType(type)
+  return (
+    PRIMITIVES.has(element) ||
+    isOpaqueType(element) ||
+    indices.enumByName.has(element) ||
+    indices.structByName.has(element)
+  )
 }
 
 export function qualifiedClassName(editor: Editor): string {
@@ -113,7 +174,9 @@ export function resolveEditor(indices: Indices, familyName: string, className: s
 
 /** The bridge an editor comes from, or undefined for a built-in. */
 export function bridgeOf(indices: Indices, editor: Editor | undefined): Bridge | undefined {
-  if (!editor?.bridge) return undefined
+  if (!editor?.bridge) {
+    return undefined
+  }
   return indices.bridgeByName.get(editor.bridge)
 }
 
@@ -121,9 +184,13 @@ export function bridgeOf(indices: Indices, editor: Editor | undefined): Bridge |
 export function bridgeRequirements(bridge: Bridge): string {
   const parts: string[] = [`the ${bridge.displayName} mod`]
   const mods = bridge.requires?.mods?.filter((m) => m && m !== 'AbilityEditor') ?? []
-  if (mods.length > 0) parts.push(mods.join(', '))
+  if (mods.length > 0) {
+    parts.push(mods.join(', '))
+  }
   const dlc = bridge.requires?.dlc?.filter(Boolean) ?? []
-  if (dlc.length > 0) parts.push(`the ${dlc.join(', ')} DLC`)
+  if (dlc.length > 0) {
+    parts.push(`the ${dlc.join(', ')} DLC`)
+  }
   return parts.join(' and ')
 }
 

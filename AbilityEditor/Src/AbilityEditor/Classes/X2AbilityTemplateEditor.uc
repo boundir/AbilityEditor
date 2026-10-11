@@ -3,6 +3,8 @@ class X2AbilityTemplateEditor extends Object;
 
 static function ApplyTemplateEdit(X2AbilityTemplate Template, AbilityEdit AbilityEdit)
 {
+	local class<X2TargetingMethod> TargetingMethodClass;
+	local string ListenerPath;
 	local int i, Index;
 
 	if (AbilityEdit.SetHostility)
@@ -535,23 +537,27 @@ static function ApplyTemplateEdit(X2AbilityTemplate Template, AbilityEdit Abilit
 
 	if (AbilityEdit.SetTargetingMethod)
 	{
-		class'X2AbilityEditor_Logger'.static.LogInfo(
-			Template.DataName,
-			"Template.TargetingMethod",
-			PathName(Template.TargetingMethod),
-			AbilityEdit.TargetingMethod
-		);
+		TargetingMethodClass = class<X2TargetingMethod>(DynamicLoadObject(AbilityEdit.TargetingMethod, class'Class'));
 
-		Template.TargetingMethod = class<X2TargetingMethod>(DynamicLoadObject(AbilityEdit.TargetingMethod, class'Class'));
-
-		if (Template.TargetingMethod == none && AbilityEdit.TargetingMethod != "")
+		if (TargetingMethodClass == none)
 		{
 			`log(
 				"AbilityEdit:" @ string(Template.DataName) @ "Template.TargetingMethod" @
-				"could not load class" @ AbilityEdit.TargetingMethod,
+				"could not load class" @ AbilityEdit.TargetingMethod @ "- keeping" @ PathName(Template.TargetingMethod),
 				class'X2DLCInfo_AbilityEditor'.default.EnableDebug,
 				'AbilityEditor'
 			);
+		}
+		else
+		{
+			class'X2AbilityEditor_Logger'.static.LogInfo(
+				Template.DataName,
+				"Template.TargetingMethod",
+				PathName(Template.TargetingMethod),
+				AbilityEdit.TargetingMethod
+			);
+
+			Template.TargetingMethod = TargetingMethodClass;
 		}
 	}
 
@@ -699,8 +705,7 @@ static function ApplyTemplateEdit(X2AbilityTemplate Template, AbilityEdit Abilit
 		AbilityEdit.HideIfAvailableMode
 	);
 
-	// Edit existing AbilityEventListeners entries by EventID (adding is not possible:
-	// their EventFn delegate can only be assigned in code).
+	// Edit existing AbilityEventListeners entries by EventID (adding is not possible: their EventFn delegate can only be assigned in code).
 	for (i = 0; i < AbilityEdit.AbilityEventListenerEdits.Length; ++i)
 	{
 		Index = FindEventListenerIndex(Template.AbilityEventListeners, AbilityEdit.AbilityEventListenerEdits[i].EventID);
@@ -711,18 +716,41 @@ static function ApplyTemplateEdit(X2AbilityTemplate Template, AbilityEdit Abilit
 			continue;
 		}
 
+		ListenerPath = "Template.AbilityEventListeners[" $ string(AbilityEdit.AbilityEventListenerEdits[i].EventID) $ "]";
+
 		if (AbilityEdit.AbilityEventListenerEdits[i].SetDeferral)
 		{
+			class'X2AbilityEditor_Logger'.static.LogInfo(
+				Template.DataName,
+				ListenerPath $ ".Deferral",
+				string(Template.AbilityEventListeners[Index].Deferral),
+				string(AbilityEdit.AbilityEventListenerEdits[i].Deferral)
+			);
+
 			Template.AbilityEventListeners[Index].Deferral = AbilityEdit.AbilityEventListenerEdits[i].Deferral;
 		}
 
 		if (AbilityEdit.AbilityEventListenerEdits[i].SetFilter)
 		{
+			class'X2AbilityEditor_Logger'.static.LogInfo(
+				Template.DataName,
+				ListenerPath $ ".Filter",
+				string(Template.AbilityEventListeners[Index].Filter),
+				string(AbilityEdit.AbilityEventListenerEdits[i].Filter)
+			);
+
 			Template.AbilityEventListeners[Index].Filter = AbilityEdit.AbilityEventListenerEdits[i].Filter;
 		}
 
 		if (AbilityEdit.AbilityEventListenerEdits[i].SetPriority)
 		{
+			class'X2AbilityEditor_Logger'.static.LogInfo(
+				Template.DataName,
+				ListenerPath $ ".Priority",
+				string(Template.AbilityEventListeners[Index].Priority),
+				string(AbilityEdit.AbilityEventListenerEdits[i].Priority)
+			);
+
 			Template.AbilityEventListeners[Index].Priority = AbilityEdit.AbilityEventListenerEdits[i].Priority;
 		}
 	}

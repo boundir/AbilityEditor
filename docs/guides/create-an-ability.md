@@ -131,10 +131,10 @@ Creating the template is where this mod stops. Which units get the ability, and 
 If you would rather stay in this file, `AdditionalAbilities` on an ability the unit already has grants the new one alongside it:
 
 ```ini
-+AbilityEdits=( \
-    Ability=SwordSlice, \
-    AdditionalAbilitiesMode=eNAEM_Merge, \
-    AdditionalAbilities=(SwordSlice_Heavy) \
++AbilityEdits=( \\
+    Ability=SwordSlice, \\
+    AdditionalAbilitiesMode=eNAEM_Merge, \\
+    AdditionalAbilities=(SwordSlice_Heavy) \\
 )
 ```
 
@@ -170,7 +170,7 @@ AbilityEdit: created blank ability IronLegs with preset eACP_Passive
 AbilityEdit: IronLegs preset eACP_Passive set ToHitCalc to X2AbilityToHitCalc_DeadEye, TargetStyle to X2AbilityTarget_Self and added an X2AbilityTrigger_UnitPostBeginPlay trigger
 ```
 
-Then the usual `changed from ... to ...` lines for every field the entry set. And, only when something is wrong:
+Then the usual `changed from ... to ...` lines for every field the entry set. The checks below run for every ability an entry touched, created or not, so an edit that strips the last trigger from an existing ability is explained the same way. Only when something is wrong:
 
 | Line | Meaning |
 |---|---|

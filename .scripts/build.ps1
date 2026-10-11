@@ -14,6 +14,40 @@ $builder = [BuildProject]::new("AbilityEditor", $srcDirectory, $sdkPath, $gamePa
 
 $builder.IncludeSrc((Join-Path $srcDirectory "CustomSrc"))
 
+$overlayRoot = Join-Path $srcDirectory "CustomSrc"
+$overlayStampPath = Join-Path $srcDirectory "BuildCache\CustomSrcPackages.json"
+$sdkScriptDir = Join-Path $sdkPath "XComGame\Script"
+
+function Get-OverlayPackageTimestamp([string] $package)
+{
+    $compiled = Get-Item (Join-Path $sdkScriptDir "$package.u") -ErrorAction SilentlyContinue
+    if ($null -eq $compiled) { return $null }
+    return $compiled.LastWriteTimeUtc.Ticks
+}
+
+$builder.AddPreMakeHook({
+    $stamp = @{}
+    if (Test-Path $overlayStampPath)
+    {
+        (Get-Content $overlayStampPath -Raw | ConvertFrom-Json).PSObject.Properties | ForEach-Object { $stamp[$_.Name] = $_.Value }
+    }
+
+    foreach ($packageDir in Get-ChildItem $overlayRoot -Directory)
+    {
+        $current = Get-OverlayPackageTimestamp $packageDir.Name
+        if ($null -eq $current) { continue }
+        if ($stamp.ContainsKey($packageDir.Name) -and [long]$stamp[$packageDir.Name] -eq $current) { continue }
+
+        Write-Host "$($packageDir.Name).u was not produced by this mod's last build; recompiling it with CustomSrc"
+        foreach ($file in Get-ChildItem $packageDir.FullName -Recurse -File)
+        {
+            $relative = $file.FullName.Substring($packageDir.FullName.Length + 1)
+            $copy = Join-Path $sdkPath "Development\Src\$($packageDir.Name)\$relative"
+            if (Test-Path $copy) { (Get-Item $copy).LastWriteTime = Get-Date }
+        }
+    }
+})
+
 switch ($config)
 {
     "debug" {
@@ -27,3 +61,13 @@ switch ($config)
 }
 
 $builder.InvokeBuild()
+
+# Only reached on success: the base packages now contain the CustomSrc changes.
+$overlayStamp = @{}
+foreach ($packageDir in Get-ChildItem $overlayRoot -Directory)
+{
+    $timestamp = Get-OverlayPackageTimestamp $packageDir.Name
+    if ($null -ne $timestamp) { $overlayStamp[$packageDir.Name] = $timestamp }
+}
+New-Item -ItemType Directory -Force (Split-Path $overlayStampPath) | Out-Null
+$overlayStamp | ConvertTo-Json | Set-Content -Path $overlayStampPath

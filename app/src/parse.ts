@@ -1,5 +1,12 @@
-import { nestedStructName } from './emit'
-import type { Indices, StructField } from './schema'
+import {
+  elementType,
+  enumOf,
+  isArrayType,
+  isKnownType,
+  structOf,
+  type Indices,
+  type StructField,
+} from './schema'
 import { newNode, type Doc, type Node, type Value } from './state'
 
 /**
@@ -43,7 +50,9 @@ function flatten(source: string): { text: string; lineAt: number[] } {
     let inQuote = false
     for (let i = 0; i < text.length; i += 1) {
       const ch = text[i]
-      if (ch === '"') inQuote = !inQuote
+      if (ch === '"') {
+        inQuote = !inQuote
+      }
       else if (ch === ';' && !inQuote) {
         text = text.slice(0, i)
         break
@@ -65,6 +74,7 @@ class Cursor {
   constructor(
     readonly text: string,
     readonly lineAt: number[],
+    readonly problems: ParseProblem[],
     public pos = 0,
   ) {}
 
@@ -88,12 +98,17 @@ class Cursor {
     }
     return false
   }
+
+  snippet(): string {
+    return this.text.slice(this.pos, this.pos + 24).trim()
+  }
 }
 
 function readToken(cursor: Cursor): { text: string; quoted: boolean } {
   cursor.skipSpace()
 
   if (cursor.peek() === '"') {
+    const line = cursor.line
     cursor.pos += 1
     let text = ''
     while (cursor.pos < cursor.text.length && cursor.peek() !== '"') {
@@ -101,6 +116,16 @@ function readToken(cursor: Cursor): { text: string; quoted: boolean } {
       cursor.pos += 1
     }
     cursor.pos += 1
+
+    if (text.endsWith('\\')) {
+      cursor.problems.push({
+        severity: 'error',
+        line,
+        title: 'Backslash before a quote',
+        detail:
+          'The .ini dialect has no escaping, so the string ends at the first " regardless of the backslash and whatever follows is read as separate keys. Remove the inner quotes.',
+      })
+    }
     return { text, quoted: true }
   }
 
@@ -128,7 +153,7 @@ function readParenValue(cursor: Cursor): RawValue {
       cursor.pos += 1
       items.push(readParenValue(cursor))
     } while (cursor.eat(','))
-    cursor.eat(')')
+    expectClose(cursor)
     return { kind: 'list', items, line }
   }
 
@@ -140,25 +165,58 @@ function readParenValue(cursor: Cursor): RawValue {
 
   if (isBlock) {
     const raw = readPairs(cursor, ')')
-    cursor.eat(')')
+    expectClose(cursor)
     return { kind: 'block', raw, line }
   }
 
-  // A plain value list, e.g. (Blademaster, Bladestorm).
+  // A plain value list, e.g. (Blademaster, Bladestorm). A literal among the values is kept as an item so the caller can report it against the field's type.
   const items: RawValue[] = []
   if (first.text !== '' || cursor.peek() !== ')') {
     do {
+      cursor.skipSpace()
+      if (cursor.peek() === '(') {
+        cursor.pos += 1
+        items.push(readParenValue(cursor))
+        continue
+      }
       const token = readToken(cursor)
       items.push({ kind: 'scalar', text: token.text, quoted: token.quoted, line: cursor.line })
     } while (cursor.eat(','))
   }
-  cursor.eat(')')
+  expectClose(cursor)
   return { kind: 'list', items, line }
+}
+
+function expectClose(cursor: Cursor): void {
+  if (cursor.eat(')')) {
+    return
+  }
+  if (cursor.pos >= cursor.text.length) {
+    cursor.problems.push({
+      severity: 'error',
+      line: cursor.line,
+      title: 'Unbalanced parentheses',
+      detail: 'The entry ends before its closing ). Whatever came after the last complete key is lost.',
+    })
+    return
+  }
+  cursor.problems.push({
+    severity: 'error',
+    line: cursor.line,
+    title: `Unexpected text: ${cursor.snippet()}`,
+    detail: 'Expected , or ) here. The game stops reading the block at this point, so everything after it is dropped.',
+  })
+  while (cursor.pos < cursor.text.length && cursor.peek() !== ')') {
+    cursor.pos += 1
+  }
+  cursor.eat(')')
 }
 
 function readValue(cursor: Cursor): RawValue {
   cursor.skipSpace()
-  if (cursor.eat('(')) return readParenValue(cursor)
+  if (cursor.eat('(')) {
+    return readParenValue(cursor)
+  }
   const line = cursor.line
   const token = readToken(cursor)
   return { kind: 'scalar', text: token.text, quoted: token.quoted, line }
@@ -169,7 +227,9 @@ function readPairs(cursor: Cursor, stop: string): Raw {
 
   for (;;) {
     cursor.skipSpace()
-    if (cursor.pos >= cursor.text.length || cursor.peek() === stop) break
+    if (cursor.pos >= cursor.text.length || cursor.peek() === stop) {
+      break
+    }
 
     const line = cursor.line
     const key = readToken(cursor)
@@ -177,7 +237,15 @@ function readPairs(cursor: Cursor, stop: string): Raw {
       cursor.pos += 1
       continue
     }
-    if (!cursor.eat('=')) continue
+    if (!cursor.eat('=')) {
+      cursor.problems.push({
+        severity: 'error',
+        line,
+        title: `${key.text} has no value`,
+        detail: 'Expected key=value. The game ignores a key without =.',
+      })
+      continue
+    }
 
     pairs.push({ key: key.text, value: readValue(cursor), line })
     if (!cursor.eat(',')) break
@@ -220,6 +288,40 @@ function fieldsOf(ctx: Ctx, structName: string): Map<string, StructField> {
   return new Map(fields.map((f) => [f.name.toLowerCase(), f]))
 }
 
+function describe(value: RawValue): string {
+  if (value.kind === 'scalar') {
+    return value.quoted ? `"${value.text}"` : value.text || '(nothing)'
+  }
+  if (value.kind === 'list') {
+    return value.items.length === 0 ? '()' : 'a list'
+  }
+  return 'a (Key=Value, ...) block'
+}
+
+function shapeProblem(ctx: Ctx, pair: Raw['pairs'][number], where: string, expected: string): void {
+  ctx.problems.push({
+    severity: 'error',
+    line: pair.line,
+    title: `${pair.key} has the wrong shape`,
+    detail: `${where}.${pair.key} expects ${expected}, but ${describe(pair.value)} was given. The game cannot read it, so the value is dropped.`,
+  })
+}
+
+function numberProblem(ctx: Ctx, pair: Raw['pairs'][number], where: string, type: string): void {
+  ctx.problems.push({
+    severity: 'error',
+    line: pair.line,
+    title: `${pair.key} is not a number`,
+    detail: `${where}.${pair.key} is ${type === 'int' ? 'an int' : 'a float'}, but ${describe(pair.value)} was given. The game reads it as 0.`,
+  })
+}
+
+function blockOf(value: RawValue): Raw | null {
+  if (value.kind === 'block') return value.raw
+  if (value.kind === 'list' && value.items.length === 0) return { pairs: [] }
+  return null
+}
+
 function buildNode(ctx: Ctx, raw: Raw, structName: string, where: string): Node {
   const node = newNode()
   const byName = fieldsOf(ctx, structName)
@@ -250,36 +352,83 @@ function buildNode(ctx: Ctx, raw: Raw, structName: string, where: string): Node 
 
     if (field.kind === 'guard') continue
 
-    const childStruct = nestedStructName(field.type)
-    const isArrayType = field.type.startsWith('array<')
+    const child = structOf(ctx.indices, field.type)
+    const isArray = isArrayType(field.type)
 
-    if (childStruct && isArrayType) {
-      const items = pair.value.kind === 'list' ? pair.value.items : []
-      node[field.name] = items
-        .filter((item): item is Extract<RawValue, { kind: 'block' }> => item.kind === 'block')
-        .map((item) => buildNode(ctx, item.raw, childStruct, childStruct))
-      continue
+    if (!child && !isKnownType(ctx.indices, field.type)) {
+      ctx.problems.push({
+        severity: 'warning',
+        line: pair.line,
+        title: `${pair.key} has a type the schema does not describe`,
+        detail: `${field.type} is not in the schema, so ${pair.key} is carried through as text without checks.`,
+      })
     }
 
-    if (childStruct) {
-      if (pair.value.kind === 'block') {
-        node[field.name] = buildNode(ctx, pair.value.raw, childStruct, childStruct)
+    if (child && isArray) {
+      if (pair.value.kind !== 'list') {
+        shapeProblem(ctx, pair, where, `a list of ${child.name} literals, ((...), (...))`)
+        continue
       }
-      continue
-    }
-
-    if (isArrayType) {
-      const items = pair.value.kind === 'list' ? pair.value.items : [pair.value]
+      const items: Node[] = []
+      for (const item of pair.value.items) {
+        const block = blockOf(item)
+        if (block) {
+          items.push(buildNode(ctx, block, child.name, child.name))
+        } else {
+          ctx.problems.push({
+            severity: 'error',
+            line: item.line,
+            title: `${pair.key} item is not a ${child.name}`,
+            detail: `Each ${pair.key} item must be a (Key=Value, ...) literal, but ${describe(item)} was given. It is dropped.`,
+          })
+        }
+      }
       node[field.name] = items
-        .filter((item): item is Extract<RawValue, { kind: 'scalar' }> => item.kind === 'scalar')
-        .map((item) => item.text)
-        .filter((text) => text !== '')
       continue
     }
 
-    if (pair.value.kind === 'scalar') {
-      node[field.name] = scalarValue(pair.value, field.type)
+    if (child) {
+      const block = blockOf(pair.value)
+      if (!block) {
+        shapeProblem(ctx, pair, where, `a ${child.name} literal, (Key=Value, ...)`)
+        continue
+      }
+      node[field.name] = buildNode(ctx, block, child.name, child.name)
+      continue
     }
+
+    if (isArray) {
+      const items = pair.value.kind === 'list' ? pair.value.items : [pair.value]
+      const texts: string[] = []
+      for (const item of items) {
+        if (item.kind === 'scalar') {
+          if (item.text !== '') {
+            texts.push(item.text)
+          }
+        } else {
+          ctx.problems.push({
+            severity: 'error',
+            line: item.line,
+            title: `${pair.key} item is not a ${elementType(field.type)}`,
+            detail: `${pair.key} is a list of plain values, but ${describe(item)} was given. It is dropped.`,
+          })
+        }
+      }
+      node[field.name] = texts
+      continue
+    }
+
+    if (pair.value.kind !== 'scalar') {
+      shapeProblem(ctx, pair, where, `a single ${field.type}`)
+      continue
+    }
+
+    const value = scalarValue(pair.value, field.type)
+    if ((field.type === 'int' || field.type === 'float') && typeof value !== 'number') {
+      numberProblem(ctx, pair, where, field.type)
+      continue
+    }
+    node[field.name] = value
   }
 
   reconcileGuards(ctx, node, byName, seenGuards, where)
@@ -324,7 +473,8 @@ function reconcileGuards(
     }
 
     if (guard?.value && !hasValue) {
-      node[field.name] = zeroFor(field.type)
+      const child = structOf(ctx.indices, field.type)
+      node[field.name] = child ? newNode() : enumOf(ctx.indices, field.type)?.values[0]?.name ?? zeroFor(field.type)
       ctx.problems.push({
         severity: 'warning',
         line: guard.line,
@@ -364,7 +514,7 @@ export function parseConfig(source: string, indices: Indices): ParseResult {
       })
     }
 
-    const cursor = new Cursor(text, lineAt, match.index + match[0].length)
+    const cursor = new Cursor(text, lineAt, ctx.problems, match.index + match[0].length)
     if (!cursor.eat('(')) continue
 
     const value = readParenValue(cursor)

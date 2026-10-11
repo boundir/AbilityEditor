@@ -1,8 +1,16 @@
 import { useMemo, useState } from 'react'
 
-import { nestedStructName } from '../emit'
 import type { Editor, Indices, StructField } from '../schema'
-import { bridgeOf, bridgeRequirements, groupFields, qualifiedClassName, resolveEditor } from '../schema'
+import {
+  bridgeOf,
+  bridgeRequirements,
+  groupFields,
+  isArrayType,
+  isEditStruct,
+  qualifiedClassName,
+  resolveEditor,
+  structOf,
+} from '../schema'
 import { newNode, type Node, type Path, type Value } from '../state'
 
 import { Field, type EditorField } from './Field'
@@ -28,13 +36,23 @@ function structToField(field: StructField): EditorField {
 }
 
 /**
+ * A field that nests a mod edit struct gets its own block with a class picker.
+ */
+function nestsEditStruct(indices: Indices, field: StructField): string | null {
+  const struct = structOf(indices, field.type)
+  return isEditStruct(struct) ? struct!.name : null
+}
+
+/**
  * Mode fields that a nested block renders in its own header.
  */
 function modesOwnedByNestedBlocks(indices: Indices, structName: string): Set<string> {
   const fields = indices.structByName.get(structName)?.fields ?? []
   const owned = new Set<string>()
   for (const field of fields) {
-    if (field.modeField && nestedStructName(field.type)) owned.add(field.modeField)
+    if (field.modeField && nestsEditStruct(indices, field)) {
+      owned.add(field.modeField)
+    }
   }
   return owned
 }
@@ -42,18 +60,20 @@ function modesOwnedByNestedBlocks(indices: Indices, structName: string): Set<str
 function plainStructFields(indices: Indices, structName: string): StructField[] {
   const owned = modesOwnedByNestedBlocks(indices, structName)
   return (indices.structByName.get(structName)?.fields ?? []).filter(
-    (f) => f.kind !== 'guard' && !nestedStructName(f.type) && !owned.has(f.name),
+    (f) => f.kind !== 'guard' && !nestsEditStruct(indices, f) && !owned.has(f.name),
   )
 }
 
 function nestedStructFields(indices: Indices, structName: string): StructField[] {
   return (indices.structByName.get(structName)?.fields ?? []).filter((f) =>
-    nestedStructName(f.type),
+    nestsEditStruct(indices, f),
   )
 }
 
 function matches(filter: string, field: { config: string; description: string }): boolean {
-  if (!filter) return true
+  if (!filter) {
+    return true
+  }
   const needle = filter.toLowerCase()
   return (
     field.config.toLowerCase().includes(needle) ||
@@ -129,13 +149,17 @@ export function NodeEditor({ node, structName, path, indices, onChange, filter }
 
 function StructuralFields({ node, structName, path, indices, onChange, filter }: Props) {
   const family = indices.familyByStruct.get(structName)
-  if (!family) return null
+  if (!family) {
+    return null
+  }
 
   const structural = plainStructFields(indices, structName).filter(
     (f) => f.kind === 'plain' && f.name !== 'Class',
   )
   const visible = structural.map(structToField).filter((f) => matches(filter, f))
-  if (visible.length === 0) return null
+  if (visible.length === 0) {
+    return null
+  }
 
   return (
     <div className="fields fields--structural">
@@ -210,7 +234,9 @@ function FieldGroup({
   onChange,
 }: GroupProps) {
   const setCount = fields.filter((f) => node[f.config] !== undefined).length
-  if (fields.length === 0) return null
+  if (fields.length === 0) {
+    return null
+  }
 
   return (
     <details className="group" open={openByDefault || setCount > 0}>
@@ -237,7 +263,9 @@ function PlainFields({ node, structName, path, indices, onChange, filter }: Prop
   const fields = plainStructFields(indices, structName)
     .map(structToField)
     .filter((f) => matches(filter, f))
-  if (fields.length === 0) return null
+  if (fields.length === 0) {
+    return null
+  }
 
   return (
     <div className="fields">
@@ -261,9 +289,11 @@ function NestedBlocks({ node, structName, path, indices, onChange, filter }: Pro
   return (
     <>
       {nested.map((field) => {
-        const childStruct = nestedStructName(field.type)
-        if (!childStruct) return null
-        const isArray = field.type.startsWith('array<')
+        const childStruct = nestsEditStruct(indices, field)
+        if (!childStruct) {
+          return null
+        }
+        const isArray = isArrayType(field.type)
         const value = node[field.name]
 
         const modeField = field.modeField
@@ -450,9 +480,13 @@ interface ClassPickerProps {
 }
 
 function optionLabel(indices: Indices, editor: Editor): string | undefined {
-  if (editor.abstract) return 'abstract — cannot be named'
+  if (editor.abstract) {
+    return 'abstract — cannot be named'
+  }
   const bridge = bridgeOf(indices, editor)
-  if (!bridge) return undefined
+  if (!bridge) {
+    return undefined
+  }
   const dlc = bridge.requires?.dlc?.filter(Boolean) ?? []
   return dlc.length > 0
     ? `bridge: ${bridge.displayName} — needs ${dlc.join(', ')}`

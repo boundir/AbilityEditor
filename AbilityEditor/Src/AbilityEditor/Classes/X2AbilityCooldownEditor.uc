@@ -4,8 +4,8 @@ static function bool CanEdit(X2AbilityCooldown AbilityCooldown);
 
 static function ApplyEdit(name AbilityName, X2AbilityCooldown AbilityCooldown, CooldownEdit CooldownEdit)
 {
-    ApplyBaseEdit(AbilityName, AbilityCooldown, CooldownEdit);
-    ApplyDerivedEdit(AbilityName, AbilityCooldown, CooldownEdit);
+	ApplyBaseEdit(AbilityName, AbilityCooldown, CooldownEdit);
+	ApplyDerivedEdit(AbilityName, AbilityCooldown, CooldownEdit);
 }
 
 static function ApplyBaseEdit(name AbilityName, X2AbilityCooldown AbilityCooldown, CooldownEdit CooldownEdit)
@@ -103,7 +103,7 @@ static function ApplyBaseEdit(name AbilityName, X2AbilityCooldown AbilityCooldow
 		{
 			class'X2AbilityEditor_Logger'.static.LogInfo(
 				AbilityName,
-				"AditionalAbilityCooldowns.bUseAbilityCooldownNumTurns",
+				"AditionalAbilityCooldowns.ApplyCooldownType",
 				string(AbilityCooldown.AditionalAbilityCooldowns[Index].ApplyCooldownType),
 				string(CooldownEditInfo.ApplyCooldownType)
 			);

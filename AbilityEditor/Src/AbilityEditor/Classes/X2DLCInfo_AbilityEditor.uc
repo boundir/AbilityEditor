@@ -1,6 +1,5 @@
 class X2DLCInfo_AbilityEditor extends X2DownloadableContentInfo config(Engine);
 
-var config bool EnableTrace;
 var config bool EnableDebug;
 var config(AbilityEditor) array<AbilityEdit> AbilityEdits;
 
@@ -32,7 +31,7 @@ static event OnPostTemplatesCreated()
 	local X2AbilityTemplate Template, Source;
 	local array<X2DataTemplate> Variants;
 	local AbilityEdit AbilityEdit;
-	local array<name> Created;
+	local array<name> Touched;
 	local int i, j;
 
 	// Keep v1 alive
@@ -79,10 +78,7 @@ static event OnPostTemplatesCreated()
 		if (!AbilityManager.AddAbilityTemplate(Template))
 		{
 			`log("AbilityEdit: could not register" @ AbilityEdit.Ability @ "(AddAbilityTemplate returned false)", default.EnableDebug, 'AbilityEditor');
-			continue;
 		}
-
-		Created.AddItem(AbilityEdit.Ability);
 	}
 
 	for (i = 0; i < default.AbilityEdits.Length; ++i)
@@ -107,12 +103,17 @@ static event OnPostTemplatesCreated()
 				ApplyAbilityEdit(Template, AbilityEdit);
 			}
 		}
+
+		if (Touched.Find(AbilityEdit.Ability) == INDEX_NONE)
+		{
+			Touched.AddItem(AbilityEdit.Ability);
+		}
 	}
 
-	// Explain any RedScreen the game's validation is about to raise for a created ability.
-	for (i = 0; i < Created.Length; ++i)
+	// Explain any RedScreen the game's validation is about to raise for an ability an entry touched, created or not.
+	for (i = 0; i < Touched.Length; ++i)
 	{
-		class'X2AbilityTemplateCreator'.static.PreValidate(AbilityManager.FindAbilityTemplate(Created[i]), Created[i]);
+		class'X2AbilityTemplateCreator'.static.PreValidate(AbilityManager.FindAbilityTemplate(Touched[i]), Touched[i]);
 	}
 }
 
@@ -157,6 +158,7 @@ static function ValidateRegistrations(array<ExtraEditorRegistration> Registratio
 		LoadEditorClass(Registrations[i].EditorClass);
 	}
 }
+
 static function array<ExtraEditorRegistration> SortRegistrations(array<ExtraEditorRegistration> Registrations)
 {
 	local array<ExtraEditorRegistration> Sorted;

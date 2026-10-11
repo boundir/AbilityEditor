@@ -103,9 +103,25 @@ For the single-object slots - `Cooldown`, `Charges`, `ToHitCalc`, `ToHitOwnerOnM
 That last row is worth re-reading before swapping a class: unset fields do not carry over.
 
 For the array families (`Costs`, `Effects`, `Triggers`, the condition arrays), entries are matched
-by **exact class equality**, not by inheritance. You cannot target the second
-`X2Effect_ApplyWeaponDamage` on an ability, and naming a *subclass* of what the ability actually
+by **exact class equality**, not by inheritance. Naming a *subclass* of what the ability actually
 has will add a new object rather than edit the existing one.
+
+When an ability has several objects of the same class, a **selector** picks which one the entry
+targets. `Index` counts matches of the class from 0, so `Index=1` is the second
+`X2Effect_ApplyWeaponDamage`. Two keyed selectors are steadier when another mod may have inserted
+something: `MatchEffectName` on an effect entry picks the persistent effect whose `EffectName`
+matches, and `MatchEventID` on a trigger entry picks the event listener whose `EventID` matches.
+A key, when set, wins over `Index`. A selector that matches nothing counts as "not present":
+`Merge` then adds a new object and `Remove` does nothing, and the log says so. `ReplaceAll`
+ignores the selector, since it starts from an empty list.
+
+```ini
+; BladestormAttack has three event listeners; this edits only the one that reacts to attacks
+Triggers=( \\
+    ( Class="X2AbilityTrigger_EventListener", Mode=eAEM_Merge, MatchEventID=AbilityActivated, \\
+      SetListenerPriority=true, ListenerPriority=40 ) \\
+)
+```
 
 ## Where conditions can go
 

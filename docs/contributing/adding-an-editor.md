@@ -65,8 +65,8 @@ static function ApplyDerivedEdit(
 
 Four things carry weight:
 
-- **Extend the editor of the game class's nearest ancestor.** The editor hierarchy mirrors the game inheritance.
-- **`CanEdit` names exactly one game class** via `IsA`. The doc generator reads that string; a `CanEdit` that checks two classes, or uses something other than `IsA`, makes the editor invisible to these pages.
+- **Extend the editor of the game class's nearest ancestor that has one.** The editor hierarchy mirrors the game inheritance, and the doc generator checks it: an editor whose parent is not the editor of that ancestor (or the family root when no ancestor has one) is an error, because the ancestor's fields would silently never apply.
+- **`CanEdit` names exactly one game class** via `IsA`. The doc generator reads the first `IsA` string; a `CanEdit` that checks two classes is documented under the first one only, and one that uses something other than `IsA` is invisible to these pages.
 - **`super.ApplyDerivedEdit(...)` first**, whenever the parent is not the family root.
 - **One `if (Edit.SetX)` block per field**, logging before assigning.
 

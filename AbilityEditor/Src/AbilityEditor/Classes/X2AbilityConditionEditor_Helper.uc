@@ -34,7 +34,12 @@ static function ApplyConditionEditToArray(
 		return;
 	}
 
-	Index = FindConditionIndex(Conditions, ConditionClass);
+	Index = FindConditionIndex(Conditions, ConditionClass, ConditionEdit.Index);
+
+	if (Index == INDEX_NONE && ConditionEdit.Index > 0)
+	{
+		`log(string(AbilityName) @ Slot @ "has no" @ string(ConditionClass.Name) @ "matching Index" @ ConditionEdit.Index, class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
+	}
 
 	if (ConditionEdit.Mode == eAEM_Remove)
 	{
@@ -95,19 +100,28 @@ static function class<X2Condition> LoadConditionClass(string ClassName)
 	return ConditionClass;
 }
 
+// The Nth condition of the class.
 static function int FindConditionIndex(
 	array<X2Condition> Conditions,
-	class<X2Condition> ConditionClass
+	class<X2Condition> ConditionClass,
+	optional int MatchIndex
 )
 {
-	local int i;
+	local int i, Matches;
 
 	for (i = 0; i < Conditions.Length; ++i)
 	{
-		if (Conditions[i].Class == ConditionClass)
+		if (Conditions[i].Class != ConditionClass)
+		{
+			continue;
+		}
+
+		if (Matches == MatchIndex)
 		{
 			return i;
 		}
+
+		Matches++;
 	}
 
 	return INDEX_NONE;

@@ -62,7 +62,7 @@ The three usual causes: a stale config cache, a value written without its `SetX=
 
 ## For developers
 
-- [Adding an editor](https://boundir.github.io/AbilityEditor/contributing/adding-an-editor/) - conventions, and the build's Community Highlander requirement.
+- [Adding an editor](https://boundir.github.io/AbilityEditor/contributing/adding-an-editor/) - conventions, and the `CustomSrc` overlay the build uses to reach private game fields.
 - [Extending from another mod](https://boundir.github.io/AbilityEditor/guides/bridge-mods/) - register your own editor classes without forking.
 - [`docs/schema.json`](docs/schema.json) - the whole config API, machine-readable, for external tooling.
 

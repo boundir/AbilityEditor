@@ -64,7 +64,8 @@ Nine families of ability internals, plus the template's own fields:
 
 !!! tip "For tool authors"
     The whole config API is published as machine-readable
-    [`schema.json`](schema.json) - 
+    [`schema.json`](schema.json) - every family, class, field, enum and struct, with descriptions.
+    The reference pages and the config builder are both rendered from it.
 
 ## Troubleshooting
 

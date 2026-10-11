@@ -206,6 +206,179 @@ describe('unrepresentable values', () => {
   })
 })
 
+describe('enum values', () => {
+  const condition = (extra: Record<string, unknown>) =>
+    docOf(newNode({ Ability: 'X', TargetConditions: [newNode({ Class: 'X2Condition_UnitProperty', Mode: 'eAEM_Merge', ...extra })] }))
+
+  it('rejects a value that is not in a mod enum', () => {
+    const doc = docOf(newNode({ Ability: 'X', CostMode: 'nonsense', Costs: [newNode({ Class: 'X2AbilityCost_Ammo', Mode: 'eACEM_Merge' })] }))
+    expect(titles(doc)).toContain('nonsense is not a value of EAbilityCostEditMode')
+  })
+
+  it('rejects a value that is not in a game enum', () => {
+    const issue = validate(docOf(newNode({ Ability: 'X', Hostility: 'eHostility_Bogus' })), indices).find((i) =>
+      i.title.includes('EAbilityHostility'),
+    )
+    expect(issue?.severity).toBe('error')
+    expect(issue?.detail).toContain('eHostility_Neutral')
+  })
+
+  it('checks enums inside game structs', () => {
+    expect(titles(condition({ CheckAmmoData: newNode({ CheckType: 'eCheck_Sometimes', Value: 1 }) }))).toContain(
+      'eCheck_Sometimes is not a value of EValueCheck',
+    )
+    expect(titles(condition({ CheckAmmoData: newNode({ CheckType: 'eCheck_Exact', Value: 1 }) }))).toEqual([])
+  })
+
+  it('accepts every known value', () => {
+    expect(titles(docOf(newNode({ Ability: 'X', Hostility: 'eHostility_Neutral' })))).toEqual([])
+  })
+})
+
+describe('array items', () => {
+  const names = (items: string[]) => docOf(newNode({ Ability: 'X', AdditionalAbilitiesMode: 'eNAEM_Merge', AdditionalAbilities: items }))
+
+  it('rejects an empty item', () => {
+    expect(titles(names(['Blademaster', '']))).toContain('AdditionalAbilities has an empty item')
+  })
+
+  it('rejects a name item that is not a bare name', () => {
+    expect(titles(names(['Bad Name']))).toContain('AdditionalAbilities item "Bad Name" is not a bare name')
+  })
+
+  it('rejects a string item the format cannot write', () => {
+    const doc = docOf(
+      newNode({
+        Ability: 'X',
+        TargetConditions: [
+          newNode({ Class: 'X2Condition_Biome', Mode: 'eAEM_Merge', AllowedBiomesMode: 'eNAEM_Merge', AllowedBiomes: ['Arid', 'Say "no"'] }),
+        ],
+      }),
+    )
+    expect(titles(doc)).toContain('AllowedBiomes item contains a character this format cannot represent')
+  })
+
+  it('accepts a string item with spaces', () => {
+    const doc = docOf(
+      newNode({
+        Ability: 'X',
+        TargetConditions: [
+          newNode({ Class: 'X2Condition_Biome', Mode: 'eAEM_Merge', AllowedBiomesMode: 'eNAEM_Merge', AllowedBiomes: ['Temperate Forest'] }),
+        ],
+      }),
+    )
+    expect(titles(doc).filter((t) => t.includes('AllowedBiomes'))).toEqual([])
+  })
+})
+
+describe('arrays governed by a parent mode', () => {
+  it('does not ask AdditionalCooldowns entries for a Mode they do not have', () => {
+    const doc = docOf(
+      newNode({
+        Ability: 'X',
+        Cooldown: newNode({
+          Class: 'X2AbilityCooldown',
+          AdditionalCooldownMode: 'eACEM_Merge',
+          AdditionalCooldowns: [newNode({ AbilityName: 'A', NumTurns: 1 }), newNode({ AbilityName: 'B', NumTurns: 2 })],
+        }),
+      }),
+    )
+    expect(titles(doc).some((t) => t.includes('no Mode'))).toBe(false)
+  })
+
+  it('reports the parent mode default instead', () => {
+    const doc = docOf(
+      newNode({
+        Ability: 'X',
+        Cooldown: newNode({ Class: 'X2AbilityCooldown', AdditionalCooldowns: [newNode({ AbilityName: 'A', NumTurns: 1 })] }),
+      }),
+    )
+    const issue = validate(doc, indices).find((i) => i.title === 'AdditionalCooldowns will replace the existing list')
+    expect(issue?.severity).toBe('warning')
+    expect(issue?.detail).toContain('AdditionalCooldownMode')
+    expect(issue?.detail).toContain('eACEM_Replace')
+  })
+
+  it('does the same for BonusCharges and StatChange', () => {
+    const charges = docOf(newNode({ Ability: 'X', Charges: newNode({ Class: 'X2AbilityCharges', BonusCharges: [newNode({ AbilityName: 'A', NumCharges: 1 })] }) }))
+    expect(titles(charges)).toContain('BonusCharges will replace the existing list')
+
+    const effects = docOf(
+      newNode({
+        Ability: 'X',
+        Effects: [newNode({ Class: 'X2Effect_PersistentStatChange', Mode: 'eAEM_Merge', StatChange: [newNode({ StatType: 'eStat_Offense', StatAmount: 5 })] })],
+      }),
+    )
+    expect(titles(effects)).toContain('StatChange will replace the existing list')
+    expect(titles(effects).some((t) => t.includes('no Mode'))).toBe(false)
+  })
+
+  it('leaves AbilityEventListenerEdits alone, which edit in place by EventID', () => {
+    const doc = docOf(
+      newNode({ Ability: 'X', AbilityEventListenerEdits: [newNode({ EventID: 'A', Priority: 1 }), newNode({ EventID: 'B', Priority: 2 })] }),
+    )
+    expect(titles(doc)).toEqual([])
+  })
+
+  it('still reports a Costs entry without its own Mode', () => {
+    const doc = docOf(newNode({ Ability: 'X', CostMode: 'eACEM_Merge', Costs: [newNode({ Class: 'X2AbilityCost_Ammo' })] }))
+    expect(titles(doc)).toContain('Costs entry has no Mode, so the existing list will be cleared')
+  })
+})
+
+describe('selectors', () => {
+  const effects = (...entries: Node[]) => docOf(newNode({ Ability: 'X', Effects: entries }))
+
+  it('warns that a selector is ignored under an explicit ReplaceAll', () => {
+    const doc = effects(newNode({ Class: 'X2Effect_Persistent', Mode: 'eAEM_ReplaceAll', Index: 1 }))
+    const issue = validate(doc, indices).find((i) => i.title === 'Index=1 is ignored under eAEM_ReplaceAll')
+    expect(issue?.severity).toBe('warning')
+  })
+
+  it('warns when the selector is ignored because Mode defaulted to ReplaceAll', () => {
+    const doc = docOf(
+      newNode({ Ability: 'X', CostMode: 'eACEM_Merge', Costs: [newNode({ Class: 'X2AbilityCost_Ammo', Index: 2 })] }),
+    )
+    const issue = validate(doc, indices).find((i) => i.title === 'Index=2 is ignored under eACEM_ReplaceAll')
+    expect(issue?.detail).toContain('Mode is not set')
+  })
+
+  it('says the name wins when Index and a Match field are both set', () => {
+    const doc = effects(newNode({ Class: 'X2Effect_Persistent', Mode: 'eAEM_Merge', Index: 1, MatchEffectName: 'Burning' }))
+    const issue = validate(doc, indices).find((i) => i.title === 'MatchEffectName takes precedence over Index')
+    expect(issue?.severity).toBe('info')
+  })
+
+  it('is quiet for a selector under Merge or Remove', () => {
+    expect(titles(effects(newNode({ Class: 'X2Effect_Persistent', Mode: 'eAEM_Merge', Index: 1 })))).toEqual([])
+    const triggers = docOf(newNode({ Ability: 'X', Triggers: [newNode({ Class: 'X2AbilityTrigger_EventListener', Mode: 'eAEM_Remove', MatchEventID: 'UnitMoveFinished' })] }))
+    expect(titles(triggers)).toEqual([])
+  })
+
+  it('treats entries with different selectors as different targets', () => {
+    const doc = effects(
+      newNode({ Class: 'X2Effect_Persistent', Mode: 'eAEM_Merge', Index: 0 }),
+      newNode({ Class: 'X2Effect_Persistent', Mode: 'eAEM_Merge', Index: 1 }),
+    )
+    expect(titles(doc).some((t) => t.includes('Two Effects entries'))).toBe(false)
+  })
+})
+
+describe('duplicate effects', () => {
+  it('treats a missing Slot as eAES_Target', () => {
+    const doc = docOf(
+      newNode({
+        Ability: 'X',
+        Effects: [
+          newNode({ Class: 'X2Effect_Persistent', Mode: 'eAEM_Merge' }),
+          newNode({ Class: 'X2Effect_Persistent', Slot: 'eAES_Target', Mode: 'eAEM_Merge' }),
+        ],
+      }),
+    )
+    expect(titles(doc)).toContain('Two Effects entries target X2Effect_Persistent')
+  })
+})
+
 describe('creating an ability', () => {
   const blank = { Ability: 'SnapShot', Create: true }
 
