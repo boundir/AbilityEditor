@@ -291,15 +291,24 @@ function Get-EditAction {
             if (-not $VarMap.ContainsKey($guardVar)) { continue }
 
             $gameField = $null
-            for ($j = $i + 1; $j -lt [Math]::Min($i + 20, $BodyLines.Count); $j++) {
+            $localName = $null
+            for ($j = $i + 1; $j -lt [Math]::Min($i + 30, $BodyLines.Count); $j++) {
                 $inner = $BodyLines[$j]
                 # plain assignment, or a class reference loaded from the config string:
                 # Target.Foo = class<X>(DynamicLoadObject(Edit.Foo, class'Class'));
                 if ($inner -match ('^\s*([\w\.\[\]]+)\s*=\s*(?:class<[\w\.]+>\(DynamicLoadObject\()?' + [regex]::Escape($guardVar) + '\.' + [regex]::Escape($field) + '\s*(?:;|,\s*class''Class''\)\);)')) {
+                    # A target without a dot is a local: the game field is whatever that local is assigned to next
+                    # (Loaded = class<X>(DynamicLoadObject(Edit.Foo, ...)); ... Target.Foo = Loaded;).
+                    $target = $Matches[1]
+                    if (-not $target.Contains('.')) { $localName = $target; continue }
+                    $gameField = Get-GameFieldFromTarget $target
+                    break
+                }
+                if ($localName -and $inner -match ('^\s*([\w\.\[\]]+)\s*=\s*' + [regex]::Escape($localName) + '\s*;')) {
                     $gameField = Get-GameFieldFromTarget $Matches[1]
                     break
                 }
-                if ($j -gt $i + 1 -and $inner -match '^\s*if\s*\(') { break }
+                if ($null -eq $localName -and $j -gt $i + 1 -and $inner -match '^\s*if\s*\(') { break }
             }
 
             $records.Add(@{ Kind = 'scalar'; Struct = $VarMap[$guardVar]; Config = $field; GameField = $gameField })

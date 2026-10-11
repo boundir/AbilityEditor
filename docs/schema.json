@@ -6733,7 +6733,7 @@
         "config": "TargetingMethod",
         "type": "string",
         "kind": "scalar",
-        "gameField": "TargetingMethodClass",
+        "gameField": "TargetingMethod",
         "description": "Qualified class path of the targeting method, e.g. XComGame.X2TargetingMethod_OverTheShoulder. The class default is X2TargetingMethod_TopDown.",
         "guard": "SetTargetingMethod"
       },
@@ -7100,10 +7100,6 @@
       {
         "name": "bAllowUnderhandAnim",
         "reason": "not covered (deliberate core-set choice)"
-      },
-      {
-        "name": "TargetingMethod",
-        "reason": "class reference"
       },
       {
         "name": "SecondaryTargetingMethod",
