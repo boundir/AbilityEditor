@@ -6995,8 +6995,8 @@
         ]
       },
       "sourceHash": "e2e9f3af409267ead93de01bedda8fcb244743882d1ea0a0edaca7257c414d05",
-      "generatedFrom": "6e1df3ad1efe09b085c2931937db69c8343c8fdd1a0283433d092f3c774737c9",
-      "stale": true,
+      "generatedFrom": "52d5bfe6bbf1279cf829b3d2a913eae8353a935aa29e896ba4ba5fdb08975137",
+      "stale": false,
       "editorCount": 3,
       "editors": [
         {
@@ -7030,7 +7030,7 @@
         ],
         "dlc": []
       },
-      "sourceHash": "1d17fdcd819e2adb0d6819ffb332170e5cf1aeb540d8676aca1162ecdcdf273b",
+      "sourceHash": "3a439c4e95c3027f71851dc316b0e9e698f68dd0b1998165d75cb2bd057bc2d6",
       "generatedFrom": "52d5bfe6bbf1279cf829b3d2a913eae8353a935aa29e896ba4ba5fdb08975137",
       "stale": false,
       "editorCount": 2,
@@ -73800,7 +73800,5 @@
       ]
     }
   ],
-  "warnings": [
-    "[bridge AbilityEditorAlienHunters] fragment was generated against AbilityEditor sources 6e1df3ad, current is 52d5bfe6; regenerate it with .\\.scripts\\generate-docs.ps1 -Bridge <path to AbilityEditorAlienHunters>."
-  ]
+  "warnings": []
 }
