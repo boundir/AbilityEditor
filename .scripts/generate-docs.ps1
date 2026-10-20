@@ -199,9 +199,10 @@ function Read-BridgeRegistration {
 
         $priority = 0
         if ($body -match 'Priority\s*=\s*(-?\d+)') { $priority = [int]$Matches[1] }
+        $runAfter = ($body -match 'RunAfter\s*=\s*true')
 
         if (-not $registrations.ContainsKey($registry)) { $registrations[$registry] = [System.Collections.Generic.List[object]]::new() }
-        $registrations[$registry].Add(@{ Class = $class; Package = $package; Priority = $priority; Ordinal = $ordinal })
+        $registrations[$registry].Add(@{ Class = $class; Package = $package; Priority = $priority; RunAfter = $runAfter; Ordinal = $ordinal })
         $ordinal++
     }
 
@@ -623,6 +624,19 @@ $Warnings = [System.Collections.Generic.List[string]]::new()
 # Errors stop the run before anything is written: each one is a bug in the sources, not a doc gap.
 $Errors = [System.Collections.Generic.List[string]]::new()
 
+# The game class each family's catch-all editor stands for.
+$FamilyGameRoots = @{
+    Costs            = 'X2AbilityCost'
+    Cooldown         = 'X2AbilityCooldown'
+    Charges          = 'X2AbilityCharges'
+    Effects          = 'X2Effect'
+    Conditions       = 'X2Condition'
+    ToHitCalc        = 'X2AbilityToHitCalc'
+    TargetStyle      = 'X2AbilityTargetStyle'
+    MultiTargetStyle = 'X2AbilityMultiTargetStyle'
+    Triggers         = 'X2AbilityTrigger'
+}
+
 $Registries = @{}
 $registryPattern = "(?m)^\s*(\w+Editors)(?:\((\d+)\)\s*=|\.Add\()\s*class'(\w+)'"
 
@@ -921,6 +935,13 @@ foreach ($fam in $Curated.Families) {
             $editorModel.registration = $registryKey
             $editorModel.priority     = [int]$registration.Priority
             $editorModel.package      = $null
+
+            # An extension runs after the claiming editor and applies only its own ApplyDerivedEdit.
+            # Inherited fields its extends chain would suggest are not its to document.
+            if ([bool]$registration.RunAfter) {
+                $editorModel.runAfter = $true
+                $editorModel.fields = @($fields | Where-Object { -not $_.inheritedFrom })
+            }
         }
         $editorModels.Add($editorModel)
     }
@@ -1118,10 +1139,12 @@ if ($SdkClassesDir) {
             $ed.notEditable = $notEditable.ToArray()
         }
 
-        # dispatch-order validation: a class must not be preceded by one of its ancestors
+        # dispatch-order validation: a class must not be preceded by one of its ancestors (extensions do not compete)
         for ($jj = 0; $jj -lt $concrete.Count; $jj++) {
+            if ($concrete[$jj].Contains('runAfter')) { continue }
             $anc = Get-SdkAncestor $concrete[$jj].gameClass
             for ($ii = 0; $ii -lt $jj; $ii++) {
+                if ($concrete[$ii].Contains('runAfter')) { continue }
                 if ($concrete[$ii].gameClass -in $anc) {
                     if ($BridgeRoot) {
                         $Warnings.Add("Dispatch order ($($famModel.name)): $($concrete[$jj].class) has a lower or equal Priority than $($concrete[$ii].class), but $($concrete[$jj].gameClass) derives from $($concrete[$ii].gameClass) - raise Priority on $($concrete[$jj].class).")
@@ -1145,6 +1168,8 @@ if ($SdkClassesDir) {
 
             foreach ($ed in $concrete) {
                 if ($null -eq (Get-SdkClassInfo $ed.gameClass)) { continue }
+                # An extension extends the family root on purpose: it adds to whatever editor claimed the object.
+                if ($ed.Contains('runAfter')) { continue }
 
                 # Compared by game class: a bridge editor that extends the built-in editor of its own class
                 # (an override adding fields) is fine, and two editors may share a game class.
@@ -1206,7 +1231,7 @@ if ($BridgeRoot) {
             $notEditable = @()
             if ($ed.Contains('notEditable')) { $notEditable = @($ed.notEditable) }
 
-            $bridgeEditors.Add([ordered]@{
+            $fragmentEditor = [ordered]@{
                 family       = $famModel.name
                 registration = $ed.registration
                 priority     = $ed.priority
@@ -1218,7 +1243,9 @@ if ($BridgeRoot) {
                 abstract     = $abstract
                 fields       = $ed.fields
                 notEditable  = $notEditable
-            })
+            }
+            if ($ed.Contains('runAfter')) { $fragmentEditor.runAfter = $true }
+            $bridgeEditors.Add($fragmentEditor)
         }
     }
 
@@ -1371,9 +1398,14 @@ function Merge-BridgeFragment {
         if ($fed.Contains('registration')) { $model.registration = [string]$fed.registration }
         if ($fed.Contains('abstract'))    { $model.abstract = [bool]$fed.abstract }
         if ($fed.Contains('notEditable')) { $model.notEditable = @($fed.notEditable) }
+        if ($fed.Contains('runAfter') -and [bool]$fed.runAfter) {
+            # Extensions add fields to every matching class; their own page keeps only their own fields.
+            $model.runAfter = $true
+            $model.fields = @($own)
+        }
 
         $builtIn = $famModel.editors | Where-Object { $_.gameClass -eq $model.gameClass -and -not $_.Contains('bridge') } | Select-Object -First 1
-        if ($builtIn) { $model.overrides = $builtIn.class }
+        if ($builtIn -and -not $model.Contains('runAfter')) { $model.overrides = $builtIn.class }
 
         $famModel.editors = @($famModel.editors) + @($model)
         $summaryEditors.Add([ordered]@{ family = $famModel.name; class = $model.class; gameClass = $model.gameClass; package = $model.package })
@@ -1413,6 +1445,47 @@ function Merge-BridgeFragment {
 if (Test-Path -LiteralPath $BridgesDir) {
     foreach ($fragmentFile in (Get-ChildItem -LiteralPath $BridgesDir -Filter '*.json' -File | Sort-Object Name)) {
         Merge-BridgeFragment $fragmentFile.FullName
+    }
+
+    # An extension's fields reach every editor whose game class is, or derives from, the extension's own, whichever bridge that editor comes from. 
+    # Done after every fragment is merged so cross-bridge targets (the Alien Hunters freeze effect under the Highlander stat-change extension) are covered too.
+    foreach ($famModel in $FamilyModels) {
+        $extensions = @($famModel.editors | Where-Object { $_.Contains('runAfter') })
+        if ($extensions.Count -eq 0) { continue }
+
+        foreach ($extension in $extensions) {
+            $ownFields = @($extension.fields | Where-Object { -not $_.inheritedFrom })
+            if ($ownFields.Count -eq 0) { continue }
+
+            foreach ($target in $famModel.editors) {
+                if ($target.class -eq $extension.class -or $target.Contains('runAfter')) { continue }
+
+                $reaches = $false
+                if ($target.catchAll) {
+                    $reaches = ($extension.gameClass -eq $FamilyGameRoots[$famModel.name])
+                }
+                elseif ($target.gameClass -eq $extension.gameClass) {
+                    $reaches = $true
+                }
+                elseif ($SdkClassesDir) {
+                    $reaches = ($extension.gameClass -in @(Get-SdkAncestor $target.gameClass))
+                }
+                if (-not $reaches) { continue }
+
+                $additions = [System.Collections.Generic.List[object]]::new()
+                foreach ($f in $ownFields) {
+                    if ($target.fields | Where-Object { $_.config -eq $f.config }) { continue }
+                    $copy = [ordered]@{}
+                    foreach ($p in $f.Keys) { $copy[$p] = $f[$p] }
+                    $copy.origin        = 'derived'
+                    $copy.inheritedFrom = $extension.class
+                    $copy.extension     = $extension.class
+                    $copy.bridge        = $extension.bridge
+                    $additions.Add($copy)
+                }
+                if ($additions.Count -gt 0) { $target.fields = @($target.fields) + @($additions.ToArray()) }
+            }
+        }
     }
 }
 
@@ -1500,18 +1573,6 @@ foreach ($w in $Curated.KnownIssues) { $Warnings.Add("Known issue: $w") }
 # Development\SrcOrig is what every build compiles against. Kept vanilla, it cannot declare a Highlander-only
 # field, so a built-in editor that writes one fails here, in words, before it fails players without the
 # Highlander. A bridge brings the sources it needs as its own overlay, so bridge editors are not checked.
-$FamilyGameRoots = @{
-    Costs            = 'X2AbilityCost'
-    Cooldown         = 'X2AbilityCooldown'
-    Charges          = 'X2AbilityCharges'
-    Effects          = 'X2Effect'
-    Conditions       = 'X2Condition'
-    ToHitCalc        = 'X2AbilityToHitCalc'
-    TargetStyle      = 'X2AbilityTargetStyle'
-    MultiTargetStyle = 'X2AbilityMultiTargetStyle'
-    Triggers         = 'X2AbilityTrigger'
-}
-
 $SdkDeclaredCache = @{}
 
 # Every identifier on a var line of the class and its ancestors. Loose on purpose: a name absent from all of them is certainly not declared.

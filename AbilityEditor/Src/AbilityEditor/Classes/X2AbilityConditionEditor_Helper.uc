@@ -30,7 +30,7 @@ static function ApplyConditionEditToArray(
 
 	if (ConditionClass == none)
 	{
-		`log("AbilityEdit: Invalid condition class:" @ ConditionEdit.Class, class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
+		class'X2AbilityEditor_Logger'.static.LogError(string(AbilityName) @ Slot @ "names a condition class that does not exist:" @ ConditionEdit.Class);
 		return;
 	}
 
@@ -38,7 +38,7 @@ static function ApplyConditionEditToArray(
 
 	if (Index == INDEX_NONE && ConditionEdit.Index > 0)
 	{
-		`log(string(AbilityName) @ Slot @ "has no" @ string(ConditionClass.Name) @ "matching Index" @ ConditionEdit.Index, class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
+		class'X2AbilityEditor_Logger'.static.LogError(string(AbilityName) @ Slot @ "has no" @ string(ConditionClass.Name) @ "matching Index" @ ConditionEdit.Index $ "; Merge adds a new one, Remove does nothing");
 	}
 
 	if (ConditionEdit.Mode == eAEM_Remove)
@@ -92,11 +92,6 @@ static function class<X2Condition> LoadConditionClass(string ClassName)
 		DynamicLoadObject(QualifiedName, class'Class')
 	);
 
-	if (ConditionClass == none)
-	{
-		`log("AbilityEdit: Failed to load condition class:" @ QualifiedName, class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
-	}
-
 	return ConditionClass;
 }
 
@@ -136,34 +131,47 @@ static function DispatchConditionEdit(
 {
 	local int i;
 	local class<X2AbilityConditionEditor> ExtraEditor;
+	local bool IsClaimed;
 
-	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ExtraConditionEditors.Length; ++i)
+	for (i = 0; !IsClaimed && i < class'X2DLCInfo_AbilityEditor'.default.ExtraConditionEditors.Length; ++i)
 	{
+		if (class'X2DLCInfo_AbilityEditor'.default.ExtraConditionEditors[i].RunAfter)
+		{
+			continue;
+		}
+
 		ExtraEditor = class<X2AbilityConditionEditor>(DynamicLoadObject(class'X2DLCInfo_AbilityEditor'.default.ExtraConditionEditors[i].EditorClass, class'Class'));
+
 		if (ExtraEditor != none && ExtraEditor.static.CanEdit(Condition))
 		{
-			ExtraEditor.static.ApplyEdit(
-				AbilityName,
-				Slot,
-				Condition,
-				ConditionEdit
-			);
-			return;
+			ExtraEditor.static.ApplyEdit(AbilityName, Slot, Condition, ConditionEdit);
+			IsClaimed = true;
 		}
 	}
 
-	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ConditionEditors.Length; ++i)
+	for (i = 0; !IsClaimed && i < class'X2DLCInfo_AbilityEditor'.default.ConditionEditors.Length; ++i)
 	{
 		if (class'X2DLCInfo_AbilityEditor'.default.ConditionEditors[i] != none &&
 			class'X2DLCInfo_AbilityEditor'.default.ConditionEditors[i].static.CanEdit(Condition))
 		{
-			class'X2DLCInfo_AbilityEditor'.default.ConditionEditors[i].static.ApplyEdit(
-				AbilityName,
-				Slot,
-				Condition,
-				ConditionEdit
-			);
-			return;
+			class'X2DLCInfo_AbilityEditor'.default.ConditionEditors[i].static.ApplyEdit(AbilityName, Slot, Condition, ConditionEdit);
+			IsClaimed = true;
+		}
+	}
+
+	// Extensions run after the editor that claimed the object, whichever one that was.
+	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ExtraConditionEditors.Length; ++i)
+	{
+		if (!class'X2DLCInfo_AbilityEditor'.default.ExtraConditionEditors[i].RunAfter)
+		{
+			continue;
+		}
+
+		ExtraEditor = class<X2AbilityConditionEditor>(DynamicLoadObject(class'X2DLCInfo_AbilityEditor'.default.ExtraConditionEditors[i].EditorClass, class'Class'));
+
+		if (ExtraEditor != none && ExtraEditor.static.CanEdit(Condition))
+		{
+			ExtraEditor.static.ApplyDerivedEdit(AbilityName, Slot, Condition, ConditionEdit);
 		}
 	}
 }

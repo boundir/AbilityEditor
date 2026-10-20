@@ -62,7 +62,7 @@ static function ApplyCostEdit(X2AbilityTemplate Template, AbilityEdit AbilityEdi
 
 		if (CostClass == none)
 		{
-			`log("AbilityEdit: Invalid cost class:" @ CostEdit.Class, class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
+			class'X2AbilityEditor_Logger'.static.LogError(string(Template.DataName) @ "Costs names a cost class that does not exist:" @ CostEdit.Class);
 			continue;
 		}
 
@@ -70,7 +70,7 @@ static function ApplyCostEdit(X2AbilityTemplate Template, AbilityEdit AbilityEdi
 
 		if (Index == INDEX_NONE && CostEdit.Index > 0)
 		{
-			`log(string(Template.DataName) @ "Template.AbilityCosts has no" @ string(CostClass.Name) @ "matching Index" @ CostEdit.Index, class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
+			class'X2AbilityEditor_Logger'.static.LogError(string(Template.DataName) @ "Template.AbilityCosts has no" @ string(CostClass.Name) @ "matching Index" @ CostEdit.Index $ "; Merge adds a new one, Remove does nothing");
 		}
 
 		if (CostEdit.Mode == eACEM_Remove)
@@ -109,28 +109,54 @@ static function DispatchCostEdit(name AbilityName, X2AbilityCost AbilityCost, Co
 {
 	local int i;
 	local class<X2AbilityCostEditor> ExtraEditor;
+	local bool IsClaimed;
 
-	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ExtraCostEditors.Length; ++i)
+	for (i = 0; !IsClaimed && i < class'X2DLCInfo_AbilityEditor'.default.ExtraCostEditors.Length; ++i)
 	{
+		if (class'X2DLCInfo_AbilityEditor'.default.ExtraCostEditors[i].RunAfter)
+		{
+			continue;
+		}
+
 		ExtraEditor = class<X2AbilityCostEditor>(DynamicLoadObject(class'X2DLCInfo_AbilityEditor'.default.ExtraCostEditors[i].EditorClass, class'Class'));
+
 		if (ExtraEditor != none && ExtraEditor.static.CanEdit(AbilityCost))
 		{
 			ExtraEditor.static.ApplyEdit(AbilityName, AbilityCost, CostEdit);
-			return;
+			IsClaimed = true;
 		}
 	}
 
-	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.CostEditors.Length; ++i)
+	for (i = 0; !IsClaimed && i < class'X2DLCInfo_AbilityEditor'.default.CostEditors.Length; ++i)
 	{
 		if (class'X2DLCInfo_AbilityEditor'.default.CostEditors[i] != none &&
 			class'X2DLCInfo_AbilityEditor'.default.CostEditors[i].static.CanEdit(AbilityCost))
 		{
 			class'X2DLCInfo_AbilityEditor'.default.CostEditors[i].static.ApplyEdit(AbilityName, AbilityCost, CostEdit);
-			return;
+			IsClaimed = true;
 		}
 	}
 
-	`log("AbilityCostEdit: No editor for cost class" @ AbilityCost.Class, class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
+	if (!IsClaimed)
+	{
+		class'X2AbilityEditor_Logger'.static.LogError(string(AbilityName) @ "has no editor for cost class" @ string(AbilityCost.Class.Name));
+	}
+
+	// Extensions run after the editor that claimed the object, whichever one that was.
+	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ExtraCostEditors.Length; ++i)
+	{
+		if (!class'X2DLCInfo_AbilityEditor'.default.ExtraCostEditors[i].RunAfter)
+		{
+			continue;
+		}
+
+		ExtraEditor = class<X2AbilityCostEditor>(DynamicLoadObject(class'X2DLCInfo_AbilityEditor'.default.ExtraCostEditors[i].EditorClass, class'Class'));
+
+		if (ExtraEditor != none && ExtraEditor.static.CanEdit(AbilityCost))
+		{
+			ExtraEditor.static.ApplyDerivedEdit(AbilityName, AbilityCost, CostEdit);
+		}
+	}
 }
 
 static function X2AbilityCost InstantiateCost(class<X2AbilityCost> CostClass)
@@ -163,15 +189,6 @@ static function class<X2AbilityCost> LoadCostClass(string ClassName)
 	CostClass = class<X2AbilityCost>(
 		DynamicLoadObject(QualifiedName, class'Class')
 	);
-
-	if (CostClass == none)
-	{
-		`log(
-			"AbilityEdit: Failed to load cost class:" @ QualifiedName,
-			class'X2DLCInfo_AbilityEditor'.default.EnableDebug,
-			'AbilityEditor'
-		);
-	}
 
 	return CostClass;
 }

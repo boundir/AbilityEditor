@@ -24,7 +24,7 @@ static function ApplyTriggerEditToArray(
 
 	if (TriggerClass == none)
 	{
-		`log("AbilityEdit: Invalid trigger class:" @ TriggerEdit.Class, class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
+		class'X2AbilityEditor_Logger'.static.LogError(string(AbilityName) @ "Triggers names a trigger class that does not exist:" @ TriggerEdit.Class);
 		return;
 	}
 
@@ -32,7 +32,7 @@ static function ApplyTriggerEditToArray(
 
 	if (Index == INDEX_NONE && (TriggerEdit.Index > 0 || TriggerEdit.MatchEventID != ''))
 	{
-		`log(string(AbilityName) @ "Template.AbilityTriggers has no" @ string(TriggerClass.Name) @ "matching Index" @ TriggerEdit.Index @ "MatchEventID" @ string(TriggerEdit.MatchEventID), class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
+		class'X2AbilityEditor_Logger'.static.LogError(string(AbilityName) @ "Template.AbilityTriggers has no" @ string(TriggerClass.Name) @ "matching Index" @ TriggerEdit.Index @ "MatchEventID" @ string(TriggerEdit.MatchEventID) $ "; Merge adds a new one, Remove does nothing");
 	}
 
 	if (TriggerEdit.Mode == eAEM_Remove)
@@ -85,11 +85,6 @@ static function class<X2AbilityTrigger> LoadTriggerClass(string ClassName)
 	TriggerClass = class<X2AbilityTrigger>(
 		DynamicLoadObject(QualifiedName, class'Class')
 	);
-
-	if (TriggerClass == none)
-	{
-		`log("AbilityEdit: Failed to load trigger class:" @ QualifiedName, class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
-	}
 
 	return TriggerClass;
 }
@@ -144,24 +139,47 @@ static function DispatchTriggerEdit(
 {
 	local int i;
 	local class<X2AbilityTriggerEditor> ExtraEditor;
+	local bool IsClaimed;
 
-	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ExtraTriggerEditors.Length; ++i)
+	for (i = 0; !IsClaimed && i < class'X2DLCInfo_AbilityEditor'.default.ExtraTriggerEditors.Length; ++i)
 	{
+		if (class'X2DLCInfo_AbilityEditor'.default.ExtraTriggerEditors[i].RunAfter)
+		{
+			continue;
+		}
+
 		ExtraEditor = class<X2AbilityTriggerEditor>(DynamicLoadObject(class'X2DLCInfo_AbilityEditor'.default.ExtraTriggerEditors[i].EditorClass, class'Class'));
+
 		if (ExtraEditor != none && ExtraEditor.static.CanEdit(Trigger))
 		{
 			ExtraEditor.static.ApplyEdit(AbilityName, Slot, Trigger, TriggerEdit);
-			return;
+			IsClaimed = true;
 		}
 	}
 
-	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.TriggerEditors.Length; ++i)
+	for (i = 0; !IsClaimed && i < class'X2DLCInfo_AbilityEditor'.default.TriggerEditors.Length; ++i)
 	{
 		if (class'X2DLCInfo_AbilityEditor'.default.TriggerEditors[i] != none &&
 			class'X2DLCInfo_AbilityEditor'.default.TriggerEditors[i].static.CanEdit(Trigger))
 		{
 			class'X2DLCInfo_AbilityEditor'.default.TriggerEditors[i].static.ApplyEdit(AbilityName, Slot, Trigger, TriggerEdit);
-			return;
+			IsClaimed = true;
+		}
+	}
+
+	// Extensions run after the editor that claimed the object, whichever one that was.
+	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ExtraTriggerEditors.Length; ++i)
+	{
+		if (!class'X2DLCInfo_AbilityEditor'.default.ExtraTriggerEditors[i].RunAfter)
+		{
+			continue;
+		}
+
+		ExtraEditor = class<X2AbilityTriggerEditor>(DynamicLoadObject(class'X2DLCInfo_AbilityEditor'.default.ExtraTriggerEditors[i].EditorClass, class'Class'));
+
+		if (ExtraEditor != none && ExtraEditor.static.CanEdit(Trigger))
+		{
+			ExtraEditor.static.ApplyDerivedEdit(AbilityName, Slot, Trigger, TriggerEdit);
 		}
 	}
 }

@@ -44,7 +44,7 @@ static function X2AbilityToHitCalc ApplyToSlot(
 
 	if (ToHitCalcClass == none)
 	{
-		`log("AbilityEdit: Invalid to-hit calc class:" @ ToHitCalcEdit.Class, class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
+		class'X2AbilityEditor_Logger'.static.LogError(string(AbilityName) @ Slot @ "names a to-hit calc class that does not exist:" @ ToHitCalcEdit.Class);
 		return Existing;
 	}
 
@@ -80,11 +80,6 @@ static function class<X2AbilityToHitCalc> LoadToHitCalcClass(string ClassName)
 		DynamicLoadObject(QualifiedName, class'Class')
 	);
 
-	if (ToHitCalcClass == none)
-	{
-		`log("AbilityEdit: Failed to load to-hit calc class:" @ QualifiedName, class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
-	}
-
 	return ToHitCalcClass;
 }
 
@@ -97,24 +92,47 @@ static function DispatchToHitCalcEdit(
 {
 	local int i;
 	local class<X2AbilityToHitCalcEditor> ExtraEditor;
+	local bool IsClaimed;
 
-	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ExtraToHitCalcEditors.Length; ++i)
+	for (i = 0; !IsClaimed && i < class'X2DLCInfo_AbilityEditor'.default.ExtraToHitCalcEditors.Length; ++i)
 	{
+		if (class'X2DLCInfo_AbilityEditor'.default.ExtraToHitCalcEditors[i].RunAfter)
+		{
+			continue;
+		}
+
 		ExtraEditor = class<X2AbilityToHitCalcEditor>(DynamicLoadObject(class'X2DLCInfo_AbilityEditor'.default.ExtraToHitCalcEditors[i].EditorClass, class'Class'));
+
 		if (ExtraEditor != none && ExtraEditor.static.CanEdit(ToHitCalc))
 		{
 			ExtraEditor.static.ApplyEdit(AbilityName, Slot, ToHitCalc, ToHitCalcEdit);
-			return;
+			IsClaimed = true;
 		}
 	}
 
-	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ToHitCalcEditors.Length; ++i)
+	for (i = 0; !IsClaimed && i < class'X2DLCInfo_AbilityEditor'.default.ToHitCalcEditors.Length; ++i)
 	{
 		if (class'X2DLCInfo_AbilityEditor'.default.ToHitCalcEditors[i] != none &&
 			class'X2DLCInfo_AbilityEditor'.default.ToHitCalcEditors[i].static.CanEdit(ToHitCalc))
 		{
 			class'X2DLCInfo_AbilityEditor'.default.ToHitCalcEditors[i].static.ApplyEdit(AbilityName, Slot, ToHitCalc, ToHitCalcEdit);
-			return;
+			IsClaimed = true;
+		}
+	}
+
+	// Extensions run after the editor that claimed the object, whichever one that was.
+	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ExtraToHitCalcEditors.Length; ++i)
+	{
+		if (!class'X2DLCInfo_AbilityEditor'.default.ExtraToHitCalcEditors[i].RunAfter)
+		{
+			continue;
+		}
+
+		ExtraEditor = class<X2AbilityToHitCalcEditor>(DynamicLoadObject(class'X2DLCInfo_AbilityEditor'.default.ExtraToHitCalcEditors[i].EditorClass, class'Class'));
+
+		if (ExtraEditor != none && ExtraEditor.static.CanEdit(ToHitCalc))
+		{
+			ExtraEditor.static.ApplyDerivedEdit(AbilityName, Slot, ToHitCalc, ToHitCalcEdit);
 		}
 	}
 }

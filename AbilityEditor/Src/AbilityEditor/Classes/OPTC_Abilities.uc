@@ -137,23 +137,6 @@ static event EditAbilityTemplates()
 							AbilityTemplate.AbilityCharges = GremlinHealCharges;
 						}
 					}
-
-					if(ConfigAbilities.bCrossClassEligible != '')
-					{
-						if(ConfigAbilities.bCrossClassEligible == 'TRUE')
-						{
-							AbilityTemplate.bCrossClassEligible = true;
-						}
-						else if(ConfigAbilities.bCrossClassEligible == 'FALSE')
-						{
-							AbilityTemplate.bCrossClassEligible = false;
-						}
-						else
-						{
-							`LOG("bCrossClassEligible is neither true or false", , 'Ability Editor');
-						}
-					}
-
 					// Use X2AbilityCharges_ScanningProtocol instead of X2AbilityCharges
 					else if(ConfigAbilities.AbilityName == 'ScanningProtocol')
 					{
@@ -194,6 +177,22 @@ static event EditAbilityTemplates()
 					}
 
 					AbilityTemplate.AbilityCosts.AddItem(ChargeCost);
+				}
+
+				if(ConfigAbilities.bCrossClassEligible != '')
+				{
+					if(ConfigAbilities.bCrossClassEligible == 'TRUE')
+					{
+						AbilityTemplate.bCrossClassEligible = true;
+					}
+					else if(ConfigAbilities.bCrossClassEligible == 'FALSE')
+					{
+						AbilityTemplate.bCrossClassEligible = false;
+					}
+					else
+					{
+						`LOG("bCrossClassEligible is neither true or false", , 'Ability Editor');
+					}
 				}
 
 				// Set the ability action point cost

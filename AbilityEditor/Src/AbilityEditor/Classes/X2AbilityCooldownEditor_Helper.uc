@@ -19,7 +19,7 @@ static function ApplyCooldownEdit(X2AbilityTemplate Template, CooldownEdit Abili
 
 	if (CooldownClass == none)
 	{
-		`log("AbilityEdit: Invalid cooldown class:" @ AbilityEdit.Class, class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
+		class'X2AbilityEditor_Logger'.static.LogError(string(Template.DataName) @ "Cooldown names a class that does not exist:" @ AbilityEdit.Class);
 		return;
 	}
 
@@ -56,41 +56,61 @@ static function class<X2AbilityCooldown> LoadCooldownClass(string ClassName)
 		DynamicLoadObject(QualifiedName, class'Class')
 	);
 
-	if (CooldownClass == none)
-	{
-		`log("AbilityEdit: Failed to load cooldown class:" @ QualifiedName, class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
-	}
-
 	return CooldownClass;
 }
-
 
 static function DispatchCooldownEdit(name AbilityName, X2AbilityCooldown AbilityCooldown, CooldownEdit CooldownEdit)
 {
 	local int i;
 	local class<X2AbilityCooldownEditor> ExtraEditor;
+	local bool IsClaimed;
 
-	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ExtraCooldownEditors.Length; ++i)
+	for (i = 0; !IsClaimed && i < class'X2DLCInfo_AbilityEditor'.default.ExtraCooldownEditors.Length; ++i)
 	{
+		if (class'X2DLCInfo_AbilityEditor'.default.ExtraCooldownEditors[i].RunAfter)
+		{
+			continue;
+		}
+
 		ExtraEditor = class<X2AbilityCooldownEditor>(DynamicLoadObject(class'X2DLCInfo_AbilityEditor'.default.ExtraCooldownEditors[i].EditorClass, class'Class'));
+
 		if (ExtraEditor != none && ExtraEditor.static.CanEdit(AbilityCooldown))
 		{
 			ExtraEditor.static.ApplyEdit(AbilityName, AbilityCooldown, CooldownEdit);
-			return;
+			IsClaimed = true;
 		}
 	}
 
-	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.CooldownEditors.Length; ++i)
+	for (i = 0; !IsClaimed && i < class'X2DLCInfo_AbilityEditor'.default.CooldownEditors.Length; ++i)
 	{
 		if (class'X2DLCInfo_AbilityEditor'.default.CooldownEditors[i] != none &&
 			class'X2DLCInfo_AbilityEditor'.default.CooldownEditors[i].static.CanEdit(AbilityCooldown))
 		{
 			class'X2DLCInfo_AbilityEditor'.default.CooldownEditors[i].static.ApplyEdit(AbilityName, AbilityCooldown, CooldownEdit);
-			return;
+			IsClaimed = true;
 		}
 	}
 
-	`log("AbilityEdit: No editor for cooldown class" @ AbilityCooldown.Class, class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
+	if (!IsClaimed)
+	{
+		class'X2AbilityEditor_Logger'.static.LogError(string(AbilityName) @ "has no editor for cooldown class" @ string(AbilityCooldown.Class.Name));
+	}
+
+	// Extensions run after the editor that claimed the object, whichever one that was.
+	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ExtraCooldownEditors.Length; ++i)
+	{
+		if (!class'X2DLCInfo_AbilityEditor'.default.ExtraCooldownEditors[i].RunAfter)
+		{
+			continue;
+		}
+
+		ExtraEditor = class<X2AbilityCooldownEditor>(DynamicLoadObject(class'X2DLCInfo_AbilityEditor'.default.ExtraCooldownEditors[i].EditorClass, class'Class'));
+
+		if (ExtraEditor != none && ExtraEditor.static.CanEdit(AbilityCooldown))
+		{
+			ExtraEditor.static.ApplyDerivedEdit(AbilityName, AbilityCooldown, CooldownEdit);
+		}
+	}
 }
 
 static function int FindAdditionalCooldownIndex(out array<AdditionalCooldownInfo> CooldownInfos, name AbilityName)

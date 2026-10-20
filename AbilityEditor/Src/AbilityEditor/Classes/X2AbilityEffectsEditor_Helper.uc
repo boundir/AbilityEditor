@@ -41,7 +41,7 @@ static function ApplyToEffectArray(
 
 	if (EffectClass == none)
 	{
-		`log("AbilityEdit: Invalid effect class:" @ ClassName, class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
+		class'X2AbilityEditor_Logger'.static.LogError(string(AbilityName) @ Slot @ "names an effect class that does not exist:" @ ClassName);
 		return;
 	}
 
@@ -49,7 +49,7 @@ static function ApplyToEffectArray(
 
 	if (Index == INDEX_NONE && (EffectEdit.Index > 0 || EffectEdit.MatchEffectName != ''))
 	{
-		`log(string(AbilityName) @ Slot @ "has no" @ string(EffectClass.Name) @ "matching Index" @ EffectEdit.Index @ "MatchEffectName" @ string(EffectEdit.MatchEffectName), class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
+		class'X2AbilityEditor_Logger'.static.LogError(string(AbilityName) @ Slot @ "has no" @ string(EffectClass.Name) @ "matching Index" @ EffectEdit.Index @ "MatchEffectName" @ string(EffectEdit.MatchEffectName) $ "; Merge adds a new one, Remove does nothing");
 	}
 
 	if (EffectEdit.Mode == eAEM_Remove)
@@ -249,34 +249,47 @@ static function DispatchEffectEdit(
 {
 	local int i;
 	local class<X2AbilityEffectsEditor> ExtraEditor;
+	local bool IsClaimed;
 
-	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ExtraEffectsEditors.Length; ++i)
+	for (i = 0; !IsClaimed && i < class'X2DLCInfo_AbilityEditor'.default.ExtraEffectsEditors.Length; ++i)
 	{
+		if (class'X2DLCInfo_AbilityEditor'.default.ExtraEffectsEditors[i].RunAfter)
+		{
+			continue;
+		}
+
 		ExtraEditor = class<X2AbilityEffectsEditor>(DynamicLoadObject(class'X2DLCInfo_AbilityEditor'.default.ExtraEffectsEditors[i].EditorClass, class'Class'));
+
 		if (ExtraEditor != none && ExtraEditor.static.CanEdit(Effect))
 		{
-			ExtraEditor.static.ApplyEdit(
-				AbilityName,
-				Slot,
-				Effect,
-				EffectEdit
-			);
-			return;
+			ExtraEditor.static.ApplyEdit(AbilityName, Slot, Effect, EffectEdit);
+			IsClaimed = true;
 		}
 	}
 
-	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.EffectsEditors.Length; ++i)
+	for (i = 0; !IsClaimed && i < class'X2DLCInfo_AbilityEditor'.default.EffectsEditors.Length; ++i)
 	{
 		if (class'X2DLCInfo_AbilityEditor'.default.EffectsEditors[i] != none &&
 			class'X2DLCInfo_AbilityEditor'.default.EffectsEditors[i].static.CanEdit(Effect))
 		{
-			class'X2DLCInfo_AbilityEditor'.default.EffectsEditors[i].static.ApplyEdit(
-				AbilityName,
-				Slot,
-				Effect,
-				EffectEdit
-			);
-			return;
+			class'X2DLCInfo_AbilityEditor'.default.EffectsEditors[i].static.ApplyEdit(AbilityName, Slot, Effect, EffectEdit);
+			IsClaimed = true;
+		}
+	}
+
+	// Extensions run after the editor that claimed the object, whichever one that was.
+	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ExtraEffectsEditors.Length; ++i)
+	{
+		if (!class'X2DLCInfo_AbilityEditor'.default.ExtraEffectsEditors[i].RunAfter)
+		{
+			continue;
+		}
+
+		ExtraEditor = class<X2AbilityEffectsEditor>(DynamicLoadObject(class'X2DLCInfo_AbilityEditor'.default.ExtraEffectsEditors[i].EditorClass, class'Class'));
+
+		if (ExtraEditor != none && ExtraEditor.static.CanEdit(Effect))
+		{
+			ExtraEditor.static.ApplyDerivedEdit(AbilityName, Slot, Effect, EffectEdit);
 		}
 	}
 }

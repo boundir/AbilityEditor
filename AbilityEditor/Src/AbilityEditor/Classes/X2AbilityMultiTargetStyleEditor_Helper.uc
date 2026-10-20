@@ -35,7 +35,7 @@ static function X2AbilityMultiTargetStyle ApplyToSlot(
 
 	if (MultiTargetStyleClass == none)
 	{
-		`log("AbilityEdit: Invalid multi-target style class:" @ MultiTargetStyleEdit.Class, class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
+		class'X2AbilityEditor_Logger'.static.LogError(string(AbilityName) @ Slot @ "names a multi-target style class that does not exist:" @ MultiTargetStyleEdit.Class);
 		return Existing;
 	}
 
@@ -71,11 +71,6 @@ static function class<X2AbilityMultiTargetStyle> LoadMultiTargetStyleClass(strin
 		DynamicLoadObject(QualifiedName, class'Class')
 	);
 
-	if (MultiTargetStyleClass == none)
-	{
-		`log("AbilityEdit: Failed to load multi-target style class:" @ QualifiedName, class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
-	}
-
 	return MultiTargetStyleClass;
 }
 
@@ -88,24 +83,47 @@ static function DispatchMultiTargetStyleEdit(
 {
 	local int i;
 	local class<X2AbilityMultiTargetStyleEditor> ExtraEditor;
+	local bool IsClaimed;
 
-	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ExtraMultiTargetStyleEditors.Length; ++i)
+	for (i = 0; !IsClaimed && i < class'X2DLCInfo_AbilityEditor'.default.ExtraMultiTargetStyleEditors.Length; ++i)
 	{
+		if (class'X2DLCInfo_AbilityEditor'.default.ExtraMultiTargetStyleEditors[i].RunAfter)
+		{
+			continue;
+		}
+
 		ExtraEditor = class<X2AbilityMultiTargetStyleEditor>(DynamicLoadObject(class'X2DLCInfo_AbilityEditor'.default.ExtraMultiTargetStyleEditors[i].EditorClass, class'Class'));
+
 		if (ExtraEditor != none && ExtraEditor.static.CanEdit(MultiTargetStyle))
 		{
 			ExtraEditor.static.ApplyEdit(AbilityName, Slot, MultiTargetStyle, MultiTargetStyleEdit);
-			return;
+			IsClaimed = true;
 		}
 	}
 
-	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.MultiTargetStyleEditors.Length; ++i)
+	for (i = 0; !IsClaimed && i < class'X2DLCInfo_AbilityEditor'.default.MultiTargetStyleEditors.Length; ++i)
 	{
 		if (class'X2DLCInfo_AbilityEditor'.default.MultiTargetStyleEditors[i] != none &&
 			class'X2DLCInfo_AbilityEditor'.default.MultiTargetStyleEditors[i].static.CanEdit(MultiTargetStyle))
 		{
 			class'X2DLCInfo_AbilityEditor'.default.MultiTargetStyleEditors[i].static.ApplyEdit(AbilityName, Slot, MultiTargetStyle, MultiTargetStyleEdit);
-			return;
+			IsClaimed = true;
+		}
+	}
+
+	// Extensions run after the editor that claimed the object, whichever one that was.
+	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ExtraMultiTargetStyleEditors.Length; ++i)
+	{
+		if (!class'X2DLCInfo_AbilityEditor'.default.ExtraMultiTargetStyleEditors[i].RunAfter)
+		{
+			continue;
+		}
+
+		ExtraEditor = class<X2AbilityMultiTargetStyleEditor>(DynamicLoadObject(class'X2DLCInfo_AbilityEditor'.default.ExtraMultiTargetStyleEditors[i].EditorClass, class'Class'));
+
+		if (ExtraEditor != none && ExtraEditor.static.CanEdit(MultiTargetStyle))
+		{
+			ExtraEditor.static.ApplyDerivedEdit(AbilityName, Slot, MultiTargetStyle, MultiTargetStyleEdit);
 		}
 	}
 }

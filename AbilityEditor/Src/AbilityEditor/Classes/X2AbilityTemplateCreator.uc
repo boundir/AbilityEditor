@@ -134,5 +134,5 @@ static function bool PreValidate(X2AbilityTemplate Template, name AbilityName)
 
 static function Report(name AbilityName, string Message)
 {
-	`log("AbilityEdit:" @ string(AbilityName) @ Message, class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
+	class'X2AbilityEditor_Logger'.static.LogError(string(AbilityName) @ Message);
 }

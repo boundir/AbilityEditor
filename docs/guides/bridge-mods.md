@@ -88,7 +88,15 @@ Registered extras are dispatched **before** every built-in editor, sorted by `Pr
 
 Rule of thumb: the more derived your target class, the higher the `Priority`, so an editor for a child class always wins over one for its parent. Targeting a class Ability Editor already handles deliberately **overrides** the built-in editor.
 
-Because `CanEdit` uses `IsA`, an extra for a base class also claims every class derived from it, including ones Ability Editor has its own editor for. A bridge that adds a field to a base class therefore registers one editor per derived class too, each extending the built-in editor of that class and calling it before writing the new field; the Highlander bridge does this for the five subclasses of `X2Effect_PersistentStatChange`.
+## Extensions: adding a field to a class and its subclasses
+
+Because `CanEdit` uses `IsA`, an extra for a base class also claims every class derived from it, including ones Ability Editor or another bridge has its own editor for, and those editors' fields would be lost. For that case register the editor as an **extension** with `RunAfter=true`:
+
+```ini
++ExtraEffectsEditors=(EditorClass="AbilityEditorHighlander.X2AbilityEffectsEditor_CHL_PersistentStatChange", Priority=1, RunAfter=true)
+```
+
+An extension does not compete to claim an object. After whichever editor claimed it has run, Ability Editor calls the extension's `ApplyDerivedEdit` for every object its `CanEdit` accepts. Write the extension against the family root (`extends X2AbilityEffectsEditor`), implement `ApplyDerivedEdit` with your fields only and no `super` call, and its fields reach the class and every subclass, whoever edits them. The Highlander bridge adds `CHLForceReapplyOnRefresh` to every `X2Effect_PersistentStatChange` this way, including the Alien Hunters freeze effect that the other bridge claims. The reference lists an extension's fields on the page of every class it reaches.
 
 Classes are resolved with `DynamicLoadObject` at `OnPostTemplatesCreated` time. A class that fails to load is logged and skipped, not fatal. When the bridge is not installed its registrations are not there either, so the game class simply falls back to the built-in editor of its ancestor.
 

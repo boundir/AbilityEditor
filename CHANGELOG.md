@@ -22,6 +22,8 @@ This project follows [Keep a Changelog](https://keepachangelog.com/) and
 
 - **Every edited ability is checked before the game validates it**, not only created ones. An entry that strips the last trigger or the target style from an existing ability now gets the same plain-words log line as a blank ability would.
 
+- **Bridge editors can be extensions.** One extension adds a field to a class and all of its subclasses, including classes other bridges edit.
+
 - **Alien Hunters support, through a bridge mod.**
   `AbilityEditorAlienHunters` adds editors for `X2Effect_DLC_Day60Freeze` (the freeze durations and the ruler freeze counts), `X2Effect_DLC_Day60TurnStartRemoveActionPoints` and the ruler `OnAbilityActivated` trigger's exclusion lists.
   Their config fields are ordinary `EffectEdit`/`TriggerEdit` fields; DLC classes are named with their package, `Class="DLC_2.X2Effect_DLC_Day60Freeze"`.

@@ -34,7 +34,7 @@ static function X2AbilityTargetStyle ApplyToSlot(
 
 	if (TargetStyleClass == none)
 	{
-		`log("AbilityEdit: Invalid target style class:" @ TargetStyleEdit.Class, class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
+		class'X2AbilityEditor_Logger'.static.LogError(string(AbilityName) @ Slot @ "names a target style class that does not exist:" @ TargetStyleEdit.Class);
 		return Existing;
 	}
 
@@ -70,11 +70,6 @@ static function class<X2AbilityTargetStyle> LoadTargetStyleClass(string ClassNam
 		DynamicLoadObject(QualifiedName, class'Class')
 	);
 
-	if (TargetStyleClass == none)
-	{
-		`log("AbilityEdit: Failed to load target style class:" @ QualifiedName, class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
-	}
-
 	return TargetStyleClass;
 }
 
@@ -87,24 +82,47 @@ static function DispatchTargetStyleEdit(
 {
 	local int i;
 	local class<X2AbilityTargetStyleEditor> ExtraEditor;
+	local bool IsClaimed;
 
-	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ExtraTargetStyleEditors.Length; ++i)
+	for (i = 0; !IsClaimed && i < class'X2DLCInfo_AbilityEditor'.default.ExtraTargetStyleEditors.Length; ++i)
 	{
+		if (class'X2DLCInfo_AbilityEditor'.default.ExtraTargetStyleEditors[i].RunAfter)
+		{
+			continue;
+		}
+
 		ExtraEditor = class<X2AbilityTargetStyleEditor>(DynamicLoadObject(class'X2DLCInfo_AbilityEditor'.default.ExtraTargetStyleEditors[i].EditorClass, class'Class'));
+
 		if (ExtraEditor != none && ExtraEditor.static.CanEdit(TargetStyle))
 		{
 			ExtraEditor.static.ApplyEdit(AbilityName, Slot, TargetStyle, TargetStyleEdit);
-			return;
+			IsClaimed = true;
 		}
 	}
 
-	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.TargetStyleEditors.Length; ++i)
+	for (i = 0; !IsClaimed && i < class'X2DLCInfo_AbilityEditor'.default.TargetStyleEditors.Length; ++i)
 	{
 		if (class'X2DLCInfo_AbilityEditor'.default.TargetStyleEditors[i] != none &&
 			class'X2DLCInfo_AbilityEditor'.default.TargetStyleEditors[i].static.CanEdit(TargetStyle))
 		{
 			class'X2DLCInfo_AbilityEditor'.default.TargetStyleEditors[i].static.ApplyEdit(AbilityName, Slot, TargetStyle, TargetStyleEdit);
-			return;
+			IsClaimed = true;
+		}
+	}
+
+	// Extensions run after the editor that claimed the object, whichever one that was.
+	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ExtraTargetStyleEditors.Length; ++i)
+	{
+		if (!class'X2DLCInfo_AbilityEditor'.default.ExtraTargetStyleEditors[i].RunAfter)
+		{
+			continue;
+		}
+
+		ExtraEditor = class<X2AbilityTargetStyleEditor>(DynamicLoadObject(class'X2DLCInfo_AbilityEditor'.default.ExtraTargetStyleEditors[i].EditorClass, class'Class'));
+
+		if (ExtraEditor != none && ExtraEditor.static.CanEdit(TargetStyle))
+		{
+			ExtraEditor.static.ApplyDerivedEdit(AbilityName, Slot, TargetStyle, TargetStyleEdit);
 		}
 	}
 }

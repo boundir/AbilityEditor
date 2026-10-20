@@ -62,7 +62,7 @@ static event OnPostTemplatesCreated()
 
 			if (Source == none)
 			{
-				`log("AbilityEdit: CloneFrom source not found:" @ AbilityEdit.CloneFrom @ "- not creating" @ AbilityEdit.Ability, default.EnableDebug, 'AbilityEditor');
+				class'X2AbilityEditor_Logger'.static.LogError(string(AbilityEdit.Ability) @ "CloneFrom names an ability that does not exist:" @ string(AbilityEdit.CloneFrom) $ "; nothing created");
 				continue;
 			}
 
@@ -77,7 +77,7 @@ static event OnPostTemplatesCreated()
 
 		if (!AbilityManager.AddAbilityTemplate(Template))
 		{
-			`log("AbilityEdit: could not register" @ AbilityEdit.Ability @ "(AddAbilityTemplate returned false)", default.EnableDebug, 'AbilityEditor');
+			class'X2AbilityEditor_Logger'.static.LogError(string(AbilityEdit.Ability) @ "could not be registered: AddAbilityTemplate returned false");
 		}
 	}
 
@@ -90,7 +90,7 @@ static event OnPostTemplatesCreated()
 
 		if (Variants.Length == 0)
 		{
-			`log("AbilityEdit: Ability not found:" @ AbilityEdit.Ability, default.EnableDebug, 'AbilityEditor');
+			class'X2AbilityEditor_Logger'.static.LogError("Ability not found:" @ string(AbilityEdit.Ability) $ "; the entry was skipped");
 			continue;
 		}
 
@@ -187,7 +187,7 @@ static function class<Object> LoadEditorClass(string ClassName)
 
 	if (EditorClass == none)
 	{
-		`log("AbilityEdit: Failed to load extra editor class:" @ ClassName, default.EnableDebug, 'AbilityEditor');
+		class'X2AbilityEditor_Logger'.static.LogError("Extra editor class could not be loaded:" @ ClassName);
 	}
 
 	return EditorClass;

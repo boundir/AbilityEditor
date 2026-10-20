@@ -296,7 +296,7 @@ static function ApplyFocusLevelModifiersArrayEdit(
 			break;
 
 		case eNAEM_Remove:
-			`log(string(AbilityName) @ Category @ "eNAEM_Remove is not supported for focus levels; use eNAEM_Replace", class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
+			class'X2AbilityEditor_Logger'.static.LogError(string(AbilityName) @ Category @ "eNAEM_Remove is not supported for focus levels; use eNAEM_Replace");
 			break;
 	}
 }

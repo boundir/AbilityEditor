@@ -541,12 +541,7 @@ static function ApplyTemplateEdit(X2AbilityTemplate Template, AbilityEdit Abilit
 
 		if (TargetingMethodClass == none)
 		{
-			`log(
-				"AbilityEdit:" @ string(Template.DataName) @ "Template.TargetingMethod" @
-				"could not load class" @ AbilityEdit.TargetingMethod @ "- keeping" @ PathName(Template.TargetingMethod),
-				class'X2DLCInfo_AbilityEditor'.default.EnableDebug,
-				'AbilityEditor'
-			);
+			class'X2AbilityEditor_Logger'.static.LogError(string(Template.DataName) @ "TargetingMethod names a class that does not exist:" @ AbilityEdit.TargetingMethod @ "- keeping" @ PathName(Template.TargetingMethod));
 		}
 		else
 		{
@@ -712,7 +707,7 @@ static function ApplyTemplateEdit(X2AbilityTemplate Template, AbilityEdit Abilit
 
 		if (Index == INDEX_NONE)
 		{
-			`log(string(Template.DataName) @ "AbilityEventListeners has no entry with EventID" @ string(AbilityEdit.AbilityEventListenerEdits[i].EventID), class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
+			class'X2AbilityEditor_Logger'.static.LogError(string(Template.DataName) @ "AbilityEventListeners has no entry with EventID" @ string(AbilityEdit.AbilityEventListenerEdits[i].EventID));
 			continue;
 		}
 

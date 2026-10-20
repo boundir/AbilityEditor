@@ -26,7 +26,7 @@ static function ApplyChargesEdit(X2AbilityTemplate Template, ChargesEdit Charges
 
 	if (ChargesClass == none)
 	{
-		`log("AbilityEdit: Invalid Charges class:" @ ChargesEdit.Class, class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
+		class'X2AbilityEditor_Logger'.static.LogError(string(Template.DataName) @ "Charges names a class that does not exist:" @ ChargesEdit.Class);
 		return;
 	}
 
@@ -63,41 +63,61 @@ static function class<X2AbilityCharges> LoadChargesClass(string ClassName)
 		DynamicLoadObject(QualifiedName, class'Class')
 	);
 
-	if (ChargesClass == none)
-	{
-		`log("AbilityEdit: Failed to load charges class:" @ QualifiedName, class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
-	}
-
 	return ChargesClass;
 }
-
 
 static function DispatchChargesEdit(name AbilityName, X2AbilityCharges AbilityCharges, ChargesEdit ChargesEdit)
 {
 	local int i;
 	local class<X2AbilityChargesEditor> ExtraEditor;
+	local bool IsClaimed;
 
-	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ExtraChargesEditors.Length; ++i)
+	for (i = 0; !IsClaimed && i < class'X2DLCInfo_AbilityEditor'.default.ExtraChargesEditors.Length; ++i)
 	{
+		if (class'X2DLCInfo_AbilityEditor'.default.ExtraChargesEditors[i].RunAfter)
+		{
+			continue;
+		}
+
 		ExtraEditor = class<X2AbilityChargesEditor>(DynamicLoadObject(class'X2DLCInfo_AbilityEditor'.default.ExtraChargesEditors[i].EditorClass, class'Class'));
+
 		if (ExtraEditor != none && ExtraEditor.static.CanEdit(AbilityCharges))
 		{
 			ExtraEditor.static.ApplyEdit(AbilityName, AbilityCharges, ChargesEdit);
-			return;
+			IsClaimed = true;
 		}
 	}
 
-	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ChargesEditors.Length; ++i)
+	for (i = 0; !IsClaimed && i < class'X2DLCInfo_AbilityEditor'.default.ChargesEditors.Length; ++i)
 	{
 		if (class'X2DLCInfo_AbilityEditor'.default.ChargesEditors[i] != none &&
 			class'X2DLCInfo_AbilityEditor'.default.ChargesEditors[i].static.CanEdit(AbilityCharges))
 		{
 			class'X2DLCInfo_AbilityEditor'.default.ChargesEditors[i].static.ApplyEdit(AbilityName, AbilityCharges, ChargesEdit);
-			return;
+			IsClaimed = true;
 		}
 	}
 
-	`log("AbilityEdit: No editor for Charges class" @ AbilityCharges.Class, class'X2DLCInfo_AbilityEditor'.default.EnableDebug, 'AbilityEditor');
+	if (!IsClaimed)
+	{
+		class'X2AbilityEditor_Logger'.static.LogError(string(AbilityName) @ "has no editor for charges class" @ string(AbilityCharges.Class.Name));
+	}
+
+	// Extensions run after the editor that claimed the object, whichever one that was.
+	for (i = 0; i < class'X2DLCInfo_AbilityEditor'.default.ExtraChargesEditors.Length; ++i)
+	{
+		if (!class'X2DLCInfo_AbilityEditor'.default.ExtraChargesEditors[i].RunAfter)
+		{
+			continue;
+		}
+
+		ExtraEditor = class<X2AbilityChargesEditor>(DynamicLoadObject(class'X2DLCInfo_AbilityEditor'.default.ExtraChargesEditors[i].EditorClass, class'Class'));
+
+		if (ExtraEditor != none && ExtraEditor.static.CanEdit(AbilityCharges))
+		{
+			ExtraEditor.static.ApplyDerivedEdit(AbilityName, AbilityCharges, ChargesEdit);
+		}
+	}
 }
 
 static function int FindBonusChargeIndex(const out array<X2AbilityCharges.BonusCharge> BonusCharges, name AbilityName)

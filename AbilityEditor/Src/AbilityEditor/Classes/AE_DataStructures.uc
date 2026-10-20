@@ -2650,6 +2650,10 @@ struct ExtraEditorRegistration
 {
 	var string EditorClass;
 	var int Priority;
+
+	// An extension: runs after the editor that claimed the object, for every object its CanEdit accepts, instead of competing to claim it.
+	// For adding a field to a class and all of its subclasses.
+	var bool RunAfter;
 };
 
 struct AbilityEdit

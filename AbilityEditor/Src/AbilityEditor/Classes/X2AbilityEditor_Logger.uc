@@ -17,6 +17,11 @@ static function LogInfo(
 	);
 }
 
+static function LogError(string Message)
+{
+	`log("AbilityEditor:" @ Message, , 'AbilityEditor');
+}
+
 static function LogDetach(name AbilityName, int ObjectCount)
 {
 	`log(

@@ -192,7 +192,7 @@ def render_bridge_notice(editor: dict[str, Any], bridge: dict[str, Any]) -> list
     fallback_line = (
         f" Without it, an entry naming this class is handled by the built-in `{fallback}` "
         "and the own fields below are silently skipped."
-        if fallback
+        if fallback and not editor.get("runAfter")
         else " Without it, the own fields below are silently skipped."
     )
     out = [
@@ -211,6 +211,15 @@ def render_bridge_notice(editor: dict[str, Any], bridge: dict[str, Any]) -> list
             "!!! note",
             f"    This bridge editor overrides the built-in `{editor['overrides']}` for the same "
             "game class. With the bridge installed it wins; without it the built-in applies.",
+            "",
+        ]
+    if editor.get("runAfter"):
+        out += [
+            "!!! note \"Extension\"",
+            f"    This editor is an extension: Ability Editor runs it after whichever editor claimed a "
+            f"`{editor.get('gameClass')}` or a class derived from it, so the fields below are added to "
+            "every one of those classes without taking them away from the editor that knows their "
+            "other fields. They are listed on each of those pages too.",
             "",
         ]
     if bridge.get("stale"):
@@ -256,6 +265,18 @@ def render_editor(editor: dict[str, Any]) -> str:
         out += ["## Inherited fields", ""]
         for source, fields in groups.items():
             names = ", ".join(f"`{f['config']}`" for f in fields)
+            extension_bridge = BRIDGES.get(fields[0].get("bridge", "")) if fields[0].get("extension") else None
+            if extension_bridge:
+                out += [
+                    f'??? note "Added by the {extension_bridge["displayName"]} bridge through `{source}` ({len(fields)})"',
+                    "",
+                    f"    {names}",
+                    "",
+                    f"    These need the {bridge_link(extension_bridge, '../')} bridge installed; without it "
+                    "they are silently skipped.",
+                    "",
+                ]
+                continue
             out += [
                 f'??? abstract "From `{source}` ({len(fields)})"',
                 "",
@@ -379,6 +400,8 @@ def render_bridge(bridge: dict[str, Any]) -> str:
         for editor in sorted(editors, key=sort_key):
             own = len(own_fields(editor))
             note = f" overrides `{editor['overrides']}`" if editor.get("overrides") else ""
+            if editor.get("runAfter"):
+                note = f" extension: adds its fields to every `{editor.get('gameClass')}` and subclass"
             rows.append([
                 f"[`{qualified_class(editor)}`](../{fslug}/{slugs[editor['class']]}.md)",
                 f"`{editor['class']}`{note}",
@@ -387,9 +410,10 @@ def render_bridge(bridge: dict[str, Any]) -> str:
             ])
             registry = editor.get("registration")
             if registry:
+                run_after = ", RunAfter=true" if editor.get("runAfter") else ""
                 registrations.append(
                     f'+{registry}=(EditorClass="{bridge["name"]}.{editor["class"]}", '
-                    f'Priority={editor.get("priority", 0)})'
+                    f'Priority={editor.get("priority", 0)}{run_after})'
                 )
         out += [
             f"## {family['name']}",
